@@ -149,11 +149,11 @@ export function AdminSidebar() {
       <div className={cn("flex items-center h-16 border-b border-border px-4", collapsed ? "justify-center" : "justify-between")}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <img src="/images/icon-maroon.webp" alt="DA" className="h-8 w-8 object-contain" />
             <span className="font-serif font-bold text-lg text-primary">DA Creation</span>
           </div>
         )}
-        {collapsed && <Sparkles className="h-6 w-6 text-primary" />}
+        {collapsed && <img src="/images/icon-maroon.webp" alt="DA" className="h-8 w-8 object-contain" />}
         <Button
           variant="ghost"
           size="icon"

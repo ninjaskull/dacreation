@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, X, Send, User, Phone, Calendar, MapPin, Check } from "lucide-react";
+import { X, Send, User, Phone, Calendar, MapPin, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -199,7 +199,7 @@ export function Chatbot() {
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: -90, opacity: 0 }}
             >
-              <Bot className="w-6 h-6" />
+              <img src="/images/icon-white.webp" alt="DA" className="w-8 h-8 object-contain" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -217,8 +217,8 @@ export function Chatbot() {
           >
             <div className="bg-secondary p-4 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <Bot className="w-5 h-5" />
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center p-1">
+                  <img src="/images/icon-white.webp" alt="DA" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <h3 className="font-medium">Event Planning Assistant</h3>

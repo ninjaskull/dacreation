@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Gift, Phone, Mail, User, Calendar, Sparkles } from "lucide-react";
+import { X, Phone, Mail, User, Calendar, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -87,12 +87,12 @@ function LeadCapturePopup({ type, isOpen, onClose }: PopupProps) {
   };
 
   const content = type === "exit-intent" ? {
-    icon: <Gift className="w-8 h-8 text-secondary" />,
+    icon: <img src="/images/icon-white.webp" alt="DA" className="w-10 h-10 object-contain" />,
     title: "Wait! Get Your Free Event Quote",
     subtitle: "Don't leave without your personalized event planning estimate",
     cta: "Get My Free Quote",
   } : {
-    icon: <Sparkles className="w-8 h-8 text-secondary" />,
+    icon: <img src="/images/icon-white.webp" alt="DA" className="w-10 h-10 object-contain" />,
     title: "Planning an Event?",
     subtitle: "Get a free consultation with our expert planners",
     cta: "Request Free Consultation",
