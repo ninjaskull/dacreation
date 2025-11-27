@@ -81,12 +81,33 @@ export function LeadCaptureWizard() {
     if (!isValid) return;
     
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Lead Captured:", data);
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit inquiry");
+      }
+
+      setStep(4);
+      toast({
+        title: "Success",
+        description: "Your inquiry has been submitted successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-      setStep(4); // Success step
-    }, 1500);
+    }
   };
 
   return (
