@@ -146,20 +146,73 @@ Preferred communication style: Simple, everyday language.
   - Password: `admin123`
   - ⚠️ Change these credentials before deploying to production
 
+### Enterprise CRM Sidebar
+The admin area features a collapsible sidebar with comprehensive CRM navigation:
+
+**Overview Section**
+- Dashboard - Main overview with key metrics and recent leads
+- Notifications - System alerts and updates
+
+**CRM Section**
+- Leads - Full lead management with filtering and status updates
+- Clients - Client directory with VIP tracking and contact history
+- Inquiries - Manage customer inquiries
+
+**Event Management Section**
+- Events - View and manage all events and bookings
+- Calendar - Visual calendar with event scheduling
+- Bookings - Manage event bookings
+- Venues - Venue partnerships and management
+
+**Operations Section**
+- Vendors - Vendor directory with ratings and category filtering
+- Team - Team member management
+- Tasks - Task and to-do management
+
+**Analytics Section**
+- Reports - Business analytics with revenue breakdown, lead sources, and performance metrics
+
+**Settings**
+- Settings - Profile, notifications, security, and company settings
+- Help & Support - Support resources
+
 ### Features
 1. **Lead Management Dashboard** (`/admin/dashboard`)
    - View all inquiries in a sortable table
-   - Real-time statistics: Total leads, New, Contacted, Qualified
+   - Real-time statistics: Total leads, New, Contacted, Qualified, Conversion Rate
    - Lead details modal with full contact and event information
    - Status management with 5 states: New, Contacted, Qualified, Converted, Lost
    - Notes field for tracking communication and follow-ups
+   - Lead pipeline visualization
 
 2. **Lead Capture**
    - Public inquiry form automatically creates leads in the database
    - All submissions are stored with timestamps
    - Integrated with the 3-step wizard on `/inquire` page
 
-3. **Security**
+3. **Client Management** (`/admin/clients`)
+   - Client directory with search functionality
+   - VIP status tracking
+   - Total revenue per client
+   - Contact history
+
+4. **Event Management** (`/admin/events`)
+   - Event listing with status badges
+   - Event type categorization
+   - Guest count and venue tracking
+
+5. **Vendor Management** (`/admin/vendors`)
+   - Vendor directory with category filtering
+   - Rating system
+   - Contact information management
+
+6. **Reports & Analytics** (`/admin/reports`)
+   - Revenue by event type
+   - Lead source tracking
+   - Monthly performance charts
+   - Export functionality
+
+7. **Security**
    - Session-based authentication with Passport.js
    - Password hashing using scrypt algorithm
    - Protected API routes requiring authentication
