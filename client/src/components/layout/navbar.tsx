@@ -47,7 +47,7 @@ export function Navbar() {
             <img 
               src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
               alt="DA Creation" 
-              className="h-12 w-auto object-contain"
+              className="h-24 md:h-32 w-auto object-contain"
             />
           </a>
         </Link>
