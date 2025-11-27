@@ -9,6 +9,7 @@ import WeddingsPage from "@/pages/services/weddings";
 import CorporatePage from "@/pages/services/corporate";
 import SocialPage from "@/pages/services/social";
 import DestinationPage from "@/pages/services/destination";
+import InquirePage from "@/pages/inquire";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/services/corporate" component={CorporatePage} />
       <Route path="/services/social" component={SocialPage} />
       <Route path="/services/destination" component={DestinationPage} />
+      <Route path="/inquire" component={InquirePage} />
       <Route component={NotFound} />
     </Switch>
   );

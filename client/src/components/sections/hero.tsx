@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import heroImage from "@assets/generated_images/luxury_indian_wedding_reception_venue.png";
 
+import { Link } from "wouter";
+
 export function Hero() {
   return (
     <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
@@ -34,16 +36,19 @@ export function Hero() {
           </p>
           
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <Button 
-              size="lg" 
-              className="rounded-none bg-secondary hover:bg-secondary/90 text-primary-foreground px-8 py-6 text-lg min-w-[200px]"
-            >
-              Let’s Plan Your Event →
-            </Button>
+            <Link href="/inquire">
+              <Button 
+                size="lg" 
+                className="rounded-none bg-secondary hover:bg-secondary/90 text-primary-foreground px-8 py-6 text-lg min-w-[200px]"
+              >
+                Let’s Plan Your Event →
+              </Button>
+            </Link>
             <Button 
               variant="outline" 
               size="lg" 
               className="rounded-none border-white text-white hover:bg-white hover:text-primary px-8 py-6 text-lg min-w-[200px] backdrop-blur-sm bg-white/5"
+              onClick={() => document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' })}
             >
               View Our Portfolio
             </Button>
