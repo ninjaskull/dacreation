@@ -3,7 +3,14 @@ import {
   type Appointment, type InsertAppointment, type UpdateAppointment,
   type ActivityLog, type InsertActivityLog,
   type LeadNote, type InsertLeadNote,
-  users, leads, appointments, activityLogs, leadNotes
+  type TeamMember, type InsertTeamMember,
+  type PortfolioItem, type InsertPortfolioItem,
+  type Testimonial, type InsertTestimonial,
+  type Career, type InsertCareer,
+  type PressArticle, type InsertPressArticle,
+  type PageContent, type InsertPageContent,
+  users, leads, appointments, activityLogs, leadNotes,
+  teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -77,6 +84,40 @@ export interface IStorage {
   deleteLeadNote(id: string): Promise<boolean>;
   
   updateLeadStatus(id: string, status: string, notes?: string): Promise<Lead | undefined>;
+  
+  getAllTeamMembers(activeOnly?: boolean): Promise<TeamMember[]>;
+  getTeamMemberById(id: string): Promise<TeamMember | undefined>;
+  createTeamMember(member: InsertTeamMember): Promise<TeamMember>;
+  updateTeamMember(id: string, data: Partial<InsertTeamMember>): Promise<TeamMember | undefined>;
+  deleteTeamMember(id: string): Promise<boolean>;
+  
+  getAllPortfolioItems(activeOnly?: boolean): Promise<PortfolioItem[]>;
+  getPortfolioItemById(id: string): Promise<PortfolioItem | undefined>;
+  createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem>;
+  updatePortfolioItem(id: string, data: Partial<InsertPortfolioItem>): Promise<PortfolioItem | undefined>;
+  deletePortfolioItem(id: string): Promise<boolean>;
+  
+  getAllTestimonials(activeOnly?: boolean): Promise<Testimonial[]>;
+  getTestimonialById(id: string): Promise<Testimonial | undefined>;
+  createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
+  updateTestimonial(id: string, data: Partial<InsertTestimonial>): Promise<Testimonial | undefined>;
+  deleteTestimonial(id: string): Promise<boolean>;
+  
+  getAllCareers(activeOnly?: boolean): Promise<Career[]>;
+  getCareerById(id: string): Promise<Career | undefined>;
+  createCareer(career: InsertCareer): Promise<Career>;
+  updateCareer(id: string, data: Partial<InsertCareer>): Promise<Career | undefined>;
+  deleteCareer(id: string): Promise<boolean>;
+  
+  getAllPressArticles(activeOnly?: boolean): Promise<PressArticle[]>;
+  getPressArticleById(id: string): Promise<PressArticle | undefined>;
+  createPressArticle(article: InsertPressArticle): Promise<PressArticle>;
+  updatePressArticle(id: string, data: Partial<InsertPressArticle>): Promise<PressArticle | undefined>;
+  deletePressArticle(id: string): Promise<boolean>;
+  
+  getPageContent(pageKey: string): Promise<PageContent | undefined>;
+  getAllPageContent(): Promise<PageContent[]>;
+  upsertPageContent(content: InsertPageContent): Promise<PageContent>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -555,6 +596,196 @@ export class DatabaseStorage implements IStorage {
   async deleteLeadNote(id: string): Promise<boolean> {
     await db.delete(leadNotes).where(eq(leadNotes.id, id));
     return true;
+  }
+
+  async getAllTeamMembers(activeOnly: boolean = false): Promise<TeamMember[]> {
+    const conditions = activeOnly ? eq(teamMembers.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(teamMembers)
+      .where(conditions)
+      .orderBy(asc(teamMembers.displayOrder), asc(teamMembers.name));
+  }
+
+  async getTeamMemberById(id: string): Promise<TeamMember | undefined> {
+    const [member] = await db.select().from(teamMembers).where(eq(teamMembers.id, id));
+    return member || undefined;
+  }
+
+  async createTeamMember(member: InsertTeamMember): Promise<TeamMember> {
+    const [created] = await db.insert(teamMembers).values(member).returning();
+    return created;
+  }
+
+  async updateTeamMember(id: string, data: Partial<InsertTeamMember>): Promise<TeamMember | undefined> {
+    const [updated] = await db
+      .update(teamMembers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(teamMembers.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteTeamMember(id: string): Promise<boolean> {
+    await db.delete(teamMembers).where(eq(teamMembers.id, id));
+    return true;
+  }
+
+  async getAllPortfolioItems(activeOnly: boolean = false): Promise<PortfolioItem[]> {
+    const conditions = activeOnly ? eq(portfolioItems.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(portfolioItems)
+      .where(conditions)
+      .orderBy(desc(portfolioItems.isFeatured), asc(portfolioItems.displayOrder));
+  }
+
+  async getPortfolioItemById(id: string): Promise<PortfolioItem | undefined> {
+    const [item] = await db.select().from(portfolioItems).where(eq(portfolioItems.id, id));
+    return item || undefined;
+  }
+
+  async createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem> {
+    const [created] = await db.insert(portfolioItems).values(item).returning();
+    return created;
+  }
+
+  async updatePortfolioItem(id: string, data: Partial<InsertPortfolioItem>): Promise<PortfolioItem | undefined> {
+    const [updated] = await db
+      .update(portfolioItems)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(portfolioItems.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePortfolioItem(id: string): Promise<boolean> {
+    await db.delete(portfolioItems).where(eq(portfolioItems.id, id));
+    return true;
+  }
+
+  async getAllTestimonials(activeOnly: boolean = false): Promise<Testimonial[]> {
+    const conditions = activeOnly ? eq(testimonials.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(testimonials)
+      .where(conditions)
+      .orderBy(desc(testimonials.isFeatured), asc(testimonials.displayOrder));
+  }
+
+  async getTestimonialById(id: string): Promise<Testimonial | undefined> {
+    const [item] = await db.select().from(testimonials).where(eq(testimonials.id, id));
+    return item || undefined;
+  }
+
+  async createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial> {
+    const [created] = await db.insert(testimonials).values(testimonial).returning();
+    return created;
+  }
+
+  async updateTestimonial(id: string, data: Partial<InsertTestimonial>): Promise<Testimonial | undefined> {
+    const [updated] = await db
+      .update(testimonials)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(testimonials.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteTestimonial(id: string): Promise<boolean> {
+    await db.delete(testimonials).where(eq(testimonials.id, id));
+    return true;
+  }
+
+  async getAllCareers(activeOnly: boolean = false): Promise<Career[]> {
+    const conditions = activeOnly ? eq(careers.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(careers)
+      .where(conditions)
+      .orderBy(desc(careers.createdAt));
+  }
+
+  async getCareerById(id: string): Promise<Career | undefined> {
+    const [item] = await db.select().from(careers).where(eq(careers.id, id));
+    return item || undefined;
+  }
+
+  async createCareer(career: InsertCareer): Promise<Career> {
+    const [created] = await db.insert(careers).values(career).returning();
+    return created;
+  }
+
+  async updateCareer(id: string, data: Partial<InsertCareer>): Promise<Career | undefined> {
+    const [updated] = await db
+      .update(careers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(careers.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteCareer(id: string): Promise<boolean> {
+    await db.delete(careers).where(eq(careers.id, id));
+    return true;
+  }
+
+  async getAllPressArticles(activeOnly: boolean = false): Promise<PressArticle[]> {
+    const conditions = activeOnly ? eq(pressArticles.isActive, true) : undefined;
+    return await db
+      .select()
+      .from(pressArticles)
+      .where(conditions)
+      .orderBy(desc(pressArticles.isFeatured), asc(pressArticles.displayOrder));
+  }
+
+  async getPressArticleById(id: string): Promise<PressArticle | undefined> {
+    const [item] = await db.select().from(pressArticles).where(eq(pressArticles.id, id));
+    return item || undefined;
+  }
+
+  async createPressArticle(article: InsertPressArticle): Promise<PressArticle> {
+    const [created] = await db.insert(pressArticles).values(article).returning();
+    return created;
+  }
+
+  async updatePressArticle(id: string, data: Partial<InsertPressArticle>): Promise<PressArticle | undefined> {
+    const [updated] = await db
+      .update(pressArticles)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(pressArticles.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePressArticle(id: string): Promise<boolean> {
+    await db.delete(pressArticles).where(eq(pressArticles.id, id));
+    return true;
+  }
+
+  async getPageContent(pageKey: string): Promise<PageContent | undefined> {
+    const [content] = await db.select().from(pageContent).where(eq(pageContent.pageKey, pageKey));
+    return content || undefined;
+  }
+
+  async getAllPageContent(): Promise<PageContent[]> {
+    return await db.select().from(pageContent).orderBy(asc(pageContent.pageKey));
+  }
+
+  async upsertPageContent(content: InsertPageContent): Promise<PageContent> {
+    const existing = await this.getPageContent(content.pageKey);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(pageContent)
+        .set({ ...content, updatedAt: new Date() })
+        .where(eq(pageContent.pageKey, content.pageKey))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(pageContent).values(content).returning();
+      return created;
+    }
   }
 }
 
