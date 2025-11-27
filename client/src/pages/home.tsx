@@ -8,6 +8,8 @@ import { Portfolio } from "@/components/sections/portfolio";
 import { Testimonials } from "@/components/sections/testimonials";
 import { FAQ } from "@/components/sections/faq";
 import { Contact } from "@/components/sections/contact";
+import { LeadMagnetsSection } from "@/components/sales/lead-magnets";
+import { ConsultationCTA } from "@/components/sales/consultation-cta";
 
 export default function Home() {
   return (
@@ -18,7 +20,9 @@ export default function Home() {
         <About />
         <WhyChooseUs />
         <Services />
+        <ConsultationCTA />
         <Portfolio />
+        <LeadMagnetsSection />
         <Testimonials />
         <FAQ />
         <Contact />

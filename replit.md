@@ -218,19 +218,80 @@ The admin area features a collapsible sidebar with comprehensive CRM navigation:
    - Protected API routes requiring authentication
    - Automatic session management
 
+### Lead Capture System
+
+The website includes a comprehensive lead capture system designed to maximize visitor data collection:
+
+**Lead Capture Surfaces**
+
+1. **Multi-Step Inquiry Wizard** (`/inquire`)
+   - 3-step form: Event Type → Details (date, location, budget) → Contact Info
+   - Budget range selection with Indian rupee denominations
+   - Enhanced success screen with WhatsApp, call, and scheduling options
+
+2. **Exit-Intent Popup**
+   - Triggers when user moves mouse to leave the page
+   - Quick capture form with name, phone, email, event type
+   - Session-based frequency capping (shows once per session)
+
+3. **Timed Popup**
+   - Appears after 35 seconds on page
+   - Same capture form as exit-intent
+   - Coordinates with exit-intent to avoid double popups
+
+4. **Floating CTA Button**
+   - Sticky "Talk to Event Planner" button (bottom right)
+   - Quick callback request form (name, phone, event type)
+   - Expandable widget interface
+
+5. **Conversational Chatbot**
+   - AI-style chatbot (bottom left)
+   - Step-by-step data collection: Event → Date → Location → Name → Phone
+   - Validates phone number before submission
+
+6. **Lead Magnets Section**
+   - Free downloadable resources requiring contact form
+   - Event Planning Checklist, Budget Calculator, Vendor Directory
+   - Gated downloads with name, email, phone
+
+7. **Contact Form**
+   - Enhanced with mandatory phone field
+   - Budget range selection
+   - Event type dropdown
+   - Saves directly to database
+
+8. **Consultation CTA Section**
+   - Prominent "Book Free Consultation" buttons
+   - WhatsApp and call links
+   - Multiple contact options
+
+**Lead Attribution**
+All forms capture `leadSource` field to track where leads originate:
+- `inquiry_form` - Main wizard form
+- `popup` - Exit-intent or timed popup
+- `floating_cta` - Floating callback button
+- `chatbot` - Conversational chatbot
+- `lead_magnet` - Downloadable resources
+- `contact_form` - Contact section form
+
 ### Database Schema
 ```typescript
-// Leads table structure
+// Leads table structure (updated with new fields)
 {
   id: UUID (auto-generated)
   eventType: "wedding" | "corporate" | "social" | "destination"
-  date: timestamp
-  guestCount: integer
-  location: string
-  name: string
-  phone: string
-  email: string
+  date: timestamp (optional)
+  guestCount: integer (optional)
+  location: string (optional)
+  budgetRange: string (optional) - e.g., "5l-10l", "25l-50l", "above-1cr"
+  name: string (required)
+  phone: string (required)
+  email: string (required)
   contactMethod: "whatsapp" | "call" | "email"
+  leadSource: string - tracks origin of lead
+  leadMagnet: string (optional) - which resource was downloaded
+  message: text (optional)
+  consentGiven: boolean
   status: "new" | "contacted" | "qualified" | "converted" | "lost"
   notes: text (optional)
   createdAt: timestamp (auto-generated)

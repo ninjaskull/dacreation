@@ -33,9 +33,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLead(insertLead: InsertLead): Promise<Lead> {
+    const leadData = {
+      ...insertLead,
+      date: insertLead.date ? new Date(insertLead.date) : null,
+    };
+    
     const [lead] = await db
       .insert(leads)
-      .values(insertLead)
+      .values(leadData as any)
       .returning();
     return lead;
   }

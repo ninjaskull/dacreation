@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -28,6 +28,9 @@ import {
   TasksPage, 
   HelpPage 
 } from "@/pages/admin/placeholder";
+import { PopupSystem } from "@/components/sales/popup-system";
+import { FloatingCTA } from "@/components/sales/floating-cta";
+import { Chatbot } from "@/components/sales/chatbot";
 
 function Router() {
   return (
@@ -59,12 +62,28 @@ function Router() {
   );
 }
 
+function LeadCaptureWidgets() {
+  const [location] = useLocation();
+  const isAdminPage = location.startsWith("/admin");
+  
+  if (isAdminPage) return null;
+  
+  return (
+    <>
+      <PopupSystem />
+      <FloatingCTA />
+      <Chatbot />
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Router />
+        <LeadCaptureWidgets />
       </TooltipProvider>
     </QueryClientProvider>
   );

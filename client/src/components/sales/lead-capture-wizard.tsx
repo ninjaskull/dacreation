@@ -10,13 +10,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
-import { CalendarIcon, Check, ChevronRight, ChevronLeft, Phone, Mail, User, MapPin } from "lucide-react";
+import { CalendarIcon, Check, ChevronRight, ChevronLeft, Phone, Mail, User, MapPin, Wallet, Calendar as CalendarCTA, MessageCircle, PhoneCall } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { budgetRanges } from "@shared/schema";
 
-// Validation Schemas for each step
 const step1Schema = z.object({
   eventType: z.enum(["wedding", "corporate", "social", "destination"], {
     required_error: "Please select an event type.",
@@ -27,6 +28,7 @@ const step2Schema = z.object({
   date: z.date({ required_error: "Please select a tentative date." }),
   guestCount: z.number().min(1, "Guest count is required"),
   location: z.string().min(2, "Location/City is required"),
+  budgetRange: z.string().min(1, "Please select a budget range"),
 });
 
 const step3Schema = z.object({
@@ -36,7 +38,6 @@ const step3Schema = z.object({
   contactMethod: z.enum(["whatsapp", "call", "email"]).default("whatsapp"),
 });
 
-// Combined schema for final submission
 const formSchema = step1Schema.merge(step2Schema).merge(step3Schema);
 
 type FormData = z.infer<typeof formSchema>;
@@ -59,6 +60,7 @@ export function LeadCaptureWizard() {
     defaultValues: {
       guestCount: 100,
       contactMethod: "whatsapp",
+      budgetRange: "",
     }
   });
 
@@ -66,7 +68,7 @@ export function LeadCaptureWizard() {
   const currentEventType = watch("eventType");
 
   const nextStep = async () => {
-    const isValid = await trigger(step === 1 ? ["eventType"] : step === 2 ? ["date", "guestCount", "location"] : undefined);
+    const isValid = await trigger(step === 1 ? ["eventType"] : step === 2 ? ["date", "guestCount", "location", "budgetRange"] : undefined);
     if (isValid) {
       setStep((prev) => prev + 1);
     }
@@ -87,7 +89,10 @@ export function LeadCaptureWizard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          leadSource: "inquiry_form",
+        }),
       });
 
       if (!response.ok) {
@@ -282,6 +287,34 @@ export function LeadCaptureWizard() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="budgetRange"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Wallet className="w-4 h-4 text-primary" />
+                          <span>Approximate Budget</span>
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-12" data-testid="wizard-budget-select">
+                              <SelectValue placeholder="Select your budget range" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {budgetRanges.map((range) => (
+                              <SelectItem key={range.value} value={range.value}>
+                                {range.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </Form>
 
@@ -414,22 +447,64 @@ export function LeadCaptureWizard() {
             </motion.div>
           )}
 
-          {/* STEP 4: Success */}
+          {/* STEP 4: Success with Scheduling Options */}
           {step === 4 && (
             <motion.div
               key="step4"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-10"
+              className="text-center py-8"
             >
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Check className="w-10 h-10 text-green-600" />
               </div>
               <h2 className="font-serif text-3xl text-primary mb-4">Inquiry Received!</h2>
-              <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                Thank you, {getValues("name")}. We have received your details. One of our senior planners will reach out to you shortly on <strong>{getValues("phone")}</strong> to discuss your {getValues("eventType")}.
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                Thank you, <strong>{getValues("name")}</strong>! We've received your details and will reach out shortly on <strong>{getValues("phone")}</strong>.
               </p>
-              <Button onClick={() => window.location.href = "/"} variant="outline">
+              
+              <div className="bg-muted/50 rounded-lg p-6 mb-6">
+                <h3 className="font-medium text-foreground mb-4">Want to speed things up?</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Button 
+                    variant="default" 
+                    className="flex items-center justify-center gap-2"
+                    onClick={() => window.open("https://wa.me/919876543210?text=Hi! I just submitted an inquiry for my " + getValues("eventType") + ". My name is " + getValues("name"), "_blank")}
+                    data-testid="success-whatsapp-button"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Chat on WhatsApp
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center gap-2"
+                    onClick={() => window.open("tel:+919876543210", "_blank")}
+                    data-testid="success-call-button"
+                  >
+                    <PhoneCall className="w-4 h-4" />
+                    Call Us Now
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-center gap-2 text-primary mb-2">
+                  <CalendarCTA className="w-5 h-5" />
+                  <span className="font-medium">Schedule a Consultation</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Pick a time that works for you. Our expert will call you.
+                </p>
+                <Button 
+                  variant="secondary" 
+                  className="w-full"
+                  data-testid="success-schedule-button"
+                >
+                  Book Your Free Consultation Call
+                </Button>
+              </div>
+
+              <Button onClick={() => window.location.href = "/"} variant="ghost" size="sm">
                 Return Home
               </Button>
             </motion.div>
