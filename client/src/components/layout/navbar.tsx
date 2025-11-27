@@ -50,7 +50,7 @@ export function Navbar() {
               "w-auto object-contain transition-all duration-300",
               !isScrolled && location === "/" && !isMobileMenuOpen 
                 ? "h-24 md:h-32 mt-8 md:mt-12" 
-                : "h-12 md:h-14 mt-0"
+                : "h-16 md:h-20 mt-0"
             )}
           />
         </Link>
