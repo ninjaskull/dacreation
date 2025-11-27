@@ -13,6 +13,7 @@ import InquirePage from "@/pages/inquire";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import LeadsPage from "@/pages/admin/leads";
+import LeadDetailPage from "@/pages/admin/lead-detail";
 import ClientsPage from "@/pages/admin/clients";
 import EventsPage from "@/pages/admin/events";
 import CalendarPage from "@/pages/admin/calendar";
@@ -24,10 +25,10 @@ import {
   InquiriesPage, 
   BookingsPage, 
   VenuesPage, 
-  TeamPage, 
   TasksPage, 
   HelpPage 
 } from "@/pages/admin/placeholder";
+import TeamPage from "@/pages/admin/team";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/leads" component={LeadsPage} />
+      <Route path="/admin/leads/:id" component={LeadDetailPage} />
       <Route path="/admin/clients" component={ClientsPage} />
       <Route path="/admin/events" component={EventsPage} />
       <Route path="/admin/calendar" component={CalendarPage} />

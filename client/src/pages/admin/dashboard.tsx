@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLayout } from "@/components/admin/layout";
+import { Link } from "wouter";
 import { 
   Users, 
   Calendar, 
@@ -17,12 +18,37 @@ import {
   MapPin, 
   MessageSquare,
   TrendingUp,
-  DollarSign,
   CalendarCheck,
   Clock,
+  UserPlus,
+  ArrowUpRight,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import type { Lead } from "@shared/schema";
+
+const COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
+
+const SOURCE_LABELS: Record<string, string> = {
+  website: 'Website',
+  inquiry_form: 'Inquiry Form',
+  popup: 'Pop-up',
+  floating_cta: 'Floating CTA',
+  chatbot: 'Chatbot',
+  lead_magnet: 'Lead Magnet',
+  callback_request: 'Callback',
+  contact_form: 'Contact Form',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  new: 'New',
+  contacted: 'Contacted',
+  'follow-up': 'Follow-up',
+  qualified: 'Qualified',
+  converted: 'Converted',
+  lost: 'Lost',
+};
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -35,10 +61,26 @@ export default function AdminDashboard() {
     queryKey: ["leads"],
     queryFn: async () => {
       const response = await fetch("/api/leads");
-      if (!response.ok) {
-        throw new Error("Failed to fetch leads");
-      }
+      if (!response.ok) throw new Error("Failed to fetch leads");
       return response.json() as Promise<Lead[]>;
+    },
+  });
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["leadStats"],
+    queryFn: async () => {
+      const response = await fetch("/api/leads/stats");
+      if (!response.ok) throw new Error("Failed to fetch stats");
+      return response.json();
+    },
+  });
+
+  const { data: upcomingAppointments } = useQuery({
+    queryKey: ["upcomingAppointments"],
+    queryFn: async () => {
+      const response = await fetch("/api/appointments/upcoming?limit=5");
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      return response.json();
     },
   });
 
@@ -54,6 +96,7 @@ export default function AdminDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
       setSelectedLead(null);
       toast({
         title: "Success",
@@ -82,6 +125,7 @@ export default function AdminDashboard() {
     switch (status) {
       case "new": return "bg-blue-500";
       case "contacted": return "bg-yellow-500";
+      case "follow-up": return "bg-orange-500";
       case "qualified": return "bg-green-500";
       case "converted": return "bg-purple-500";
       case "lost": return "bg-gray-500";
@@ -89,13 +133,26 @@ export default function AdminDashboard() {
     }
   };
 
-  const stats = leads ? {
-    total: leads.length,
-    new: leads.filter(l => l.status === "new").length,
-    contacted: leads.filter(l => l.status === "contacted").length,
-    qualified: leads.filter(l => l.status === "qualified").length,
-    converted: leads.filter(l => l.status === "converted").length,
-  } : { total: 0, new: 0, contacted: 0, qualified: 0, converted: 0 };
+  const sourceChartData = stats?.bySource 
+    ? Object.entries(stats.bySource).map(([name, value]) => ({
+        name: SOURCE_LABELS[name] || name,
+        value: value as number,
+      }))
+    : [];
+
+  const statusChartData = stats?.byStatus
+    ? Object.entries(stats.byStatus).map(([name, value]) => ({
+        name: STATUS_LABELS[name] || name,
+        value: value as number,
+      }))
+    : [];
+
+  const eventTypeChartData = stats?.byEventType
+    ? Object.entries(stats.byEventType).map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        leads: value as number,
+      }))
+    : [];
 
   const recentLeads = leads?.slice(0, 5) || [];
 
@@ -103,68 +160,138 @@ export default function AdminDashboard() {
     <AdminLayout title="Dashboard" description="Overview of your event management business">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-l-4 border-l-blue-500">
+          <Card className="border-l-4 border-l-blue-500" data-testid="card-total-leads">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                <span className="text-green-500">+12%</span> from last month
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {stats.total > 0 ? Math.round((stats.converted / stats.total) * 100) : 0}%
+              <div className="text-3xl font-bold" data-testid="text-total-leads">
+                {statsLoading ? "..." : stats?.total || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.converted} converted leads
+                All time leads
               </p>
             </CardContent>
           </Card>
           
-          <Card className="border-l-4 border-l-purple-500">
+          <Card className="border-l-4 border-l-green-500" data-testid="card-new-today">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-              <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">New Today</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">8</div>
+              <div className="text-3xl font-bold" data-testid="text-new-today">
+                {statsLoading ? "..." : stats?.newToday || 0}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Next 30 days
+                Leads received today
               </p>
             </CardContent>
           </Card>
           
-          <Card className="border-l-4 border-l-amber-500">
+          <Card className="border-l-4 border-l-amber-500" data-testid="card-pending-followup">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Follow-ups</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.contacted}</div>
+              <div className="text-3xl font-bold" data-testid="text-pending-followup">
+                {statsLoading ? "..." : stats?.pendingFollowUp || 0}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Require attention
               </p>
             </CardContent>
           </Card>
+          
+          <Card className="border-l-4 border-l-purple-500" data-testid="card-conversion-rate">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold" data-testid="text-conversion-rate">
+                {stats?.total > 0 
+                  ? Math.round(((stats?.byStatus?.converted || 0) / stats.total) * 100)
+                  : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats?.byStatus?.converted || 0} converted leads
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card data-testid="card-lead-sources-chart">
+            <CardHeader>
+              <CardTitle className="text-base">Lead Sources</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sourceChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={sourceChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      labelLine={false}
+                    >
+                      {sourceChartData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                  No data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-event-types-chart">
+            <CardHeader>
+              <CardTitle className="text-base">Leads by Event Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {eventTypeChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={eventTypeChartData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={80} />
+                    <Tooltip />
+                    <Bar dataKey="leads" fill="#8B5CF6" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                  No data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2" data-testid="card-recent-leads">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Leads</CardTitle>
-              <Button variant="outline" size="sm" data-testid="button-view-all-leads">
-                View All
-              </Button>
+              <Link href="/admin/leads">
+                <Button variant="outline" size="sm" data-testid="button-view-all-leads">
+                  View All
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               {leadsLoading ? (
@@ -195,14 +322,16 @@ export default function AdminDashboard() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleOpenLead(lead)}
-                              data-testid={`button-view-${lead.id}`}
-                            >
-                              View
-                            </Button>
+                            <Link href={`/admin/leads/${lead.id}`}>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                data-testid={`button-view-${lead.id}`}
+                              >
+                                View
+                                <ArrowUpRight className="ml-1 h-3 w-3" />
+                              </Button>
+                            </Link>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -213,108 +342,107 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-lead-pipeline">
             <CardHeader>
-              <CardTitle>Lead Pipeline</CardTitle>
+              <CardTitle className="text-base">Lead Pipeline</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="text-sm">New</span>
-                </div>
-                <span className="font-semibold">{stats.new}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <span className="text-sm">Contacted</span>
-                </div>
-                <span className="font-semibold">{stats.contacted}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-sm">Qualified</span>
-                </div>
-                <span className="font-semibold">{stats.qualified}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                  <span className="text-sm">Converted</span>
-                </div>
-                <span className="font-semibold">{stats.converted}</span>
-              </div>
+              {Object.entries(STATUS_LABELS).map(([key, label]) => {
+                const count = stats?.byStatus?.[key] || 0;
+                const percentage = stats?.total > 0 ? (count / stats.total) * 100 : 0;
+                return (
+                  <div key={key} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${getStatusColor(key)}`}></div>
+                        <span>{label}</span>
+                      </div>
+                      <span className="font-semibold">{count}</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${getStatusColor(key)} transition-all`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {leadsLoading ? (
-              <div className="text-center py-8">Loading leads...</div>
-            ) : !leads || leads.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No leads yet</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Event Type</TableHead>
-                      <TableHead>Event Date</TableHead>
-                      <TableHead>Guests</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leads.map((lead) => (
-                      <TableRow key={lead.id} data-testid={`row-lead-${lead.id}`}>
-                        <TableCell className="text-sm">
-                          {format(new Date(lead.createdAt), "MMM dd, yyyy")}
-                        </TableCell>
-                        <TableCell className="font-medium">{lead.name}</TableCell>
-                        <TableCell className="capitalize">{lead.eventType}</TableCell>
-                        <TableCell>{lead.date ? format(new Date(lead.date), "MMM dd, yyyy") : "TBD"}</TableCell>
-                        <TableCell>{lead.guestCount}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {lead.phone}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(lead.status)}>
-                            {lead.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleOpenLead(lead)}
-                            data-testid={`button-view-${lead.id}`}
-                          >
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card data-testid="card-upcoming-appointments">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Upcoming Appointments</CardTitle>
+              <Link href="/admin/calendar">
+                <Button variant="outline" size="sm" data-testid="button-view-calendar">
+                  View Calendar
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {upcomingAppointments && upcomingAppointments.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingAppointments.map((apt: any) => (
+                    <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50" data-testid={`appointment-${apt.id}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <CalendarCheck className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{apt.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {apt.lead?.name} - {format(new Date(apt.scheduledAt), "MMM dd, h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="capitalize">{apt.type}</Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No upcoming appointments
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-quick-actions">
+            <CardHeader>
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-3">
+              <Link href="/admin/leads">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-leads">
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Leads
+                </Button>
+              </Link>
+              <Link href="/admin/calendar">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-calendar">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Calendar
+                </Button>
+              </Link>
+              <Link href="/admin/team">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-team">
+                  <Users className="mr-2 h-4 w-4" />
+                  Team Members
+                </Button>
+              </Link>
+              <Link href="/admin/reports">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-quick-reports">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Reports
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
@@ -356,11 +484,11 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{selectedLead.location}</span>
+                      <span>{selectedLead.location || "Not specified"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{selectedLead.guestCount} guests</span>
+                      <span>{selectedLead.guestCount || 0} guests</span>
                     </div>
                     <div>
                       <span className="text-sm font-medium">Type: </span>
@@ -380,6 +508,7 @@ export default function AdminDashboard() {
                     <SelectContent>
                       <SelectItem value="new">New</SelectItem>
                       <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="follow-up">Follow-up</SelectItem>
                       <SelectItem value="qualified">Qualified</SelectItem>
                       <SelectItem value="converted">Converted</SelectItem>
                       <SelectItem value="lost">Lost</SelectItem>

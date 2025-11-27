@@ -32,6 +32,8 @@ declare global {
     interface User {
       id: string;
       username: string;
+      role: string;
+      name?: string | null;
     }
   }
 }
@@ -66,7 +68,7 @@ export function setupAuth(app: Express) {
         if (!user || !(await crypto.compare(password, user.password))) {
           return done(null, false, { message: "Invalid credentials" });
         }
-        return done(null, { id: user.id, username: user.username });
+        return done(null, { id: user.id, username: user.username, role: user.role, name: user.name });
       } catch (err) {
         return done(err);
       }
@@ -83,7 +85,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(null, false);
       }
-      done(null, { id: user.id, username: user.username });
+      done(null, { id: user.id, username: user.username, role: user.role, name: user.name });
     } catch (err) {
       done(err);
     }
