@@ -10,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           <div className="md:col-span-2">
             <div className="mb-6">
-              <img src="/images/logo-white.webp" alt="DA Creation" className="h-24 md:h-32 w-auto object-contain" />
+              <img src="/images/logo-white.webp" alt="DA Creation" className="h-16 md:h-20 w-auto object-contain" />
             </div>
             <p className="text-primary-foreground/80 max-w-md text-lg font-light leading-relaxed">
               Curating timeless, elegant, and culturally inspired weddings. 

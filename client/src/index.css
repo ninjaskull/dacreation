@@ -45,8 +45,8 @@
   --popover: 40 20% 97%;
   --popover-foreground: 30 5% 20%;
 
-  /* Rich Maroon for Primary Actions */
-  --primary: 350 40% 35%; 
+  /* Rich Maroon for Primary Actions - #601a29 */
+  --primary: 347 57% 24%; 
   --primary-foreground: 40 20% 97%;
 
   /* Deep Gold for Secondary Elements */

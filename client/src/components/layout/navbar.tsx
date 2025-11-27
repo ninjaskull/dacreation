@@ -49,14 +49,14 @@ export function Navbar() {
             className={cn(
               "w-auto object-contain transition-all duration-300",
               !isScrolled && location === "/" && !isMobileMenuOpen 
-                ? "h-24 md:h-32 mt-8 md:mt-12" 
-                : "h-16 md:h-20 mt-0"
+                ? "h-16 md:h-20 mt-4 md:mt-6" 
+                : "h-10 md:h-12 mt-0"
             )}
           />
         </Link>
 
         {/* Spacer for logo to maintain layout if needed, only when hanging */}
-        <div className={cn("transition-all duration-300", !isScrolled && location === "/" && !isMobileMenuOpen ? "w-24 md:w-32" : "hidden md:block w-0")}></div>
+        <div className={cn("transition-all duration-300", !isScrolled && location === "/" && !isMobileMenuOpen ? "w-16 md:w-20" : "hidden md:block w-0")}></div>
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8">
