@@ -73,18 +73,16 @@ export function Navbar() {
             </a>
           ))}
           <Link href="/inquire">
-            <a>
-              <Button 
-                variant={(isScrolled || location !== "/") ? "default" : "secondary"}
-                size="sm"
-                className={cn(
-                  "rounded-none px-6 transition-all",
-                  (!isScrolled && location === "/") && "bg-white/20 hover:bg-white/30 text-white border border-white/40"
-                )}
-              >
-                Get a Quote
-              </Button>
-            </a>
+            <Button 
+              variant={(isScrolled || location !== "/") ? "default" : "secondary"}
+              size="sm"
+              className={cn(
+                "rounded-none px-6 transition-all",
+                (!isScrolled && location === "/") && "bg-white/20 hover:bg-white/30 text-white border border-white/40"
+              )}
+            >
+              Get a Quote
+            </Button>
           </Link>
         </div>
 
@@ -115,11 +113,9 @@ export function Navbar() {
             </a>
           ))}
           <Link href="/inquire" onClick={() => setIsMobileMenuOpen(false)}>
-            <a>
-              <Button className="rounded-none bg-primary text-white px-10 py-6 text-xl mt-8">
-                Get a Quote
-              </Button>
-            </a>
+            <Button className="rounded-none bg-primary text-white px-10 py-6 text-xl mt-8">
+              Get a Quote
+            </Button>
           </Link>
         </div>
       )}
