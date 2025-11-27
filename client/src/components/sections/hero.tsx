@@ -9,10 +9,10 @@ export function Hero() {
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
-          alt="Luxury Wedding" 
+          alt="Luxury Event" 
           className="w-full h-full object-cover transition-transform duration-[20s] ease-in-out transform scale-100 hover:scale-105"
         />
-        <div className="absolute inset-0 bg-black/30 bg-gradient-to-b from-black/60 via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-black/40 bg-gradient-to-b from-black/70 via-transparent to-black/70" />
       </div>
 
       {/* Content */}
@@ -23,14 +23,14 @@ export function Hero() {
           transition={{ duration: 1, delay: 0.2 }}
         >
           <h2 className="text-sm md:text-base uppercase tracking-[0.3em] mb-6 text-secondary font-medium">
-            Curating Memories
+            Seamless. Creative. Unforgettable.
           </h2>
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-medium leading-tight mb-8 drop-shadow-lg">
-            Timeless Elegance, <br />
-            <span className="italic text-white/90">Culturally Inspired</span>
+          <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-medium leading-tight mb-8 drop-shadow-lg">
+            Crafting Exceptional Events With <br />
+            <span className="italic text-white/90">Modern Elegance & Cultural Soul</span>
           </h1>
-          <p className="max-w-xl mx-auto text-lg md:text-xl text-white/90 font-light mb-10 leading-relaxed">
-            We design bespoke Indian weddings that blend modern luxury with rich tradition, creating unforgettable experiences for you and your guests.
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-white/90 font-light mb-10 leading-relaxed">
+            From lavish Indian weddings to high-impact corporate events and intimate private celebrations, we design experiences that are seamless, creative, and unforgettable.
           </p>
           
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
@@ -38,14 +38,14 @@ export function Hero() {
               size="lg" 
               className="rounded-none bg-secondary hover:bg-secondary/90 text-primary-foreground px-8 py-6 text-lg min-w-[200px]"
             >
-              Plan Your Wedding
+              Let’s Plan Your Event →
             </Button>
             <Button 
               variant="outline" 
               size="lg" 
               className="rounded-none border-white text-white hover:bg-white hover:text-primary px-8 py-6 text-lg min-w-[200px] backdrop-blur-sm bg-white/5"
             >
-              View Portfolio
+              View Our Portfolio
             </Button>
           </div>
         </motion.div>

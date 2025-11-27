@@ -3,8 +3,10 @@ import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/sections/hero";
 import { Services } from "@/components/sections/services";
 import { About } from "@/components/sections/about";
+import { WhyChooseUs } from "@/components/sections/why-choose-us";
 import { Portfolio } from "@/components/sections/portfolio";
 import { Testimonials } from "@/components/sections/testimonials";
+import { FAQ } from "@/components/sections/faq";
 import { Contact } from "@/components/sections/contact";
 
 export default function Home() {
@@ -14,9 +16,11 @@ export default function Home() {
       <main>
         <Hero />
         <About />
+        <WhyChooseUs />
         <Services />
         <Portfolio />
         <Testimonials />
+        <FAQ />
         <Contact />
       </main>
       <Footer />

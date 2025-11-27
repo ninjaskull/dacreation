@@ -9,19 +9,19 @@ import {
 
 const testimonials = [
   {
-    text: "Aura Events transformed our dream into a reality that exceeded our wildest expectations. The attention to detail and cultural sensitivity was impeccable.",
-    author: "Sneha & Rohan",
-    role: "Bride & Groom"
+    text: "A corporate event executed with absolute professionalism—impressive staging, management, and creativity.",
+    author: "Fortune 500 Client",
+    role: "Corporate Event"
   },
   {
-    text: "Professional, creative, and incredibly organized. They managed our 500-guest wedding flawlessly while maintaining a personal touch.",
-    author: "Mrs. Kapoor",
-    role: "Mother of the Bride"
+    text: "Our wedding was magical. Every detail reflected our culture and personality. Couldn’t have asked for better.",
+    author: "Aarav & Meera",
+    role: "Wedding"
   },
   {
-    text: "The decor design was simply breathtaking. Minimal yet grand, exactly what we wanted for our modern fusion wedding.",
-    author: "Anita & David",
-    role: "Couple"
+    text: "From décor to guest hospitality, my 50th birthday party felt luxurious and personal.",
+    author: "Radhika S.",
+    role: "Birthday Celebration"
   }
 ];
 
@@ -36,21 +36,23 @@ export function Testimonials() {
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <Quote className="w-12 h-12 mx-auto mb-6 text-secondary opacity-80" />
-          <h2 className="font-serif text-3xl md:text-4xl mb-4">Words of Love</h2>
-          <div className="w-16 h-0.5 bg-secondary mx-auto"></div>
+          <h2 className="font-serif text-3xl md:text-4xl mb-4">Client Testimonials</h2>
+          <p className="text-white/70 font-light max-w-xl mx-auto">
+            We take pride in the experiences we create and the trust we earn. Here's what our clients say about working with us.
+          </p>
         </div>
 
         <Carousel className="max-w-4xl mx-auto">
           <CarouselContent>
             {testimonials.map((item, index) => (
               <CarouselItem key={index}>
-                <div className="text-center px-4 md:px-12">
+                <div className="text-center px-4 md:px-12 py-4">
                   <p className="font-serif text-2xl md:text-3xl italic leading-relaxed mb-8 opacity-90">
                     "{item.text}"
                   </p>
                   <div>
                     <h4 className="text-secondary text-lg font-medium uppercase tracking-widest">{item.author}</h4>
-                    <span className="text-white/60 text-sm">{item.role}</span>
+                    <span className="text-white/60 text-sm block mt-1">{item.role}</span>
                   </div>
                 </div>
               </CarouselItem>

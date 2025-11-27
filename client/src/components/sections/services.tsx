@@ -1,74 +1,125 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import planningImg from "@assets/generated_images/wedding_planning_detail_shot.png";
-import decorImg from "@assets/generated_images/indian_wedding_decor_detail.png";
-import logisticsImg from "@assets/generated_images/luxury_indian_wedding_reception_venue.png"; // Reusing venue for logistics context
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const services = [
-  {
-    title: "Full Wedding Planning",
-    description: "From venue selection to the final vidaai, we manage every detail so you can cherish every moment.",
-    image: planningImg,
-    icon: "📋"
+// Updated images
+import weddingImg from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
+import corporateImg from "@assets/generated_images/corporate_conference_stage.png";
+import socialImg from "@assets/generated_images/luxury_private_dinner.png";
+import destImg from "@assets/generated_images/destination_event_beach.png";
+
+const serviceData = {
+  weddings: {
+    title: "Weddings & Cultural Celebrations",
+    description: "Modern design meets rich Indian tradition. We plan every ritual, ceremony, and moment effortlessly.",
+    image: weddingImg,
+    features: [
+      "Full Wedding Planning & Coordination",
+      "Design & Décor Styling (Stage, Mandap, Sangeet)",
+      "Ritual & Ceremony Management (Hindu, Sikh, Muslim, Christian)",
+      "Vendor Management & Logistics"
+    ]
   },
-  {
-    title: "Decor & Design",
-    description: "Transforming spaces with bespoke floral arrangements, lighting, and thematic decor that reflects your style.",
-    image: decorImg,
-    icon: "✨"
+  corporate: {
+    title: "Corporate Events",
+    description: "Professional, polished, and impact-driven events—from conferences to award shows.",
+    image: corporateImg,
+    features: [
+      "Conferences & Seminars",
+      "Product Launches & Brand Activations",
+      "Annual Events & Award Nights",
+      "Corporate Retreats & Offsites"
+    ]
   },
-  {
-    title: "Logistics & Coordination",
-    description: "Seamless vendor management, guest hospitality, and timeline execution for a flawless celebration.",
-    image: logisticsImg,
-    icon: "clock"
+  social: {
+    title: "Social Events & Private Parties",
+    description: "Birthdays, anniversaries, baby showers, proposals, and everything worth celebrating.",
+    image: socialImg,
+    features: [
+      "Birthdays, Anniversaries & Private Parties",
+      "Baby Showers & Naming Ceremonies",
+      "Luxury Private Dinners & Home Events",
+      "Theme-based Décor & Entertainment"
+    ]
+  },
+  destination: {
+    title: "Destination Events",
+    description: "Pan-India and international event planning with complete logistics and hospitality management.",
+    image: destImg,
+    features: [
+      "Pan-India Locations (Goa, Jaipur, Udaipur, Kerala)",
+      "International Planning (Dubai, Bali, Thailand)",
+      "Travel & Accommodation Management",
+      "Hospitality Desks & Guest Logistics"
+    ]
   }
-];
+};
 
 export function Services() {
   return (
-    <section id="services" className="py-24 bg-background relative overflow-hidden">
-      {/* Subtle Background Texture */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">Our Expertise</span>
-          <h2 className="font-serif text-4xl md:text-5xl text-primary mb-6">Curated Services</h2>
+    <section id="services" className="py-24 bg-muted/30 relative">
+      <div className="container mx-auto px-6">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">What We Do</span>
+          <h2 className="font-serif text-4xl md:text-5xl text-primary mb-6">Our Services</h2>
           <p className="text-muted-foreground text-lg font-light">
-            We specialize in bringing modern luxury to traditional celebrations, ensuring every event is a masterpiece of design and execution.
+            We blend creative design, structured planning, and professional execution to transform visions into beautifully orchestrated events.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {services.map((service, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.2 }}
-              className="group"
-            >
-              <div className="relative h-[400px] overflow-hidden mb-6 shadow-sm hover:shadow-xl transition-all duration-500">
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
-                <img 
-                  src={service.image} 
-                  alt={service.title} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-8 z-20 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  <div className="w-12 h-1 bg-secondary mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <h3 className="font-serif text-2xl mb-2">{service.title}</h3>
-                  <p className="text-white/80 font-light text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                    {service.description}
+        <Tabs defaultValue="weddings" className="w-full">
+          <div className="flex justify-center mb-12 overflow-x-auto pb-4">
+            <TabsList className="bg-transparent h-auto gap-4 md:gap-8">
+              {Object.keys(serviceData).map((key) => (
+                <TabsTrigger 
+                  key={key}
+                  value={key}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-4 px-2 md:px-6 font-serif text-lg md:text-xl text-muted-foreground data-[state=active]:text-primary transition-all"
+                >
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {Object.entries(serviceData).map(([key, data]) => (
+            <TabsContent key={key} value={key} className="mt-0 outline-none">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+              >
+                <div className="order-2 lg:order-1">
+                  <h3 className="font-serif text-3xl md:text-4xl mb-6 text-foreground">{data.title}</h3>
+                  <p className="text-lg text-muted-foreground font-light mb-8 leading-relaxed">
+                    {data.description}
                   </p>
+                  <ul className="space-y-4 mb-10">
+                    {data.features.map((feature, i) => (
+                      <li key={i} className="flex items-center text-foreground/80 font-light">
+                        <span className="w-1.5 h-1.5 bg-secondary rounded-full mr-4"></span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="rounded-none bg-primary hover:bg-primary/90 text-white px-8 py-6 group">
+                    Explore {data.title} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
                 </div>
-              </div>
-            </motion.div>
+                <div className="order-1 lg:order-2 relative h-[400px] md:h-[500px]">
+                  <div className="absolute inset-0 bg-secondary/10 transform translate-x-4 translate-y-4 -z-10"></div>
+                  <img 
+                    src={data.image} 
+                    alt={data.title} 
+                    className="w-full h-full object-cover shadow-lg"
+                  />
+                </div>
+              </motion.div>
+            </TabsContent>
           ))}
-        </div>
+        </Tabs>
       </div>
     </section>
   );

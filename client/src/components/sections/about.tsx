@@ -15,43 +15,44 @@ export function About() {
       ></div>
 
       <div className="container mx-auto px-6 relative z-10">
-        <div className="flex flex-col md:flex-row items-center gap-16">
-          <div className="md:w-1/2 relative">
+        <div className="flex flex-col lg:flex-row items-start gap-16">
+          <div className="lg:w-1/2 relative">
             <div className="aspect-[4/5] bg-muted relative overflow-hidden">
-              {/* Placeholder for Founder/Team Image - using a colored block for now or a stock image if I had one. 
-                  I'll use a nice gradient/text block or one of the detail shots */}
-              <div className="absolute inset-0 bg-neutral-200 flex items-center justify-center text-neutral-400">
-                 {/* Using a detail shot instead of a person for now as I didn't generate a person */}
-                 <img 
+              <img 
                   src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070&auto=format&fit=crop" 
                   alt="Aura Team" 
-                  className="w-full h-full object-cover opacity-80 grayscale hover:grayscale-0 transition-all duration-700"
-                 />
-              </div>
-              <div className="absolute top-8 right-8 w-24 h-24 bg-white/90 backdrop-blur flex items-center justify-center p-4 shadow-lg">
-                 <span className="font-serif text-3xl text-primary">10+</span>
-                 <span className="text-xs uppercase tracking-widest absolute bottom-2">Years</span>
+                  className="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 to-transparent p-8">
+                 <p className="text-white font-serif italic text-xl">"Every event deserves precision, passion, and artistry."</p>
               </div>
             </div>
-            <div className="absolute -bottom-8 -right-8 w-64 h-64 border-[20px] border-secondary/20 -z-10"></div>
+            <div className="absolute -top-8 -left-8 w-32 h-32 border-t-2 border-l-2 border-primary/20 -z-10"></div>
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 border-b-2 border-r-2 border-primary/20 -z-10"></div>
           </div>
 
-          <div className="md:w-1/2">
-            <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">Our Story</span>
-            <h2 className="font-serif text-4xl md:text-5xl text-primary mb-8">Weaving Dreams into Reality</h2>
+          <div className="lg:w-1/2">
+            <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">Who We Are</span>
+            <h2 className="font-serif text-4xl md:text-5xl text-primary mb-8">More Than Just Planners</h2>
             
-            <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed">
+            <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed mb-10">
               <p>
-                At Aura Events, we believe that a wedding is not just an event; it is a symphony of emotions, traditions, and personal style. Founded on the principles of refined elegance and cultural authenticity, we specialize in curating modern Indian weddings that are as unique as the couples we serve.
+                Aura Events is a full-service event management company known for combining meticulous planning with world-class design. What began as a wedding planning brand has evolved into a complete event management studio trusted by families, multinational corporations, and individuals looking for excellence.
               </p>
               <p>
-                Our mission is to strip away the chaos and clutter, leaving only what matters: love, joy, and beauty. We blend the grandeur of Indian traditions with a minimalist, contemporary aesthetic to create celebrations that feel timeless and sophisticated.
+                Our philosophy is simple: whether you’re planning a multi-day wedding, a product launch, a milestone birthday, or a corporate retreat, we bring creativity, cultural understanding, and flawless execution to every detail.
               </p>
             </div>
 
-            <div className="mt-10 flex items-center space-x-4">
-              <div className="h-px w-16 bg-primary"></div>
-              <span className="font-serif text-xl text-primary italic">The Aura Team</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+              <div>
+                <h3 className="font-serif text-xl text-foreground mb-2">Our Vision</h3>
+                <p className="text-sm text-muted-foreground font-light">To create culturally rich, aesthetically modern, and emotionally meaningful events that feel effortless for our clients and extraordinary for their guests.</p>
+              </div>
+              <div>
+                <h3 className="font-serif text-xl text-foreground mb-2">Our Team</h3>
+                <p className="text-sm text-muted-foreground font-light">A diverse team of planners, designers, production experts, and logistics managers working together to deliver seamless experiences.</p>
+              </div>
             </div>
           </div>
         </div>
