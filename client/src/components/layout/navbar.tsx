@@ -41,19 +41,24 @@ export function Navbar() {
       <div className="container mx-auto px-6 flex justify-between items-center relative">
         <Link href="/">
           <a className={cn(
-            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block absolute top-1/2 -translate-y-1/2",
-            (isScrolled || location !== "/" || isMobileMenuOpen) ? "text-primary" : "text-white"
+            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block",
+            !isScrolled && location === "/" && !isMobileMenuOpen ? "absolute top-1/2 -translate-y-1/2" : ""
           )}>
             <img 
               src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
               alt="DA Creation" 
-              className="h-24 md:h-32 w-auto object-contain mt-8 md:mt-12 transition-all duration-300"
+              className={cn(
+                "w-auto object-contain transition-all duration-300",
+                !isScrolled && location === "/" && !isMobileMenuOpen 
+                  ? "h-24 md:h-32 mt-8 md:mt-12" 
+                  : "h-12 md:h-14 mt-0"
+              )}
             />
           </a>
         </Link>
 
-        {/* Spacer for logo to maintain layout if needed, or just margin on nav items */}
-        <div className="w-24 md:w-32"></div>
+        {/* Spacer for logo to maintain layout if needed, only when hanging */}
+        <div className={cn("transition-all duration-300", !isScrolled && location === "/" && !isMobileMenuOpen ? "w-24 md:w-32" : "hidden md:block w-0")}></div>
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8">
