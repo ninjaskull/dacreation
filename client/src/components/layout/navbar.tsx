@@ -34,23 +34,26 @@ export function Navbar() {
       className={cn(
         "fixed top-0 w-full z-50 transition-all duration-300 border-b border-transparent",
         isScrolled || location !== "/"
-          ? "bg-white/95 backdrop-blur-md py-4 shadow-sm border-border/40" 
-          : "bg-transparent py-6"
+          ? "bg-white/95 backdrop-blur-md py-3 shadow-sm border-border/40" 
+          : "bg-transparent py-4"
       )}
     >
-      <div className="container mx-auto px-6 flex justify-between items-center">
+      <div className="container mx-auto px-6 flex justify-between items-center relative">
         <Link href="/">
           <a className={cn(
-            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block",
+            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block absolute top-1/2 -translate-y-1/2",
             (isScrolled || location !== "/" || isMobileMenuOpen) ? "text-primary" : "text-white"
           )}>
             <img 
               src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
               alt="DA Creation" 
-              className="h-24 md:h-32 w-auto object-contain"
+              className="h-24 md:h-32 w-auto object-contain mt-8 md:mt-12 transition-all duration-300"
             />
           </a>
         </Link>
+
+        {/* Spacer for logo to maintain layout if needed, or just margin on nav items */}
+        <div className="w-24 md:w-32"></div>
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8">
