@@ -39,22 +39,20 @@ export function Navbar() {
       )}
     >
       <div className="container mx-auto px-6 flex justify-between items-center relative">
-        <Link href="/">
-          <a className={cn(
-            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block",
-            !isScrolled && location === "/" && !isMobileMenuOpen ? "absolute top-1/2 -translate-y-1/2" : ""
-          )}>
-            <img 
-              src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
-              alt="DA Creation" 
-              className={cn(
-                "w-auto object-contain transition-all duration-300",
-                !isScrolled && location === "/" && !isMobileMenuOpen 
-                  ? "h-24 md:h-32 mt-8 md:mt-12" 
-                  : "h-12 md:h-14 mt-0"
-              )}
-            />
-          </a>
+        <Link href="/" className={cn(
+          "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block",
+          !isScrolled && location === "/" && !isMobileMenuOpen ? "absolute top-1/2 -translate-y-1/2" : ""
+        )}>
+          <img 
+            src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
+            alt="DA Creation" 
+            className={cn(
+              "w-auto object-contain transition-all duration-300",
+              !isScrolled && location === "/" && !isMobileMenuOpen 
+                ? "h-24 md:h-32 mt-8 md:mt-12" 
+                : "h-12 md:h-14 mt-0"
+            )}
+          />
         </Link>
 
         {/* Spacer for logo to maintain layout if needed, only when hanging */}
@@ -75,16 +73,18 @@ export function Navbar() {
             </a>
           ))}
           <Link href="/inquire">
-            <Button 
-              variant={(isScrolled || location !== "/") ? "default" : "secondary"}
-              size="sm"
-              className={cn(
-                "rounded-none px-6 transition-all",
-                (!isScrolled && location === "/") && "bg-white/20 hover:bg-white/30 text-white border border-white/40"
-              )}
-            >
-              Get a Quote
-            </Button>
+            <a>
+              <Button 
+                variant={(isScrolled || location !== "/") ? "default" : "secondary"}
+                size="sm"
+                className={cn(
+                  "rounded-none px-6 transition-all",
+                  (!isScrolled && location === "/") && "bg-white/20 hover:bg-white/30 text-white border border-white/40"
+                )}
+              >
+                Get a Quote
+              </Button>
+            </a>
           </Link>
         </div>
 
@@ -115,9 +115,11 @@ export function Navbar() {
             </a>
           ))}
           <Link href="/inquire" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button className="rounded-none bg-primary text-white px-10 py-6 text-xl mt-8">
-              Get a Quote
-            </Button>
+            <a>
+              <Button className="rounded-none bg-primary text-white px-10 py-6 text-xl mt-8">
+                Get a Quote
+              </Button>
+            </a>
           </Link>
         </div>
       )}
