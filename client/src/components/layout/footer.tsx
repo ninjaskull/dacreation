@@ -9,7 +9,9 @@ export function Footer() {
       <div className="container mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           <div className="md:col-span-2">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold mb-6 tracking-tight">DA Creation</h2>
+            <div className="mb-6">
+              <img src="/images/logo-white.png" alt="DA Creation" className="h-16 w-auto object-contain" />
+            </div>
             <p className="text-primary-foreground/80 max-w-md text-lg font-light leading-relaxed">
               Curating timeless, elegant, and culturally inspired weddings. 
               We bring your vision to life with refined detailing and modern luxury.

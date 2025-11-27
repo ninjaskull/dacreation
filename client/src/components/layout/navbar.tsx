@@ -41,10 +41,14 @@ export function Navbar() {
       <div className="container mx-auto px-6 flex justify-between items-center">
         <Link href="/">
           <a className={cn(
-            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors",
-            (isScrolled || location !== "/") ? "text-primary" : "text-white"
+            "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors block",
+            (isScrolled || location !== "/" || isMobileMenuOpen) ? "text-primary" : "text-white"
           )}>
-            DA Creation
+            <img 
+              src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
+              alt="DA Creation" 
+              className="h-12 w-auto object-contain"
+            />
           </a>
         </Link>
 
