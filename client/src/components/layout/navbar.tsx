@@ -44,7 +44,7 @@ export function Navbar() {
           !isScrolled && location === "/" && !isMobileMenuOpen ? "absolute top-1/2 -translate-y-1/2" : ""
         )}>
           <img 
-            src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.png" : "/images/logo-white.png"} 
+            src={(isScrolled || location !== "/" || isMobileMenuOpen) ? "/images/logo-maroon.webp" : "/images/logo-white.webp"} 
             alt="DA Creation" 
             className={cn(
               "w-auto object-contain transition-all duration-300",
