@@ -1,0 +1,111 @@
+Design a minimal, modern, and visually elegant website for an event management company specializing in Indian wedding planning. The design should feel contemporary and upscale while incorporating subtle Indian cultural elements—never overwhelming or traditional-heavy. Think refined, fresh, and culturally inspired.
+
+Overall Style & Mood
+
+Minimalist, clean, and premium
+
+Warm, inviting tone with elegant Indian cultural hints
+
+Avoid clutter—focus on white space, balance, and refined detailing
+
+Blend modern luxury aesthetics with soft cultural motifs
+
+Color Palette
+
+Neutral base: ivory, off-white, warm beige
+
+Accent colors: rich maroon, deep gold, blush pink, emerald, muted saffron
+
+Gold or brass accents used sparingly for sophistication
+
+Pastels can be infused for modern wedding charm
+
+Typography
+
+Modern serif for headings (timeless + premium)
+
+Clean sans-serif for body text (minimal + readable)
+
+Optional calligraphic touches for section titles or initials
+
+Visual Elements
+
+Minimal line-art or subtle patterns inspired by:
+
+mandala geometry
+
+paisley outlines
+
+jaali lattice patterns
+
+mehndi-style motifs (super minimal)
+
+High-quality imagery of Indian wedding decor, outfits, venues (light, bright, aspirational)
+
+Use hero banners with soft gradients, elegant typography, and warm lighting
+
+Layout Requirements
+
+Clean, modular sections
+
+Large hero section with tagline, call to action
+
+Well-spaced service cards with icons
+
+Testimonials carousel
+
+Gallery with minimal borders and soft shadows
+
+Easy navigation with sticky top bar
+
+Key Pages / Sections
+
+Home
+
+Opening hero with a modern Indian wedding ambiance
+
+“Our Services” preview
+
+“Why Choose Us” with icons
+
+Featured weddings
+
+Client testimonials
+
+CTA banner
+
+Services
+
+Wedding planning, decor, logistics, vendor coordination
+
+Each service card modern with culturally inspired accents
+
+Portfolio / Featured Weddings
+
+Story-based layout with minimal film-style frames
+
+About Us
+
+Brand story, mission
+
+Designer/Planner photos in monochrome or soft tones
+
+Contact / Consultation Booking
+
+Clean form with subtle festive border or iconography
+
+Design Inspirations (Moodboard Keywords)
+
+“Modern Indian luxury wedding”
+
+“Minimal mandala line art"
+
+“Ivory and gold aesthetic”
+
+“Soft Indian pastel wedding palette”
+
+“Contemporary curated elegance”
+
+Website Feel in One Sentence
+
+A minimal, modern, and culturally elegant digital experience that celebrates Indian weddings without overwhelming the design—luxury, warmth, and subtle tradition.
