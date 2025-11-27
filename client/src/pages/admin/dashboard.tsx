@@ -188,7 +188,7 @@ export default function AdminDashboard() {
                         <TableRow key={lead.id} data-testid={`row-lead-${lead.id}`}>
                           <TableCell className="font-medium">{lead.name}</TableCell>
                           <TableCell className="capitalize">{lead.eventType}</TableCell>
-                          <TableCell>{format(new Date(lead.date), "MMM dd, yyyy")}</TableCell>
+                          <TableCell>{lead.date ? format(new Date(lead.date), "MMM dd, yyyy") : "TBD"}</TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(lead.status)}>
                               {lead.status}
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
                         </TableCell>
                         <TableCell className="font-medium">{lead.name}</TableCell>
                         <TableCell className="capitalize">{lead.eventType}</TableCell>
-                        <TableCell>{format(new Date(lead.date), "MMM dd, yyyy")}</TableCell>
+                        <TableCell>{lead.date ? format(new Date(lead.date), "MMM dd, yyyy") : "TBD"}</TableCell>
                         <TableCell>{lead.guestCount}</TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>{format(new Date(selectedLead.date), "PPP")}</span>
+                      <span>{selectedLead.date ? format(new Date(selectedLead.date), "PPP") : "TBD"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
