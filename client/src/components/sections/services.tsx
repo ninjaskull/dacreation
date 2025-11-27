@@ -69,8 +69,8 @@ export function Services() {
         </div>
 
         <Tabs defaultValue="weddings" className="w-full">
-          <div className="flex justify-center mb-12 overflow-x-auto pb-4">
-            <TabsList className="bg-transparent h-auto gap-4 md:gap-8">
+          <div className="flex justify-start md:justify-center mb-12 overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 no-scrollbar">
+            <TabsList className="bg-transparent h-auto gap-4 md:gap-8 flex-nowrap w-max md:w-auto">
               {Object.keys(serviceData).map((key) => (
                 <TabsTrigger 
                   key={key}

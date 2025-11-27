@@ -43,13 +43,13 @@ export function Contact() {
   }
 
   return (
-    <section id="contact" className="py-24 bg-white relative">
+    <section id="contact" className="py-20 md:py-24 bg-white relative">
       <div className="container mx-auto px-6 max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
           
-          <div>
+          <div className="order-2 md:order-1">
             <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">Contact Us</span>
-            <h2 className="font-serif text-4xl md:text-5xl text-primary mb-6">Let’s Create Something Unforgettable</h2>
+            <h2 className="font-serif text-3xl md:text-5xl text-primary mb-6">Let’s Create Something Unforgettable</h2>
             <p className="text-muted-foreground text-lg font-light mb-8">
               Whether it's a grand wedding, a corporate gathering, or a private celebration, we’re here to make it extraordinary.
             </p>
@@ -79,7 +79,7 @@ export function Contact() {
             </div>
           </div>
 
-          <div className="bg-muted/20 p-8 md:p-10 shadow-sm border border-border/50 relative">
+          <div className="bg-muted/20 p-6 md:p-10 shadow-sm border border-border/50 relative order-1 md:order-2">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField

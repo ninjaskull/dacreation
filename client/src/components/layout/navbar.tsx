@@ -70,31 +70,31 @@ export function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-foreground"
+          className="md:hidden text-foreground z-50 relative"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (
-            <X className={isScrolled ? "text-foreground" : "text-white"} />
+            <X className="text-foreground w-8 h-8" />
           ) : (
-            <Menu className={isScrolled ? "text-foreground" : "text-white"} />
+            <Menu className={cn("w-8 h-8", isScrolled ? "text-foreground" : "text-white")} />
           )}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-background border-b border-border/50 p-6 flex flex-col space-y-4 shadow-lg animate-in slide-in-from-top-5">
+        <div className="fixed inset-0 bg-background z-40 flex flex-col items-center justify-center space-y-8 animate-in fade-in duration-200 md:hidden">
           {navLinks.map((link) => (
             <a
               key={link.name}
               href={link.href}
-              className="text-lg font-medium text-foreground hover:text-primary"
+              className="text-3xl font-serif font-medium text-foreground hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {link.name}
             </a>
           ))}
-          <Button className="w-full rounded-none bg-primary text-white">
+          <Button className="rounded-none bg-primary text-white px-10 py-6 text-xl mt-8" onClick={() => setIsMobileMenuOpen(false)}>
             Book Consultation
           </Button>
         </div>
