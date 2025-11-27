@@ -215,3 +215,152 @@ export const eventTypes = [
   { value: "anniversary", label: "Anniversary" },
   { value: "other", label: "Other" },
 ] as const;
+
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  bio: text("bio"),
+  image: text("image"),
+  email: text("email"),
+  phone: text("phone"),
+  linkedin: text("linkedin"),
+  instagram: text("instagram"),
+  displayOrder: integer("display_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type TeamMember = typeof teamMembers.$inferSelect;
+
+export const portfolioItems = pgTable("portfolio_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  category: text("category").notNull(),
+  description: text("description"),
+  location: text("location"),
+  date: text("date"),
+  client: text("client"),
+  images: text("images").array(),
+  featuredImage: text("featured_image"),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
+export type PortfolioItem = typeof portfolioItems.$inferSelect;
+
+export const testimonials = pgTable("testimonials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientName: text("client_name").notNull(),
+  clientRole: text("client_role"),
+  eventType: text("event_type"),
+  content: text("content").notNull(),
+  rating: integer("rating").notNull().default(5),
+  image: text("image"),
+  videoUrl: text("video_url"),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
+export type Testimonial = typeof testimonials.$inferSelect;
+
+export const careers = pgTable("careers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  department: text("department").notNull(),
+  location: text("location").notNull(),
+  type: text("type").notNull(),
+  experience: text("experience"),
+  description: text("description").notNull(),
+  requirements: text("requirements").array(),
+  benefits: text("benefits").array(),
+  salary: text("salary"),
+  applicationEmail: text("application_email"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCareerSchema = createInsertSchema(careers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCareer = z.infer<typeof insertCareerSchema>;
+export type Career = typeof careers.$inferSelect;
+
+export const pressArticles = pgTable("press_articles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  publication: text("publication").notNull(),
+  publishedDate: text("published_date"),
+  excerpt: text("excerpt"),
+  content: text("content"),
+  externalUrl: text("external_url"),
+  image: text("image"),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPressArticleSchema = createInsertSchema(pressArticles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPressArticle = z.infer<typeof insertPressArticleSchema>;
+export type PressArticle = typeof pressArticles.$inferSelect;
+
+export const pageContent = pgTable("page_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageKey: text("page_key").notNull().unique(),
+  title: text("title"),
+  subtitle: text("subtitle"),
+  content: text("content"),
+  heroImage: text("hero_image"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  sections: jsonb("sections"),
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPageContentSchema = createInsertSchema(pageContent).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertPageContent = z.infer<typeof insertPageContentSchema>;
+export type PageContent = typeof pageContent.$inferSelect;
