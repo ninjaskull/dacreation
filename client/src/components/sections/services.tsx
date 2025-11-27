@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 // Updated images
 import weddingImg from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
@@ -14,6 +15,7 @@ const serviceData = {
     title: "Weddings & Cultural Celebrations",
     description: "Modern design meets rich Indian tradition. We plan every ritual, ceremony, and moment effortlessly.",
     image: weddingImg,
+    link: "/services/weddings",
     features: [
       "Full Wedding Planning & Coordination",
       "Design & Décor Styling (Stage, Mandap, Sangeet)",
@@ -25,6 +27,7 @@ const serviceData = {
     title: "Corporate Events",
     description: "Professional, polished, and impact-driven events—from conferences to award shows.",
     image: corporateImg,
+    link: "/services/corporate",
     features: [
       "Conferences & Seminars",
       "Product Launches & Brand Activations",
@@ -36,6 +39,7 @@ const serviceData = {
     title: "Social Events & Private Parties",
     description: "Birthdays, anniversaries, baby showers, proposals, and everything worth celebrating.",
     image: socialImg,
+    link: "/services/social",
     features: [
       "Birthdays, Anniversaries & Private Parties",
       "Baby Showers & Naming Ceremonies",
@@ -47,6 +51,7 @@ const serviceData = {
     title: "Destination Events",
     description: "Pan-India and international event planning with complete logistics and hospitality management.",
     image: destImg,
+    link: "/services/destination",
     features: [
       "Pan-India Locations (Goa, Jaipur, Udaipur, Kerala)",
       "International Planning (Dubai, Bali, Thailand)",
@@ -104,9 +109,11 @@ export function Services() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="rounded-none bg-primary hover:bg-primary/90 text-white px-8 py-6 group">
-                    Explore {data.title} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
+                  <Link href={data.link}>
+                    <Button className="rounded-none bg-primary hover:bg-primary/90 text-white px-8 py-6 group">
+                      Explore {data.title} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </Link>
                 </div>
                 <div className="order-1 lg:order-2 relative h-[400px] md:h-[500px]">
                   <div className="absolute inset-0 bg-secondary/10 transform translate-x-4 translate-y-4 -z-10"></div>

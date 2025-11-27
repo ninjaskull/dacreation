@@ -38,7 +38,7 @@ export function Navbar() {
             "font-serif text-2xl md:text-3xl font-bold tracking-tighter transition-colors",
             isScrolled ? "text-primary" : "text-white"
           )}>
-            AURA
+            DA Creation
           </a>
         </Link>
 

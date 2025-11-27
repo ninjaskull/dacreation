@@ -37,7 +37,7 @@ export function About() {
             
             <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed mb-10">
               <p>
-                Aura Events is a full-service event management company known for combining meticulous planning with world-class design. What began as a wedding planning brand has evolved into a complete event management studio trusted by families, multinational corporations, and individuals looking for excellence.
+                DA Creation is a full-service event management company known for combining meticulous planning with world-class design. What began as a wedding planning brand has evolved into a complete event management studio trusted by families, multinational corporations, and individuals looking for excellence.
               </p>
               <p>
                 Our philosophy is simple: whether you’re planning a multi-day wedding, a product launch, a milestone birthday, or a corporate retreat, we bring creativity, cultural understanding, and flawless execution to every detail.

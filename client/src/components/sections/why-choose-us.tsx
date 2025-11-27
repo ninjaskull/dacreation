@@ -30,7 +30,7 @@ export function WhyChooseUs() {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">Why Choose Us?</span>
-          <h2 className="font-serif text-3xl md:text-4xl">The Aura Standard</h2>
+          <h2 className="font-serif text-3xl md:text-4xl">The DA Creation Standard</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

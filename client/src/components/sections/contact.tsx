@@ -37,7 +37,7 @@ export function Contact() {
     console.log(values);
     toast({
       title: "Inquiry Sent",
-      description: "Thank you for contacting Aura Events. We will be in touch shortly.",
+      description: "Thank you for contacting DA Creation. We will be in touch shortly.",
     });
     form.reset();
   }
