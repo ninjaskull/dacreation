@@ -5,7 +5,10 @@ import passport from "passport";
 import { 
   insertLeadSchema, insertUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
-  insertActivityLogSchema, insertLeadNoteSchema
+  insertActivityLogSchema, insertLeadNoteSchema,
+  insertTeamMemberSchema, insertPortfolioItemSchema,
+  insertTestimonialSchema, insertCareerSchema,
+  insertPressArticleSchema, insertPageContentSchema
 } from "@shared/schema";
 import { crypto } from "./auth";
 import type { User } from "@shared/schema";
@@ -558,6 +561,348 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete appointment error:", error);
       res.status(500).json({ message: "Failed to delete appointment" });
+    }
+  });
+
+  app.get("/api/cms/team", async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const members = await storage.getAllTeamMembers(activeOnly);
+      res.json(members);
+    } catch (error) {
+      console.error("Get team members error:", error);
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  app.get("/api/cms/team/:id", async (req, res) => {
+    try {
+      const member = await storage.getTeamMemberById(req.params.id);
+      if (!member) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      res.json(member);
+    } catch (error) {
+      console.error("Get team member error:", error);
+      res.status(500).json({ message: "Failed to fetch team member" });
+    }
+  });
+
+  app.post("/api/cms/team", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertTeamMemberSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const member = await storage.createTeamMember(result.data);
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Create team member error:", error);
+      res.status(500).json({ message: "Failed to create team member" });
+    }
+  });
+
+  app.patch("/api/cms/team/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const member = await storage.updateTeamMember(req.params.id, req.body);
+      if (!member) {
+        return res.status(404).json({ message: "Team member not found" });
+      }
+      res.json(member);
+    } catch (error) {
+      console.error("Update team member error:", error);
+      res.status(500).json({ message: "Failed to update team member" });
+    }
+  });
+
+  app.delete("/api/cms/team/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteTeamMember(req.params.id);
+      res.json({ message: "Team member deleted successfully" });
+    } catch (error) {
+      console.error("Delete team member error:", error);
+      res.status(500).json({ message: "Failed to delete team member" });
+    }
+  });
+
+  app.get("/api/cms/portfolio", async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const items = await storage.getAllPortfolioItems(activeOnly);
+      res.json(items);
+    } catch (error) {
+      console.error("Get portfolio items error:", error);
+      res.status(500).json({ message: "Failed to fetch portfolio items" });
+    }
+  });
+
+  app.get("/api/cms/portfolio/:id", async (req, res) => {
+    try {
+      const item = await storage.getPortfolioItemById(req.params.id);
+      if (!item) {
+        return res.status(404).json({ message: "Portfolio item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      console.error("Get portfolio item error:", error);
+      res.status(500).json({ message: "Failed to fetch portfolio item" });
+    }
+  });
+
+  app.post("/api/cms/portfolio", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertPortfolioItemSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const item = await storage.createPortfolioItem(result.data);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Create portfolio item error:", error);
+      res.status(500).json({ message: "Failed to create portfolio item" });
+    }
+  });
+
+  app.patch("/api/cms/portfolio/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const item = await storage.updatePortfolioItem(req.params.id, req.body);
+      if (!item) {
+        return res.status(404).json({ message: "Portfolio item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      console.error("Update portfolio item error:", error);
+      res.status(500).json({ message: "Failed to update portfolio item" });
+    }
+  });
+
+  app.delete("/api/cms/portfolio/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deletePortfolioItem(req.params.id);
+      res.json({ message: "Portfolio item deleted successfully" });
+    } catch (error) {
+      console.error("Delete portfolio item error:", error);
+      res.status(500).json({ message: "Failed to delete portfolio item" });
+    }
+  });
+
+  app.get("/api/cms/testimonials", async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const testimonials = await storage.getAllTestimonials(activeOnly);
+      res.json(testimonials);
+    } catch (error) {
+      console.error("Get testimonials error:", error);
+      res.status(500).json({ message: "Failed to fetch testimonials" });
+    }
+  });
+
+  app.get("/api/cms/testimonials/:id", async (req, res) => {
+    try {
+      const testimonial = await storage.getTestimonialById(req.params.id);
+      if (!testimonial) {
+        return res.status(404).json({ message: "Testimonial not found" });
+      }
+      res.json(testimonial);
+    } catch (error) {
+      console.error("Get testimonial error:", error);
+      res.status(500).json({ message: "Failed to fetch testimonial" });
+    }
+  });
+
+  app.post("/api/cms/testimonials", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertTestimonialSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const testimonial = await storage.createTestimonial(result.data);
+      res.status(201).json(testimonial);
+    } catch (error) {
+      console.error("Create testimonial error:", error);
+      res.status(500).json({ message: "Failed to create testimonial" });
+    }
+  });
+
+  app.patch("/api/cms/testimonials/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const testimonial = await storage.updateTestimonial(req.params.id, req.body);
+      if (!testimonial) {
+        return res.status(404).json({ message: "Testimonial not found" });
+      }
+      res.json(testimonial);
+    } catch (error) {
+      console.error("Update testimonial error:", error);
+      res.status(500).json({ message: "Failed to update testimonial" });
+    }
+  });
+
+  app.delete("/api/cms/testimonials/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteTestimonial(req.params.id);
+      res.json({ message: "Testimonial deleted successfully" });
+    } catch (error) {
+      console.error("Delete testimonial error:", error);
+      res.status(500).json({ message: "Failed to delete testimonial" });
+    }
+  });
+
+  app.get("/api/cms/careers", async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const careers = await storage.getAllCareers(activeOnly);
+      res.json(careers);
+    } catch (error) {
+      console.error("Get careers error:", error);
+      res.status(500).json({ message: "Failed to fetch careers" });
+    }
+  });
+
+  app.get("/api/cms/careers/:id", async (req, res) => {
+    try {
+      const career = await storage.getCareerById(req.params.id);
+      if (!career) {
+        return res.status(404).json({ message: "Career not found" });
+      }
+      res.json(career);
+    } catch (error) {
+      console.error("Get career error:", error);
+      res.status(500).json({ message: "Failed to fetch career" });
+    }
+  });
+
+  app.post("/api/cms/careers", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertCareerSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const career = await storage.createCareer(result.data);
+      res.status(201).json(career);
+    } catch (error) {
+      console.error("Create career error:", error);
+      res.status(500).json({ message: "Failed to create career" });
+    }
+  });
+
+  app.patch("/api/cms/careers/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const career = await storage.updateCareer(req.params.id, req.body);
+      if (!career) {
+        return res.status(404).json({ message: "Career not found" });
+      }
+      res.json(career);
+    } catch (error) {
+      console.error("Update career error:", error);
+      res.status(500).json({ message: "Failed to update career" });
+    }
+  });
+
+  app.delete("/api/cms/careers/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteCareer(req.params.id);
+      res.json({ message: "Career deleted successfully" });
+    } catch (error) {
+      console.error("Delete career error:", error);
+      res.status(500).json({ message: "Failed to delete career" });
+    }
+  });
+
+  app.get("/api/cms/press", async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const articles = await storage.getAllPressArticles(activeOnly);
+      res.json(articles);
+    } catch (error) {
+      console.error("Get press articles error:", error);
+      res.status(500).json({ message: "Failed to fetch press articles" });
+    }
+  });
+
+  app.get("/api/cms/press/:id", async (req, res) => {
+    try {
+      const article = await storage.getPressArticleById(req.params.id);
+      if (!article) {
+        return res.status(404).json({ message: "Press article not found" });
+      }
+      res.json(article);
+    } catch (error) {
+      console.error("Get press article error:", error);
+      res.status(500).json({ message: "Failed to fetch press article" });
+    }
+  });
+
+  app.post("/api/cms/press", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertPressArticleSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const article = await storage.createPressArticle(result.data);
+      res.status(201).json(article);
+    } catch (error) {
+      console.error("Create press article error:", error);
+      res.status(500).json({ message: "Failed to create press article" });
+    }
+  });
+
+  app.patch("/api/cms/press/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const article = await storage.updatePressArticle(req.params.id, req.body);
+      if (!article) {
+        return res.status(404).json({ message: "Press article not found" });
+      }
+      res.json(article);
+    } catch (error) {
+      console.error("Update press article error:", error);
+      res.status(500).json({ message: "Failed to update press article" });
+    }
+  });
+
+  app.delete("/api/cms/press/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deletePressArticle(req.params.id);
+      res.json({ message: "Press article deleted successfully" });
+    } catch (error) {
+      console.error("Delete press article error:", error);
+      res.status(500).json({ message: "Failed to delete press article" });
+    }
+  });
+
+  app.get("/api/cms/pages", async (req, res) => {
+    try {
+      const pages = await storage.getAllPageContent();
+      res.json(pages);
+    } catch (error) {
+      console.error("Get pages error:", error);
+      res.status(500).json({ message: "Failed to fetch pages" });
+    }
+  });
+
+  app.get("/api/cms/pages/:pageKey", async (req, res) => {
+    try {
+      const page = await storage.getPageContent(req.params.pageKey);
+      if (!page) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+      res.json(page);
+    } catch (error) {
+      console.error("Get page error:", error);
+      res.status(500).json({ message: "Failed to fetch page" });
+    }
+  });
+
+  app.post("/api/cms/pages", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertPageContentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const page = await storage.upsertPageContent(result.data);
+      res.status(201).json(page);
+    } catch (error) {
+      console.error("Create/Update page error:", error);
+      res.status(500).json({ message: "Failed to save page content" });
     }
   });
 
