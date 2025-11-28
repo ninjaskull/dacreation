@@ -13,7 +13,8 @@ import {
   Heart,
   Award,
   Shield,
-  Star
+  Star,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,25 +28,21 @@ export function Footer() {
     { name: "Corporate Events", href: "/services/corporate" },
     { name: "Social Celebrations", href: "/services/social" },
     { name: "Destination Events", href: "/services/destination" },
-    { name: "Decor & Design", href: "/#services" },
-    { name: "Venue Selection", href: "/#services" },
   ];
 
   const company = [
-    { name: "About Us", href: "/#about" },
-    { name: "Our Team", href: "/#about" },
-    { name: "Portfolio", href: "/#portfolio" },
-    { name: "Testimonials", href: "/#testimonials" },
-    { name: "Careers", href: "#" },
-    { name: "Press & Media", href: "#" },
+    { name: "About Us", href: "/about" },
+    { name: "Our Team", href: "/team" },
+    { name: "Portfolio", href: "/portfolio" },
+    { name: "Testimonials", href: "/testimonials" },
+    { name: "Careers", href: "/careers" },
+    { name: "Press & Media", href: "/press" },
   ];
 
-  const resources = [
-    { name: "Event Planning Guide", href: "#" },
-    { name: "Budget Calculator", href: "#" },
-    { name: "Vendor Directory", href: "#" },
-    { name: "Blog & Insights", href: "#" },
+  const quickLinks = [
+    { name: "Get a Quote", href: "/inquire" },
     { name: "FAQs", href: "/#faq" },
+    { name: "Contact Us", href: "/#contact" },
     { name: "Client Portal", href: "/admin/login" },
   ];
 
@@ -53,15 +50,14 @@ export function Footer() {
     { name: "Privacy Policy", href: "#" },
     { name: "Terms of Service", href: "#" },
     { name: "Cookie Policy", href: "#" },
-    { name: "Refund Policy", href: "#" },
   ];
 
   const socialLinks = [
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Linkedin, href: "#", label: "LinkedIn" },
-    { icon: Youtube, href: "#", label: "YouTube" },
+    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+    { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
+    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
+    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
+    { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
   ];
 
   const trustBadges = [
@@ -82,12 +78,14 @@ export function Footer() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
             <div className="lg:col-span-4 space-y-8">
               <div>
-                <img 
-                  src="/images/logo-white.webp" 
-                  alt="DA Creation" 
-                  className="h-14 md:h-16 w-auto object-contain"
-                  data-testid="footer-logo"
-                />
+                <Link href="/">
+                  <img 
+                    src="/images/logo-white.webp" 
+                    alt="DA Creation" 
+                    className="h-14 md:h-16 w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                    data-testid="footer-logo"
+                  />
+                </Link>
                 <p className="text-primary-foreground/70 mt-6 text-base leading-relaxed max-w-sm">
                   Crafting extraordinary events with modern elegance and cultural soul. 
                   From lavish weddings to corporate galas, we bring your vision to life.
@@ -124,6 +122,8 @@ export function Footer() {
                   <a
                     key={social.label}
                     href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-secondary hover:text-primary transition-all duration-300"
                     aria-label={social.label}
                     data-testid={`footer-social-${social.label.toLowerCase()}`}
@@ -145,10 +145,11 @@ export function Footer() {
                       <li key={item.name}>
                         <Link 
                           href={item.href}
-                          className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
+                          className="text-primary-foreground/70 hover:text-white transition-colors text-sm flex items-center gap-1 group"
                           data-testid={`footer-link-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                         >
-                          {item.name}
+                          <span>{item.name}</span>
+                          <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                         </Link>
                       </li>
                     ))}
@@ -164,10 +165,11 @@ export function Footer() {
                       <li key={item.name}>
                         <Link 
                           href={item.href}
-                          className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
+                          className="text-primary-foreground/70 hover:text-white transition-colors text-sm flex items-center gap-1 group"
                           data-testid={`footer-link-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                         >
-                          {item.name}
+                          <span>{item.name}</span>
+                          <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                         </Link>
                       </li>
                     ))}
@@ -176,21 +178,46 @@ export function Footer() {
 
                 <div>
                   <h3 className="font-serif text-lg font-medium mb-6 text-secondary">
-                    Resources
+                    Quick Links
                   </h3>
                   <ul className="space-y-3">
-                    {resources.map((item) => (
+                    {quickLinks.map((item) => (
                       <li key={item.name}>
-                        <Link 
-                          href={item.href}
-                          className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
-                          data-testid={`footer-link-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          {item.name}
-                        </Link>
+                        {item.href.startsWith('/#') ? (
+                          <a 
+                            href={item.href}
+                            className="text-primary-foreground/70 hover:text-white transition-colors text-sm flex items-center gap-1 group"
+                            data-testid={`footer-link-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            <span>{item.name}</span>
+                            <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                          </a>
+                        ) : (
+                          <Link 
+                            href={item.href}
+                            className="text-primary-foreground/70 hover:text-white transition-colors text-sm flex items-center gap-1 group"
+                            data-testid={`footer-link-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            <span>{item.name}</span>
+                            <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                          </Link>
+                        )}
                       </li>
                     ))}
                   </ul>
+                  
+                  <div className="mt-8">
+                    <Link href="/inquire">
+                      <Button 
+                        variant="secondary" 
+                        className="w-full gap-2 rounded-full"
+                        data-testid="footer-cta-button"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Plan Your Event
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
 
                 <div>
