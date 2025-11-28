@@ -9,8 +9,14 @@ import {
   type Career, type InsertCareer,
   type PressArticle, type InsertPressArticle,
   type PageContent, type InsertPageContent,
+  type Client, type InsertClient, type UpdateClient,
+  type Event, type InsertEvent, type UpdateEvent,
+  type Vendor, type InsertVendor, type UpdateVendor,
+  type CompanySettings, type InsertCompanySettings,
+  type UserSettings, type InsertUserSettings, type UpdateUserSettings,
   users, leads, appointments, activityLogs, leadNotes,
-  teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent
+  teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
+  clients, events, vendors, companySettings, userSettings
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -42,6 +48,94 @@ export interface LeadFilters {
   dateFrom?: Date;
   dateTo?: Date;
   leadSource?: string;
+}
+
+export interface ClientFilters {
+  status?: string;
+  search?: string;
+  city?: string;
+  source?: string;
+}
+
+export interface ClientWithDetails extends Client {
+  referrer?: { id: string; name: string } | null;
+}
+
+export interface ClientStats {
+  total: number;
+  active: number;
+  vip: number;
+  new: number;
+  totalRevenue: number;
+  byStatus: Record<string, number>;
+}
+
+export interface EventFilters {
+  status?: string;
+  type?: string;
+  paymentStatus?: string;
+  clientId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  search?: string;
+}
+
+export interface EventWithDetails extends Event {
+  client?: { id: string; name: string; email: string } | null;
+  lead?: { id: string; name: string } | null;
+  assignee?: { id: string; name: string | null; username: string } | null;
+}
+
+export interface EventStats {
+  total: number;
+  upcoming: number;
+  inProgress: number;
+  completed: number;
+  totalRevenue: number;
+  pendingPayments: number;
+  byType: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
+export interface VendorFilters {
+  category?: string;
+  status?: string;
+  city?: string;
+  search?: string;
+  minRating?: number;
+}
+
+export interface VendorStats {
+  total: number;
+  active: number;
+  byCategory: Record<string, number>;
+  topRated: number;
+}
+
+export interface ReportData {
+  revenue: {
+    total: number;
+    byMonth: { month: string; amount: number }[];
+    byEventType: { type: string; amount: number }[];
+  };
+  leads: {
+    total: number;
+    converted: number;
+    conversionRate: number;
+    bySource: { source: string; count: number }[];
+    byStatus: { status: string; count: number }[];
+  };
+  events: {
+    total: number;
+    completed: number;
+    upcoming: number;
+    byType: { type: string; count: number }[];
+  };
+  clients: {
+    total: number;
+    new: number;
+    returning: number;
+  };
 }
 
 export interface IStorage {
@@ -118,6 +212,35 @@ export interface IStorage {
   getPageContent(pageKey: string): Promise<PageContent | undefined>;
   getAllPageContent(): Promise<PageContent[]>;
   upsertPageContent(content: InsertPageContent): Promise<PageContent>;
+  
+  getAllClients(filters?: ClientFilters): Promise<ClientWithDetails[]>;
+  getClientById(id: string): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: string, data: UpdateClient): Promise<Client | undefined>;
+  deleteClient(id: string): Promise<boolean>;
+  getClientStats(): Promise<ClientStats>;
+  
+  getAllEvents(filters?: EventFilters): Promise<EventWithDetails[]>;
+  getEventById(id: string): Promise<EventWithDetails | undefined>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: string, data: UpdateEvent): Promise<Event | undefined>;
+  deleteEvent(id: string): Promise<boolean>;
+  getEventStats(): Promise<EventStats>;
+  
+  getAllVendors(filters?: VendorFilters): Promise<Vendor[]>;
+  getVendorById(id: string): Promise<Vendor | undefined>;
+  createVendor(vendor: InsertVendor): Promise<Vendor>;
+  updateVendor(id: string, data: UpdateVendor): Promise<Vendor | undefined>;
+  deleteVendor(id: string): Promise<boolean>;
+  getVendorStats(): Promise<VendorStats>;
+  
+  getCompanySettings(): Promise<CompanySettings | undefined>;
+  upsertCompanySettings(settings: InsertCompanySettings): Promise<CompanySettings>;
+  
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  upsertUserSettings(userId: string, settings: UpdateUserSettings): Promise<UserSettings>;
+  
+  getReportData(dateFrom?: Date, dateTo?: Date): Promise<ReportData>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -786,6 +909,476 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db.insert(pageContent).values(content).returning();
       return created;
     }
+  }
+
+  async getAllClients(filters?: ClientFilters): Promise<ClientWithDetails[]> {
+    const conditions = [];
+    
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(clients.status, filters.status));
+    }
+    if (filters?.city) {
+      conditions.push(like(clients.city, `%${filters.city}%`));
+    }
+    if (filters?.source && filters.source !== 'all') {
+      conditions.push(eq(clients.source, filters.source));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        or(
+          like(clients.name, searchTerm),
+          like(clients.email, searchTerm),
+          like(clients.phone, searchTerm),
+          like(clients.company, searchTerm)
+        )
+      );
+    }
+
+    const result = await db
+      .select()
+      .from(clients)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(clients.createdAt));
+
+    return result.map(client => ({
+      ...client,
+      referrer: null,
+    }));
+  }
+
+  async getClientById(id: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
+  }
+
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(insertClient as any).returning();
+    return client;
+  }
+
+  async updateClient(id: string, data: UpdateClient): Promise<Client | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.lastContactDate) {
+      updateData.lastContactDate = new Date(data.lastContactDate);
+    }
+
+    const [client] = await db
+      .update(clients)
+      .set(updateData)
+      .where(eq(clients.id, id))
+      .returning();
+    return client || undefined;
+  }
+
+  async deleteClient(id: string): Promise<boolean> {
+    await db.delete(clients).where(eq(clients.id, id));
+    return true;
+  }
+
+  async getClientStats(): Promise<ClientStats> {
+    const allClients = await db.select().from(clients);
+    
+    const byStatus: Record<string, number> = {};
+    let totalRevenue = 0;
+    let active = 0;
+    let vip = 0;
+    let newClients = 0;
+    
+    for (const client of allClients) {
+      byStatus[client.status] = (byStatus[client.status] || 0) + 1;
+      totalRevenue += client.totalSpent || 0;
+      
+      if (client.status === 'active') active++;
+      if (client.status === 'vip') vip++;
+      if (client.status === 'new') newClients++;
+    }
+    
+    return {
+      total: allClients.length,
+      active,
+      vip,
+      new: newClients,
+      totalRevenue,
+      byStatus,
+    };
+  }
+
+  async getAllEvents(filters?: EventFilters): Promise<EventWithDetails[]> {
+    const conditions = [];
+    
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(events.status, filters.status));
+    }
+    if (filters?.type && filters.type !== 'all') {
+      conditions.push(eq(events.type, filters.type));
+    }
+    if (filters?.paymentStatus && filters.paymentStatus !== 'all') {
+      conditions.push(eq(events.paymentStatus, filters.paymentStatus));
+    }
+    if (filters?.clientId) {
+      conditions.push(eq(events.clientId, filters.clientId));
+    }
+    if (filters?.dateFrom) {
+      conditions.push(gte(events.date, filters.dateFrom));
+    }
+    if (filters?.dateTo) {
+      conditions.push(lte(events.date, filters.dateTo));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        or(
+          like(events.name, searchTerm),
+          like(events.venue, searchTerm)
+        )
+      );
+    }
+
+    const result = await db
+      .select({
+        event: events,
+        client: {
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+        },
+        assignee: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(events)
+      .leftJoin(clients, eq(events.clientId, clients.id))
+      .leftJoin(users, eq(events.assignedTo, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(events.date));
+
+    return result.map(r => ({
+      ...r.event,
+      client: r.client?.id ? r.client : null,
+      lead: null,
+      assignee: r.assignee?.id ? r.assignee : null,
+    }));
+  }
+
+  async getEventById(id: string): Promise<EventWithDetails | undefined> {
+    const [result] = await db
+      .select({
+        event: events,
+        client: {
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+        },
+        assignee: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(events)
+      .leftJoin(clients, eq(events.clientId, clients.id))
+      .leftJoin(users, eq(events.assignedTo, users.id))
+      .where(eq(events.id, id));
+
+    if (!result) return undefined;
+
+    return {
+      ...result.event,
+      client: result.client?.id ? result.client : null,
+      lead: null,
+      assignee: result.assignee?.id ? result.assignee : null,
+    };
+  }
+
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const eventData = {
+      ...insertEvent,
+      date: new Date(insertEvent.date),
+      endDate: insertEvent.endDate ? new Date(insertEvent.endDate) : null,
+    };
+    
+    const [event] = await db.insert(events).values(eventData as any).returning();
+    return event;
+  }
+
+  async updateEvent(id: string, data: UpdateEvent): Promise<Event | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.date) {
+      updateData.date = new Date(data.date);
+    }
+    if (data.endDate) {
+      updateData.endDate = new Date(data.endDate);
+    }
+
+    const [event] = await db
+      .update(events)
+      .set(updateData)
+      .where(eq(events.id, id))
+      .returning();
+    return event || undefined;
+  }
+
+  async deleteEvent(id: string): Promise<boolean> {
+    await db.delete(events).where(eq(events.id, id));
+    return true;
+  }
+
+  async getEventStats(): Promise<EventStats> {
+    const allEvents = await db.select().from(events);
+    const now = new Date();
+    
+    const byType: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+    let totalRevenue = 0;
+    let pendingPayments = 0;
+    let upcoming = 0;
+    let inProgress = 0;
+    let completed = 0;
+    
+    for (const event of allEvents) {
+      byType[event.type] = (byType[event.type] || 0) + 1;
+      byStatus[event.status] = (byStatus[event.status] || 0) + 1;
+      totalRevenue += event.paidAmount || 0;
+      
+      if (event.paymentStatus === 'pending' || event.paymentStatus === 'partial') {
+        pendingPayments += (event.contractAmount || 0) - (event.paidAmount || 0);
+      }
+      
+      if (event.status === 'completed') completed++;
+      if (event.status === 'in_progress') inProgress++;
+      if (new Date(event.date) > now && event.status !== 'completed' && event.status !== 'cancelled') {
+        upcoming++;
+      }
+    }
+    
+    return {
+      total: allEvents.length,
+      upcoming,
+      inProgress,
+      completed,
+      totalRevenue,
+      pendingPayments,
+      byType,
+      byStatus,
+    };
+  }
+
+  async getAllVendors(filters?: VendorFilters): Promise<Vendor[]> {
+    const conditions = [];
+    
+    if (filters?.category && filters.category !== 'all') {
+      conditions.push(eq(vendors.category, filters.category));
+    }
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(vendors.status, filters.status));
+    }
+    if (filters?.city) {
+      conditions.push(like(vendors.city, `%${filters.city}%`));
+    }
+    if (filters?.minRating) {
+      conditions.push(gte(vendors.rating, filters.minRating));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        or(
+          like(vendors.name, searchTerm),
+          like(vendors.contactName, searchTerm),
+          like(vendors.email, searchTerm)
+        )
+      );
+    }
+
+    return await db
+      .select()
+      .from(vendors)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(vendors.rating), asc(vendors.name));
+  }
+
+  async getVendorById(id: string): Promise<Vendor | undefined> {
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.id, id));
+    return vendor || undefined;
+  }
+
+  async createVendor(insertVendor: InsertVendor): Promise<Vendor> {
+    const [vendor] = await db.insert(vendors).values(insertVendor as any).returning();
+    return vendor;
+  }
+
+  async updateVendor(id: string, data: UpdateVendor): Promise<Vendor | undefined> {
+    const [vendor] = await db
+      .update(vendors)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(vendors.id, id))
+      .returning();
+    return vendor || undefined;
+  }
+
+  async deleteVendor(id: string): Promise<boolean> {
+    await db.delete(vendors).where(eq(vendors.id, id));
+    return true;
+  }
+
+  async getVendorStats(): Promise<VendorStats> {
+    const allVendors = await db.select().from(vendors);
+    
+    const byCategory: Record<string, number> = {};
+    let active = 0;
+    let topRated = 0;
+    
+    for (const vendor of allVendors) {
+      byCategory[vendor.category] = (byCategory[vendor.category] || 0) + 1;
+      if (vendor.status === 'active') active++;
+      if (vendor.rating >= 4) topRated++;
+    }
+    
+    return {
+      total: allVendors.length,
+      active,
+      byCategory,
+      topRated,
+    };
+  }
+
+  async getCompanySettings(): Promise<CompanySettings | undefined> {
+    const [settings] = await db.select().from(companySettings);
+    return settings || undefined;
+  }
+
+  async upsertCompanySettings(settings: InsertCompanySettings): Promise<CompanySettings> {
+    const existing = await this.getCompanySettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(companySettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(companySettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(companySettings).values(settings).returning();
+      return created;
+    }
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
+    return settings || undefined;
+  }
+
+  async upsertUserSettings(userId: string, settings: UpdateUserSettings): Promise<UserSettings> {
+    const existing = await this.getUserSettings(userId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(userSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(userSettings.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(userSettings)
+        .values({ userId, ...settings } as any)
+        .returning();
+      return created;
+    }
+  }
+
+  async getReportData(dateFrom?: Date, dateTo?: Date): Promise<ReportData> {
+    const conditions: any[] = [];
+    if (dateFrom) conditions.push(gte(events.createdAt, dateFrom));
+    if (dateTo) conditions.push(lte(events.createdAt, dateTo));
+
+    const allEvents = await db
+      .select()
+      .from(events)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    const leadConditions: any[] = [];
+    if (dateFrom) leadConditions.push(gte(leads.createdAt, dateFrom));
+    if (dateTo) leadConditions.push(lte(leads.createdAt, dateTo));
+
+    const allLeads = await db
+      .select()
+      .from(leads)
+      .where(leadConditions.length > 0 ? and(...leadConditions) : undefined);
+
+    const allClients = await db.select().from(clients);
+
+    const revenueByMonth: Record<string, number> = {};
+    const revenueByEventType: Record<string, number> = {};
+    let totalRevenue = 0;
+    let completedEvents = 0;
+    let upcomingEvents = 0;
+    const eventsByType: Record<string, number> = {};
+    const now = new Date();
+
+    for (const event of allEvents) {
+      const revenue = event.paidAmount || 0;
+      totalRevenue += revenue;
+      
+      const monthKey = new Date(event.date).toISOString().substring(0, 7);
+      revenueByMonth[monthKey] = (revenueByMonth[monthKey] || 0) + revenue;
+      revenueByEventType[event.type] = (revenueByEventType[event.type] || 0) + revenue;
+      eventsByType[event.type] = (eventsByType[event.type] || 0) + 1;
+      
+      if (event.status === 'completed') completedEvents++;
+      if (new Date(event.date) > now && event.status !== 'completed' && event.status !== 'cancelled') {
+        upcomingEvents++;
+      }
+    }
+
+    const leadsBySource: Record<string, number> = {};
+    const leadsByStatus: Record<string, number> = {};
+    let convertedLeads = 0;
+
+    for (const lead of allLeads) {
+      leadsBySource[lead.leadSource] = (leadsBySource[lead.leadSource] || 0) + 1;
+      leadsByStatus[lead.status] = (leadsByStatus[lead.status] || 0) + 1;
+      if (lead.status === 'converted') convertedLeads++;
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const newClients = allClients.filter(c => new Date(c.createdAt) > thirtyDaysAgo).length;
+    const returningClients = allClients.filter(c => (c.eventsCount || 0) > 1).length;
+
+    return {
+      revenue: {
+        total: totalRevenue,
+        byMonth: Object.entries(revenueByMonth)
+          .map(([month, amount]) => ({ month, amount }))
+          .sort((a, b) => a.month.localeCompare(b.month)),
+        byEventType: Object.entries(revenueByEventType)
+          .map(([type, amount]) => ({ type, amount })),
+      },
+      leads: {
+        total: allLeads.length,
+        converted: convertedLeads,
+        conversionRate: allLeads.length > 0 ? (convertedLeads / allLeads.length) * 100 : 0,
+        bySource: Object.entries(leadsBySource)
+          .map(([source, count]) => ({ source, count })),
+        byStatus: Object.entries(leadsByStatus)
+          .map(([status, count]) => ({ status, count })),
+      },
+      events: {
+        total: allEvents.length,
+        completed: completedEvents,
+        upcoming: upcomingEvents,
+        byType: Object.entries(eventsByType)
+          .map(([type, count]) => ({ type, count })),
+      },
+      clients: {
+        total: allClients.length,
+        new: newClients,
+        returning: returningClients,
+      },
+    };
   }
 }
 

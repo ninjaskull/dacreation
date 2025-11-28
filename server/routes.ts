@@ -8,7 +8,11 @@ import {
   insertActivityLogSchema, insertLeadNoteSchema,
   insertTeamMemberSchema, insertPortfolioItemSchema,
   insertTestimonialSchema, insertCareerSchema,
-  insertPressArticleSchema, insertPageContentSchema
+  insertPressArticleSchema, insertPageContentSchema,
+  insertClientSchema, updateClientSchema,
+  insertEventSchema, updateEventSchema,
+  insertVendorSchema, updateVendorSchema,
+  insertCompanySettingsSchema, updateUserSettingsSchema
 } from "@shared/schema";
 import { crypto } from "./auth";
 import type { User } from "@shared/schema";
@@ -903,6 +907,468 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Create/Update page error:", error);
       res.status(500).json({ message: "Failed to save page content" });
+    }
+  });
+
+  app.get("/api/clients", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.city) filters.city = req.query.city as string;
+      if (req.query.source) filters.source = req.query.source as string;
+
+      const clients = await storage.getAllClients(filters);
+      res.json(clients);
+    } catch (error) {
+      console.error("Get clients error:", error);
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  app.get("/api/clients/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getClientStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get client stats error:", error);
+      res.status(500).json({ message: "Failed to fetch client stats" });
+    }
+  });
+
+  app.get("/api/clients/export", isAuthenticated, async (req, res) => {
+    try {
+      const clients = await storage.getAllClients();
+      const format = req.query.format as string || 'csv';
+      
+      if (format === 'csv') {
+        const headers = ['Name', 'Email', 'Phone', 'Company', 'City', 'Status', 'Total Spent', 'Events Count', 'Source', 'Created At'];
+        const rows = clients.map(client => [
+          client.name,
+          client.email,
+          client.phone,
+          client.company || '',
+          client.city || '',
+          client.status,
+          client.totalSpent || 0,
+          client.eventsCount || 0,
+          client.source || '',
+          new Date(client.createdAt).toLocaleDateString(),
+        ]);
+        
+        const csv = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=clients.csv');
+        res.send(csv);
+      } else {
+        res.json(clients);
+      }
+    } catch (error) {
+      console.error("Export clients error:", error);
+      res.status(500).json({ message: "Failed to export clients" });
+    }
+  });
+
+  app.get("/api/clients/:id", isAuthenticated, async (req, res) => {
+    try {
+      const client = await storage.getClientById(req.params.id);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      res.json(client);
+    } catch (error) {
+      console.error("Get client error:", error);
+      res.status(500).json({ message: "Failed to fetch client" });
+    }
+  });
+
+  app.post("/api/clients", isAuthenticated, async (req, res) => {
+    try {
+      const result = insertClientSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const client = await storage.createClient(result.data);
+      res.status(201).json(client);
+    } catch (error) {
+      console.error("Create client error:", error);
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  app.patch("/api/clients/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateClientSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const client = await storage.updateClient(req.params.id, result.data);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      res.json(client);
+    } catch (error) {
+      console.error("Update client error:", error);
+      res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+
+  app.delete("/api/clients/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteClient(req.params.id);
+      res.json({ message: "Client deleted successfully" });
+    } catch (error) {
+      console.error("Delete client error:", error);
+      res.status(500).json({ message: "Failed to delete client" });
+    }
+  });
+
+  app.get("/api/events", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.type) filters.type = req.query.type as string;
+      if (req.query.paymentStatus) filters.paymentStatus = req.query.paymentStatus as string;
+      if (req.query.clientId) filters.clientId = req.query.clientId as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
+      if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
+
+      const events = await storage.getAllEvents(filters);
+      res.json(events);
+    } catch (error) {
+      console.error("Get events error:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/events/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getEventStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get event stats error:", error);
+      res.status(500).json({ message: "Failed to fetch event stats" });
+    }
+  });
+
+  app.get("/api/events/export", isAuthenticated, async (req, res) => {
+    try {
+      const events = await storage.getAllEvents();
+      const format = req.query.format as string || 'csv';
+      
+      if (format === 'csv') {
+        const headers = ['Name', 'Type', 'Date', 'Venue', 'Client', 'Status', 'Contract Amount', 'Paid Amount', 'Payment Status', 'Guest Count'];
+        const rows = events.map(event => [
+          event.name,
+          event.type,
+          new Date(event.date).toLocaleDateString(),
+          event.venue || '',
+          event.client?.name || '',
+          event.status,
+          event.contractAmount || 0,
+          event.paidAmount || 0,
+          event.paymentStatus,
+          event.guestCount || '',
+        ]);
+        
+        const csv = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=events.csv');
+        res.send(csv);
+      } else {
+        res.json(events);
+      }
+    } catch (error) {
+      console.error("Export events error:", error);
+      res.status(500).json({ message: "Failed to export events" });
+    }
+  });
+
+  app.get("/api/events/:id", isAuthenticated, async (req, res) => {
+    try {
+      const event = await storage.getEventById(req.params.id);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Get event error:", error);
+      res.status(500).json({ message: "Failed to fetch event" });
+    }
+  });
+
+  app.post("/api/events", isAuthenticated, async (req, res) => {
+    try {
+      const result = insertEventSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const event = await storage.createEvent(result.data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Create event error:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  app.patch("/api/events/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateEventSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const event = await storage.updateEvent(req.params.id, result.data);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Update event error:", error);
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  app.delete("/api/events/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteEvent(req.params.id);
+      res.json({ message: "Event deleted successfully" });
+    } catch (error) {
+      console.error("Delete event error:", error);
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  app.get("/api/vendors", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.category) filters.category = req.query.category as string;
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.city) filters.city = req.query.city as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.minRating) filters.minRating = parseInt(req.query.minRating as string);
+
+      const vendors = await storage.getAllVendors(filters);
+      res.json(vendors);
+    } catch (error) {
+      console.error("Get vendors error:", error);
+      res.status(500).json({ message: "Failed to fetch vendors" });
+    }
+  });
+
+  app.get("/api/vendors/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getVendorStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get vendor stats error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor stats" });
+    }
+  });
+
+  app.get("/api/vendors/export", isAuthenticated, async (req, res) => {
+    try {
+      const vendors = await storage.getAllVendors();
+      const format = req.query.format as string || 'csv';
+      
+      if (format === 'csv') {
+        const headers = ['Name', 'Category', 'Contact', 'Email', 'Phone', 'City', 'Rating', 'Events Completed', 'Status', 'Price Range'];
+        const rows = vendors.map(vendor => [
+          vendor.name,
+          vendor.category,
+          vendor.contactName || '',
+          vendor.email || '',
+          vendor.phone || '',
+          vendor.city || '',
+          vendor.rating || 0,
+          vendor.eventsCompleted || 0,
+          vendor.status,
+          vendor.priceRange || '',
+        ]);
+        
+        const csv = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=vendors.csv');
+        res.send(csv);
+      } else {
+        res.json(vendors);
+      }
+    } catch (error) {
+      console.error("Export vendors error:", error);
+      res.status(500).json({ message: "Failed to export vendors" });
+    }
+  });
+
+  app.get("/api/vendors/:id", isAuthenticated, async (req, res) => {
+    try {
+      const vendor = await storage.getVendorById(req.params.id);
+      if (!vendor) {
+        return res.status(404).json({ message: "Vendor not found" });
+      }
+      res.json(vendor);
+    } catch (error) {
+      console.error("Get vendor error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor" });
+    }
+  });
+
+  app.post("/api/vendors", isAuthenticated, async (req, res) => {
+    try {
+      const result = insertVendorSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const vendor = await storage.createVendor(result.data);
+      res.status(201).json(vendor);
+    } catch (error) {
+      console.error("Create vendor error:", error);
+      res.status(500).json({ message: "Failed to create vendor" });
+    }
+  });
+
+  app.patch("/api/vendors/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateVendorSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const vendor = await storage.updateVendor(req.params.id, result.data);
+      if (!vendor) {
+        return res.status(404).json({ message: "Vendor not found" });
+      }
+      res.json(vendor);
+    } catch (error) {
+      console.error("Update vendor error:", error);
+      res.status(500).json({ message: "Failed to update vendor" });
+    }
+  });
+
+  app.delete("/api/vendors/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteVendor(req.params.id);
+      res.json({ message: "Vendor deleted successfully" });
+    } catch (error) {
+      console.error("Delete vendor error:", error);
+      res.status(500).json({ message: "Failed to delete vendor" });
+    }
+  });
+
+  app.get("/api/reports", isAuthenticated, async (req, res) => {
+    try {
+      const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined;
+      const dateTo = req.query.dateTo ? new Date(req.query.dateTo as string) : undefined;
+      
+      const reportData = await storage.getReportData(dateFrom, dateTo);
+      res.json(reportData);
+    } catch (error) {
+      console.error("Get reports error:", error);
+      res.status(500).json({ message: "Failed to fetch report data" });
+    }
+  });
+
+  app.get("/api/settings/company", isAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getCompanySettings();
+      res.json(settings || {});
+    } catch (error) {
+      console.error("Get company settings error:", error);
+      res.status(500).json({ message: "Failed to fetch company settings" });
+    }
+  });
+
+  app.post("/api/settings/company", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertCompanySettingsSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const settings = await storage.upsertCompanySettings(result.data);
+      res.json(settings);
+    } catch (error) {
+      console.error("Update company settings error:", error);
+      res.status(500).json({ message: "Failed to update company settings" });
+    }
+  });
+
+  app.get("/api/settings/user", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const settings = await storage.getUserSettings(user.id);
+      res.json(settings || {});
+    } catch (error) {
+      console.error("Get user settings error:", error);
+      res.status(500).json({ message: "Failed to fetch user settings" });
+    }
+  });
+
+  app.patch("/api/settings/user", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateUserSettingsSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const user = req.user as Express.User;
+      const settings = await storage.upsertUserSettings(user.id, result.data);
+      res.json(settings);
+    } catch (error) {
+      console.error("Update user settings error:", error);
+      res.status(500).json({ message: "Failed to update user settings" });
+    }
+  });
+
+  app.patch("/api/settings/profile", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const { name, email, phone, currentPassword, newPassword } = req.body;
+      
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (email !== undefined) updateData.email = email;
+      if (phone !== undefined) updateData.phone = phone;
+      
+      if (newPassword) {
+        if (!currentPassword) {
+          return res.status(400).json({ message: "Current password is required to change password" });
+        }
+        const currentUser = await storage.getUser(user.id);
+        if (!currentUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        const isValid = await crypto.compare(currentPassword, currentUser.password);
+        if (!isValid) {
+          return res.status(400).json({ message: "Current password is incorrect" });
+        }
+        updateData.password = await crypto.hash(newPassword);
+      }
+      
+      const updatedUser = await storage.updateUser(user.id, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({
+        id: updatedUser.id,
+        username: updatedUser.username,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+      });
+    } catch (error) {
+      console.error("Update profile error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
