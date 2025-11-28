@@ -254,7 +254,7 @@ export default function SettingsPage() {
 
   const getInitials = () => {
     if (user?.name) {
-      return user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      return user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
     }
     return user?.username?.substring(0, 2).toUpperCase() || 'U';
   };
