@@ -10,6 +10,12 @@ import CorporatePage from "@/pages/services/corporate";
 import SocialPage from "@/pages/services/social";
 import DestinationPage from "@/pages/services/destination";
 import InquirePage from "@/pages/inquire";
+import AboutPage from "@/pages/about";
+import TeamPage from "@/pages/team";
+import PortfolioPage from "@/pages/portfolio";
+import TestimonialsPage from "@/pages/testimonials";
+import CareersPage from "@/pages/careers";
+import PressPage from "@/pages/press";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import LeadsPage from "@/pages/admin/leads";
@@ -28,7 +34,7 @@ import {
   TasksPage, 
   HelpPage 
 } from "@/pages/admin/placeholder";
-import TeamPage from "@/pages/admin/team";
+import AdminTeamPage from "@/pages/admin/team";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -37,6 +43,12 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/team" component={TeamPage} />
+      <Route path="/portfolio" component={PortfolioPage} />
+      <Route path="/testimonials" component={TestimonialsPage} />
+      <Route path="/careers" component={CareersPage} />
+      <Route path="/press" component={PressPage} />
       <Route path="/services/weddings" component={WeddingsPage} />
       <Route path="/services/corporate" component={CorporatePage} />
       <Route path="/services/social" component={SocialPage} />
@@ -56,7 +68,7 @@ function Router() {
       <Route path="/admin/inquiries" component={InquiriesPage} />
       <Route path="/admin/bookings" component={BookingsPage} />
       <Route path="/admin/venues" component={VenuesPage} />
-      <Route path="/admin/team" component={TeamPage} />
+      <Route path="/admin/team" component={AdminTeamPage} />
       <Route path="/admin/tasks" component={TasksPage} />
       <Route path="/admin/help" component={HelpPage} />
       <Route component={NotFound} />
