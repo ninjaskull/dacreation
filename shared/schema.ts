@@ -364,3 +364,249 @@ export const insertPageContentSchema = createInsertSchema(pageContent).omit({
 
 export type InsertPageContent = z.infer<typeof insertPageContentSchema>;
 export type PageContent = typeof pageContent.$inferSelect;
+
+export const clientStatuses = ["new", "active", "vip", "inactive"] as const;
+export type ClientStatus = typeof clientStatuses[number];
+
+export const clients = pgTable("clients", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  company: text("company"),
+  address: text("address"),
+  city: text("city"),
+  country: text("country"),
+  status: text("status").notNull().default("new"),
+  totalSpent: integer("total_spent").notNull().default(0),
+  eventsCount: integer("events_count").notNull().default(0),
+  notes: text("notes"),
+  tags: text("tags").array(),
+  source: text("source"),
+  referredBy: varchar("referred_by").references((): any => clients.id),
+  lastContactDate: timestamp("last_contact_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  totalSpent: true,
+  eventsCount: true,
+});
+
+export const updateClientSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  status: z.enum(clientStatuses).optional(),
+  notes: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  source: z.string().optional(),
+  referredBy: z.string().nullable().optional(),
+  lastContactDate: z.date().or(z.string()).optional(),
+});
+
+export type InsertClient = z.infer<typeof insertClientSchema>;
+export type UpdateClient = z.infer<typeof updateClientSchema>;
+export type Client = typeof clients.$inferSelect;
+
+export const eventStatuses = ["planning", "confirmed", "in_progress", "completed", "cancelled", "postponed"] as const;
+export type EventStatus = typeof eventStatuses[number];
+
+export const paymentStatuses = ["pending", "partial", "paid", "overdue", "refunded"] as const;
+export type PaymentStatus = typeof paymentStatuses[number];
+
+export const events = pgTable("events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  description: text("description"),
+  clientId: varchar("client_id").references(() => clients.id),
+  leadId: varchar("lead_id").references(() => leads.id),
+  date: timestamp("date").notNull(),
+  endDate: timestamp("end_date"),
+  venue: text("venue"),
+  venueAddress: text("venue_address"),
+  guestCount: integer("guest_count"),
+  budget: integer("budget"),
+  contractAmount: integer("contract_amount"),
+  paidAmount: integer("paid_amount").notNull().default(0),
+  paymentStatus: text("payment_status").notNull().default("pending"),
+  status: text("status").notNull().default("planning"),
+  notes: text("notes"),
+  timeline: jsonb("timeline"),
+  vendorIds: text("vendor_ids").array(),
+  assignedTo: varchar("assigned_to").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  paidAmount: true,
+}).extend({
+  date: z.date().or(z.string()),
+  endDate: z.date().or(z.string()).optional(),
+});
+
+export const updateEventSchema = z.object({
+  name: z.string().optional(),
+  type: z.string().optional(),
+  description: z.string().optional(),
+  clientId: z.string().nullable().optional(),
+  leadId: z.string().nullable().optional(),
+  date: z.date().or(z.string()).optional(),
+  endDate: z.date().or(z.string()).nullable().optional(),
+  venue: z.string().optional(),
+  venueAddress: z.string().optional(),
+  guestCount: z.number().optional(),
+  budget: z.number().optional(),
+  contractAmount: z.number().optional(),
+  paidAmount: z.number().optional(),
+  paymentStatus: z.enum(paymentStatuses).optional(),
+  status: z.enum(eventStatuses).optional(),
+  notes: z.string().optional(),
+  timeline: z.any().optional(),
+  vendorIds: z.array(z.string()).optional(),
+  assignedTo: z.string().nullable().optional(),
+});
+
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type UpdateEvent = z.infer<typeof updateEventSchema>;
+export type Event = typeof events.$inferSelect;
+
+export const vendorCategories = [
+  "florist", "catering", "photography", "videography", "entertainment", 
+  "venue", "decor", "lighting", "sound", "transportation", "security",
+  "makeup", "mehendi", "invitation", "other"
+] as const;
+export type VendorCategory = typeof vendorCategories[number];
+
+export const vendorStatuses = ["active", "inactive", "pending", "blacklisted"] as const;
+export type VendorStatus = typeof vendorStatuses[number];
+
+export const vendors = pgTable("vendors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  contactName: text("contact_name"),
+  email: text("email"),
+  phone: text("phone"),
+  alternatePhone: text("alternate_phone"),
+  address: text("address"),
+  city: text("city"),
+  website: text("website"),
+  rating: integer("rating").notNull().default(0),
+  reviewCount: integer("review_count").notNull().default(0),
+  eventsCompleted: integer("events_completed").notNull().default(0),
+  priceRange: text("price_range"),
+  description: text("description"),
+  services: text("services").array(),
+  portfolio: text("portfolio").array(),
+  status: text("status").notNull().default("active"),
+  contractTerms: text("contract_terms"),
+  paymentTerms: text("payment_terms"),
+  notes: text("notes"),
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertVendorSchema = createInsertSchema(vendors).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  rating: true,
+  reviewCount: true,
+  eventsCompleted: true,
+});
+
+export const updateVendorSchema = z.object({
+  name: z.string().optional(),
+  category: z.string().optional(),
+  contactName: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  alternatePhone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  website: z.string().optional(),
+  rating: z.number().min(0).max(5).optional(),
+  priceRange: z.string().optional(),
+  description: z.string().optional(),
+  services: z.array(z.string()).optional(),
+  portfolio: z.array(z.string()).optional(),
+  status: z.enum(vendorStatuses).optional(),
+  contractTerms: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  notes: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export type InsertVendor = z.infer<typeof insertVendorSchema>;
+export type UpdateVendor = z.infer<typeof updateVendorSchema>;
+export type Vendor = typeof vendors.$inferSelect;
+
+export const companySettings = pgTable("company_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  country: text("country"),
+  website: text("website"),
+  taxId: text("tax_id"),
+  logo: text("logo"),
+  currency: text("currency").notNull().default("INR"),
+  timezone: text("timezone").notNull().default("Asia/Kolkata"),
+  fiscalYearStart: text("fiscal_year_start").notNull().default("04"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
+export type CompanySettings = typeof companySettings.$inferSelect;
+
+export const userSettings = pgTable("user_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  notifyNewLeads: boolean("notify_new_leads").notNull().default(true),
+  notifyAppointments: boolean("notify_appointments").notNull().default(true),
+  notifyWeeklyReports: boolean("notify_weekly_reports").notNull().default(false),
+  notifyPayments: boolean("notify_payments").notNull().default(true),
+  emailNotifications: boolean("email_notifications").notNull().default(true),
+  theme: text("theme").notNull().default("system"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const updateUserSettingsSchema = z.object({
+  notifyNewLeads: z.boolean().optional(),
+  notifyAppointments: z.boolean().optional(),
+  notifyWeeklyReports: z.boolean().optional(),
+  notifyPayments: z.boolean().optional(),
+  emailNotifications: z.boolean().optional(),
+  theme: z.string().optional(),
+});
+
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+export type UpdateUserSettings = z.infer<typeof updateUserSettingsSchema>;
+export type UserSettings = typeof userSettings.$inferSelect;
