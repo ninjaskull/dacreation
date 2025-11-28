@@ -7,7 +7,7 @@ export default function InquirePage() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary selection:text-white">
       <Navbar />
-      <main className="pt-24 md:pt-32 pb-20 bg-muted/30">
+      <main className="pt-28 lg:pt-36 pb-20 bg-muted/30">
         <div className="container mx-auto px-6">
           <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
             

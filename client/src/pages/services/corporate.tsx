@@ -10,7 +10,7 @@ export default function CorporatePage() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary selection:text-white">
       <Navbar />
-      <main className="pt-20">
+      <main className="pt-20 lg:pt-28">
         {/* Hero */}
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0">

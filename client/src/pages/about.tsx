@@ -18,11 +18,13 @@ export default function AboutPage() {
     queryKey: ["/api/cms/pages/about"],
   });
 
-  const { data: teamMembers } = useQuery<TeamMember[]>({
+  const { data: teamMembers = [] } = useQuery<TeamMember[]>({
     queryKey: ["/api/cms/team", { active: true }],
     queryFn: async () => {
       const res = await fetch("/api/cms/team?active=true");
-      return res.json();
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -30,7 +32,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
       
-      <section className="relative py-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
+      <section className="relative pt-32 lg:pt-40 pb-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.3),transparent_70%)]" />
         </div>
@@ -153,7 +155,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {teamMembers && teamMembers.length > 0 && (
+      {teamMembers.length > 0 && (
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <motion.div

@@ -6,11 +6,13 @@ import type { TeamMember } from "@shared/schema";
 import { Linkedin, Instagram, Mail, Phone } from "lucide-react";
 
 export default function TeamPage() {
-  const { data: teamMembers, isLoading } = useQuery<TeamMember[]>({
+  const { data: teamMembers = [], isLoading } = useQuery<TeamMember[]>({
     queryKey: ["/api/cms/team", { active: true }],
     queryFn: async () => {
       const res = await fetch("/api/cms/team?active=true");
-      return res.json();
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -18,7 +20,7 @@ export default function TeamPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
       
-      <section className="relative py-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
+      <section className="relative pt-32 lg:pt-40 pb-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.3),transparent_70%)]" />
         </div>
@@ -54,7 +56,7 @@ export default function TeamPage() {
                 </div>
               ))}
             </div>
-          ) : teamMembers && teamMembers.length > 0 ? (
+          ) : teamMembers.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {teamMembers.map((member, index) => (
                 <motion.div

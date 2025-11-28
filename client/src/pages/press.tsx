@@ -6,22 +6,24 @@ import type { PressArticle } from "@shared/schema";
 import { Calendar, ExternalLink, ArrowRight } from "lucide-react";
 
 export default function PressPage() {
-  const { data: articles, isLoading } = useQuery<PressArticle[]>({
+  const { data: articles = [], isLoading } = useQuery<PressArticle[]>({
     queryKey: ["/api/cms/press", { active: true }],
     queryFn: async () => {
       const res = await fetch("/api/cms/press?active=true");
-      return res.json();
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const featuredArticles = articles?.filter(a => a.isFeatured) || [];
-  const regularArticles = articles?.filter(a => !a.isFeatured) || [];
+  const featuredArticles = articles.filter(a => a.isFeatured);
+  const regularArticles = articles.filter(a => !a.isFeatured);
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       
-      <section className="relative py-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
+      <section className="relative pt-32 lg:pt-40 pb-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.3),transparent_70%)]" />
         </div>
@@ -200,7 +202,7 @@ export default function PressPage() {
                 </motion.article>
               ))}
             </div>
-          ) : articles?.length === 0 ? (
+          ) : articles.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg">No press articles yet.</p>
             </div>
