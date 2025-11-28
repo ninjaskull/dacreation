@@ -92,7 +92,7 @@ export default function AboutPage() {
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.3),transparent_70%)]" />
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white/50 to-transparent" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -186,9 +186,9 @@ export default function AboutPage() {
               <div className="relative">
                 <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#601a29] to-[#d4af37] overflow-hidden shadow-2xl">
                   <img 
-                    src={pageContent?.heroImage || "/images/logo-white.webp"} 
+                    src={pageContent?.heroImage || "/images/logo-maroon.webp"} 
                     alt="DA Creation"
-                    className="w-full h-full object-contain p-12 bg-white/95"
+                    className="w-full h-full object-contain p-12 bg-white"
                   />
                 </div>
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#d4af37]/20 rounded-2xl -z-10" />
