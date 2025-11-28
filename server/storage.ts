@@ -14,9 +14,14 @@ import {
   type Vendor, type InsertVendor, type UpdateVendor,
   type CompanySettings, type InsertCompanySettings,
   type UserSettings, type InsertUserSettings, type UpdateUserSettings,
+  type InvoiceTemplate, type InsertInvoiceTemplate, type UpdateInvoiceTemplate,
+  type Invoice, type InsertInvoice, type UpdateInvoice,
+  type InvoiceItem, type InsertInvoiceItem, type UpdateInvoiceItem,
+  type InvoicePayment, type InsertInvoicePayment,
   users, leads, appointments, activityLogs, leadNotes,
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
-  clients, events, vendors, companySettings, userSettings
+  clients, events, vendors, companySettings, userSettings,
+  invoiceTemplates, invoices, invoiceItems, invoicePayments
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -110,6 +115,34 @@ export interface VendorStats {
   active: number;
   byCategory: Record<string, number>;
   topRated: number;
+}
+
+export interface InvoiceFilters {
+  status?: string;
+  clientId?: string;
+  eventId?: string;
+  search?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export interface InvoiceWithDetails extends Invoice {
+  client?: { id: string; name: string; email: string } | null;
+  event?: { id: string; name: string } | null;
+  template?: { id: string; name: string; layout: string } | null;
+  items?: InvoiceItem[];
+  payments?: InvoicePayment[];
+}
+
+export interface InvoiceStats {
+  total: number;
+  draft: number;
+  sent: number;
+  paid: number;
+  overdue: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
 }
 
 export interface ReportData {
@@ -241,6 +274,32 @@ export interface IStorage {
   upsertUserSettings(userId: string, settings: UpdateUserSettings): Promise<UserSettings>;
   
   getReportData(dateFrom?: Date, dateTo?: Date): Promise<ReportData>;
+  
+  getAllInvoiceTemplates(activeOnly?: boolean): Promise<InvoiceTemplate[]>;
+  getInvoiceTemplateById(id: string): Promise<InvoiceTemplate | undefined>;
+  getDefaultInvoiceTemplate(): Promise<InvoiceTemplate | undefined>;
+  createInvoiceTemplate(template: InsertInvoiceTemplate): Promise<InvoiceTemplate>;
+  updateInvoiceTemplate(id: string, data: UpdateInvoiceTemplate): Promise<InvoiceTemplate | undefined>;
+  deleteInvoiceTemplate(id: string): Promise<boolean>;
+  setDefaultTemplate(id: string): Promise<InvoiceTemplate | undefined>;
+  
+  getAllInvoices(filters?: InvoiceFilters): Promise<InvoiceWithDetails[]>;
+  getInvoiceById(id: string): Promise<InvoiceWithDetails | undefined>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  updateInvoice(id: string, data: UpdateInvoice): Promise<Invoice | undefined>;
+  deleteInvoice(id: string): Promise<boolean>;
+  getInvoiceStats(): Promise<InvoiceStats>;
+  generateInvoiceNumber(): Promise<string>;
+  
+  getInvoiceItems(invoiceId: string): Promise<InvoiceItem[]>;
+  createInvoiceItem(item: InsertInvoiceItem): Promise<InvoiceItem>;
+  updateInvoiceItem(id: string, data: UpdateInvoiceItem): Promise<InvoiceItem | undefined>;
+  deleteInvoiceItem(id: string): Promise<boolean>;
+  deleteInvoiceItems(invoiceId: string): Promise<boolean>;
+  
+  getInvoicePayments(invoiceId: string): Promise<InvoicePayment[]>;
+  createInvoicePayment(payment: InsertInvoicePayment): Promise<InvoicePayment>;
+  deleteInvoicePayment(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1379,6 +1438,376 @@ export class DatabaseStorage implements IStorage {
         returning: returningClients,
       },
     };
+  }
+
+  async getAllInvoiceTemplates(activeOnly?: boolean): Promise<InvoiceTemplate[]> {
+    if (activeOnly) {
+      return await db
+        .select()
+        .from(invoiceTemplates)
+        .where(eq(invoiceTemplates.isActive, true))
+        .orderBy(desc(invoiceTemplates.isDefault), asc(invoiceTemplates.name));
+    }
+    return await db
+      .select()
+      .from(invoiceTemplates)
+      .orderBy(desc(invoiceTemplates.isDefault), asc(invoiceTemplates.name));
+  }
+
+  async getInvoiceTemplateById(id: string): Promise<InvoiceTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(invoiceTemplates)
+      .where(eq(invoiceTemplates.id, id));
+    return template || undefined;
+  }
+
+  async getDefaultInvoiceTemplate(): Promise<InvoiceTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(invoiceTemplates)
+      .where(and(eq(invoiceTemplates.isDefault, true), eq(invoiceTemplates.isActive, true)));
+    return template || undefined;
+  }
+
+  async createInvoiceTemplate(template: InsertInvoiceTemplate): Promise<InvoiceTemplate> {
+    if (template.isDefault) {
+      await db.update(invoiceTemplates).set({ isDefault: false });
+    }
+    const [created] = await db
+      .insert(invoiceTemplates)
+      .values(template)
+      .returning();
+    return created;
+  }
+
+  async updateInvoiceTemplate(id: string, data: UpdateInvoiceTemplate): Promise<InvoiceTemplate | undefined> {
+    if (data.isDefault) {
+      await db.update(invoiceTemplates).set({ isDefault: false });
+    }
+    const [updated] = await db
+      .update(invoiceTemplates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(invoiceTemplates.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteInvoiceTemplate(id: string): Promise<boolean> {
+    await db.delete(invoiceTemplates).where(eq(invoiceTemplates.id, id));
+    return true;
+  }
+
+  async setDefaultTemplate(id: string): Promise<InvoiceTemplate | undefined> {
+    await db.update(invoiceTemplates).set({ isDefault: false });
+    const [updated] = await db
+      .update(invoiceTemplates)
+      .set({ isDefault: true, updatedAt: new Date() })
+      .where(eq(invoiceTemplates.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getAllInvoices(filters?: InvoiceFilters): Promise<InvoiceWithDetails[]> {
+    const conditions: any[] = [];
+    
+    if (filters?.status) conditions.push(eq(invoices.status, filters.status));
+    if (filters?.clientId) conditions.push(eq(invoices.clientId, filters.clientId));
+    if (filters?.eventId) conditions.push(eq(invoices.eventId, filters.eventId));
+    if (filters?.dateFrom) conditions.push(gte(invoices.issueDate, filters.dateFrom));
+    if (filters?.dateTo) conditions.push(lte(invoices.issueDate, filters.dateTo));
+    if (filters?.search) {
+      conditions.push(
+        or(
+          like(invoices.invoiceNumber, `%${filters.search}%`),
+          like(invoices.title, `%${filters.search}%`),
+          like(invoices.clientName, `%${filters.search}%`)
+        )
+      );
+    }
+
+    const allInvoices = await db
+      .select()
+      .from(invoices)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(invoices.createdAt));
+
+    const result: InvoiceWithDetails[] = [];
+    for (const invoice of allInvoices) {
+      let client = null;
+      let event = null;
+      let template = null;
+
+      if (invoice.clientId) {
+        const [c] = await db
+          .select({ id: clients.id, name: clients.name, email: clients.email })
+          .from(clients)
+          .where(eq(clients.id, invoice.clientId));
+        client = c || null;
+      }
+
+      if (invoice.eventId) {
+        const [e] = await db
+          .select({ id: events.id, name: events.name })
+          .from(events)
+          .where(eq(events.id, invoice.eventId));
+        event = e || null;
+      }
+
+      if (invoice.templateId) {
+        const [t] = await db
+          .select({ id: invoiceTemplates.id, name: invoiceTemplates.name, layout: invoiceTemplates.layout })
+          .from(invoiceTemplates)
+          .where(eq(invoiceTemplates.id, invoice.templateId));
+        template = t || null;
+      }
+
+      result.push({ ...invoice, client, event, template });
+    }
+
+    return result;
+  }
+
+  async getInvoiceById(id: string): Promise<InvoiceWithDetails | undefined> {
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
+    if (!invoice) return undefined;
+
+    let client = null;
+    let event = null;
+    let template = null;
+
+    if (invoice.clientId) {
+      const [c] = await db
+        .select({ id: clients.id, name: clients.name, email: clients.email })
+        .from(clients)
+        .where(eq(clients.id, invoice.clientId));
+      client = c || null;
+    }
+
+    if (invoice.eventId) {
+      const [e] = await db
+        .select({ id: events.id, name: events.name })
+        .from(events)
+        .where(eq(events.id, invoice.eventId));
+      event = e || null;
+    }
+
+    if (invoice.templateId) {
+      const [t] = await db
+        .select({ id: invoiceTemplates.id, name: invoiceTemplates.name, layout: invoiceTemplates.layout })
+        .from(invoiceTemplates)
+        .where(eq(invoiceTemplates.id, invoice.templateId));
+      template = t || null;
+    }
+
+    const items = await this.getInvoiceItems(id);
+    const payments = await this.getInvoicePayments(id);
+
+    return { ...invoice, client, event, template, items, payments };
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const invoiceData = {
+      ...invoice,
+      issueDate: new Date(invoice.issueDate),
+      dueDate: new Date(invoice.dueDate),
+    };
+    
+    const [created] = await db
+      .insert(invoices)
+      .values(invoiceData as any)
+      .returning();
+    return created;
+  }
+
+  async updateInvoice(id: string, data: UpdateInvoice): Promise<Invoice | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.issueDate) updateData.issueDate = new Date(data.issueDate);
+    if (data.dueDate) updateData.dueDate = new Date(data.dueDate);
+    if (data.status === 'sent' && !updateData.sentAt) updateData.sentAt = new Date();
+    if (data.status === 'paid' && !updateData.paidAt) updateData.paidAt = new Date();
+    if (data.status === 'cancelled' && !updateData.cancelledAt) updateData.cancelledAt = new Date();
+
+    const [updated] = await db
+      .update(invoices)
+      .set(updateData)
+      .where(eq(invoices.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteInvoice(id: string): Promise<boolean> {
+    await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+    await db.delete(invoicePayments).where(eq(invoicePayments.invoiceId, id));
+    await db.delete(invoices).where(eq(invoices.id, id));
+    return true;
+  }
+
+  async getInvoiceStats(): Promise<InvoiceStats> {
+    const allInvoices = await db.select().from(invoices);
+    
+    let draft = 0, sent = 0, paid = 0, overdue = 0;
+    let totalAmount = 0, paidAmount = 0;
+    const now = new Date();
+
+    for (const inv of allInvoices) {
+      totalAmount += inv.totalAmount || 0;
+      paidAmount += inv.paidAmount || 0;
+
+      switch (inv.status) {
+        case 'draft': draft++; break;
+        case 'sent': case 'viewed': sent++; break;
+        case 'paid': paid++; break;
+        case 'overdue': overdue++; break;
+      }
+
+      if (['sent', 'viewed', 'partially_paid'].includes(inv.status) && 
+          inv.dueDate && new Date(inv.dueDate) < now) {
+        overdue++;
+      }
+    }
+
+    return {
+      total: allInvoices.length,
+      draft,
+      sent,
+      paid,
+      overdue,
+      totalAmount,
+      paidAmount,
+      pendingAmount: totalAmount - paidAmount,
+    };
+  }
+
+  async generateInvoiceNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefix = `INV-${year}-`;
+    
+    const [lastInvoice] = await db
+      .select({ invoiceNumber: invoices.invoiceNumber })
+      .from(invoices)
+      .where(like(invoices.invoiceNumber, `${prefix}%`))
+      .orderBy(desc(invoices.invoiceNumber))
+      .limit(1);
+
+    let nextNum = 1;
+    if (lastInvoice?.invoiceNumber) {
+      const numPart = lastInvoice.invoiceNumber.replace(prefix, '');
+      nextNum = parseInt(numPart) + 1;
+    }
+
+    return `${prefix}${nextNum.toString().padStart(4, '0')}`;
+  }
+
+  async getInvoiceItems(invoiceId: string): Promise<InvoiceItem[]> {
+    return await db
+      .select()
+      .from(invoiceItems)
+      .where(eq(invoiceItems.invoiceId, invoiceId))
+      .orderBy(asc(invoiceItems.displayOrder));
+  }
+
+  async createInvoiceItem(item: InsertInvoiceItem): Promise<InvoiceItem> {
+    const [created] = await db
+      .insert(invoiceItems)
+      .values(item)
+      .returning();
+    return created;
+  }
+
+  async updateInvoiceItem(id: string, data: UpdateInvoiceItem): Promise<InvoiceItem | undefined> {
+    const [updated] = await db
+      .update(invoiceItems)
+      .set(data)
+      .where(eq(invoiceItems.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteInvoiceItem(id: string): Promise<boolean> {
+    await db.delete(invoiceItems).where(eq(invoiceItems.id, id));
+    return true;
+  }
+
+  async deleteInvoiceItems(invoiceId: string): Promise<boolean> {
+    await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+    return true;
+  }
+
+  async getInvoicePayments(invoiceId: string): Promise<InvoicePayment[]> {
+    return await db
+      .select()
+      .from(invoicePayments)
+      .where(eq(invoicePayments.invoiceId, invoiceId))
+      .orderBy(desc(invoicePayments.paymentDate));
+  }
+
+  async createInvoicePayment(payment: InsertInvoicePayment): Promise<InvoicePayment> {
+    const paymentData = {
+      ...payment,
+      paymentDate: new Date(payment.paymentDate),
+    };
+    
+    const [created] = await db
+      .insert(invoicePayments)
+      .values(paymentData as any)
+      .returning();
+
+    const allPayments = await this.getInvoicePayments(payment.invoiceId);
+    const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, payment.invoiceId));
+    if (invoice) {
+      let newStatus = invoice.status;
+      if (totalPaid >= (invoice.totalAmount || 0)) {
+        newStatus = 'paid';
+      } else if (totalPaid > 0) {
+        newStatus = 'partially_paid';
+      }
+      
+      await db.update(invoices)
+        .set({ 
+          paidAmount: totalPaid, 
+          balanceDue: (invoice.totalAmount || 0) - totalPaid,
+          status: newStatus,
+          paidAt: newStatus === 'paid' ? new Date() : invoice.paidAt,
+          updatedAt: new Date() 
+        })
+        .where(eq(invoices.id, payment.invoiceId));
+    }
+
+    return created;
+  }
+
+  async deleteInvoicePayment(id: string): Promise<boolean> {
+    const [payment] = await db.select().from(invoicePayments).where(eq(invoicePayments.id, id));
+    if (!payment) return false;
+
+    await db.delete(invoicePayments).where(eq(invoicePayments.id, id));
+
+    const allPayments = await this.getInvoicePayments(payment.invoiceId);
+    const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, payment.invoiceId));
+    if (invoice) {
+      let newStatus = invoice.status;
+      if (totalPaid === 0 && ['paid', 'partially_paid'].includes(invoice.status)) {
+        newStatus = 'sent';
+      } else if (totalPaid > 0 && totalPaid < (invoice.totalAmount || 0)) {
+        newStatus = 'partially_paid';
+      }
+
+      await db.update(invoices)
+        .set({ 
+          paidAmount: totalPaid, 
+          balanceDue: (invoice.totalAmount || 0) - totalPaid,
+          status: newStatus,
+          updatedAt: new Date() 
+        })
+        .where(eq(invoices.id, payment.invoiceId));
+    }
+
+    return true;
   }
 }
 

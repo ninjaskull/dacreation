@@ -12,7 +12,11 @@ import {
   insertClientSchema, updateClientSchema,
   insertEventSchema, updateEventSchema,
   insertVendorSchema, updateVendorSchema,
-  insertCompanySettingsSchema, updateUserSettingsSchema
+  insertCompanySettingsSchema, updateUserSettingsSchema,
+  insertInvoiceTemplateSchema, updateInvoiceTemplateSchema,
+  insertInvoiceSchema, updateInvoiceSchema,
+  insertInvoiceItemSchema, updateInvoiceItemSchema,
+  insertInvoicePaymentSchema
 } from "@shared/schema";
 import { crypto } from "./auth";
 import type { User } from "@shared/schema";
@@ -1369,6 +1373,512 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Update profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.get("/api/invoice-templates", isAuthenticated, async (req, res) => {
+    try {
+      const activeOnly = req.query.active === 'true';
+      const templates = await storage.getAllInvoiceTemplates(activeOnly);
+      res.json(templates);
+    } catch (error) {
+      console.error("Get invoice templates error:", error);
+      res.status(500).json({ message: "Failed to fetch invoice templates" });
+    }
+  });
+
+  app.get("/api/invoice-templates/default", isAuthenticated, async (req, res) => {
+    try {
+      const template = await storage.getDefaultInvoiceTemplate();
+      res.json(template || null);
+    } catch (error) {
+      console.error("Get default template error:", error);
+      res.status(500).json({ message: "Failed to fetch default template" });
+    }
+  });
+
+  app.get("/api/invoice-templates/:id", isAuthenticated, async (req, res) => {
+    try {
+      const template = await storage.getInvoiceTemplateById(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Get invoice template error:", error);
+      res.status(500).json({ message: "Failed to fetch invoice template" });
+    }
+  });
+
+  app.post("/api/invoice-templates", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertInvoiceTemplateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const template = await storage.createInvoiceTemplate(result.data);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Create invoice template error:", error);
+      res.status(500).json({ message: "Failed to create invoice template" });
+    }
+  });
+
+  app.patch("/api/invoice-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = updateInvoiceTemplateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const template = await storage.updateInvoiceTemplate(req.params.id, result.data);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Update invoice template error:", error);
+      res.status(500).json({ message: "Failed to update invoice template" });
+    }
+  });
+
+  app.post("/api/invoice-templates/:id/set-default", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const template = await storage.setDefaultTemplate(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Set default template error:", error);
+      res.status(500).json({ message: "Failed to set default template" });
+    }
+  });
+
+  app.delete("/api/invoice-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteInvoiceTemplate(req.params.id);
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Delete invoice template error:", error);
+      res.status(500).json({ message: "Failed to delete invoice template" });
+    }
+  });
+
+  app.get("/api/invoices", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.clientId) filters.clientId = req.query.clientId as string;
+      if (req.query.eventId) filters.eventId = req.query.eventId as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
+      if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
+
+      const invoices = await storage.getAllInvoices(filters);
+      res.json(invoices);
+    } catch (error) {
+      console.error("Get invoices error:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.get("/api/invoices/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getInvoiceStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get invoice stats error:", error);
+      res.status(500).json({ message: "Failed to fetch invoice stats" });
+    }
+  });
+
+  app.get("/api/invoices/generate-number", isAuthenticated, async (req, res) => {
+    try {
+      const invoiceNumber = await storage.generateInvoiceNumber();
+      res.json({ invoiceNumber });
+    } catch (error) {
+      console.error("Generate invoice number error:", error);
+      res.status(500).json({ message: "Failed to generate invoice number" });
+    }
+  });
+
+  app.get("/api/invoices/export", isAuthenticated, async (req, res) => {
+    try {
+      const invoices = await storage.getAllInvoices();
+      const format = req.query.format as string || 'csv';
+      
+      if (format === 'csv') {
+        const headers = ['Invoice Number', 'Title', 'Client', 'Issue Date', 'Due Date', 'Status', 'Total Amount', 'Paid Amount', 'Balance Due'];
+        const rows = invoices.map(inv => [
+          inv.invoiceNumber,
+          inv.title,
+          inv.clientName || inv.client?.name || '',
+          new Date(inv.issueDate).toLocaleDateString(),
+          new Date(inv.dueDate).toLocaleDateString(),
+          inv.status,
+          inv.totalAmount || 0,
+          inv.paidAmount || 0,
+          inv.balanceDue || 0,
+        ]);
+        
+        const csv = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=invoices.csv');
+        res.send(csv);
+      } else {
+        res.json(invoices);
+      }
+    } catch (error) {
+      console.error("Export invoices error:", error);
+      res.status(500).json({ message: "Failed to export invoices" });
+    }
+  });
+
+  app.get("/api/invoices/:id", isAuthenticated, async (req, res) => {
+    try {
+      const invoice = await storage.getInvoiceById(req.params.id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      console.error("Get invoice error:", error);
+      res.status(500).json({ message: "Failed to fetch invoice" });
+    }
+  });
+
+  app.get("/api/invoices/:id/html", async (req, res) => {
+    try {
+      const invoice = await storage.getInvoiceById(req.params.id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      
+      if (invoice.status === 'sent' && !invoice.viewedAt) {
+        await storage.updateInvoice(req.params.id, { status: 'viewed' } as any);
+      }
+
+      let template = null;
+      if (invoice.templateId) {
+        template = await storage.getInvoiceTemplateById(invoice.templateId);
+      }
+      if (!template) {
+        template = await storage.getDefaultInvoiceTemplate();
+      }
+
+      const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+      };
+
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice ${invoice.invoiceNumber}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: ${template?.fontFamily || 'Inter'}, -apple-system, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; padding: 20px; }
+    .invoice { max-width: 800px; margin: 0 auto; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: ${template?.primaryColor || '#3B82F6'}; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .company-info h1 { font-size: 28px; margin-bottom: 10px; }
+    .company-info p { opacity: 0.9; font-size: 14px; }
+    .invoice-info { text-align: right; }
+    .invoice-info h2 { font-size: 32px; margin-bottom: 10px; }
+    .invoice-info p { font-size: 14px; opacity: 0.9; }
+    .body { padding: 30px; }
+    .addresses { display: flex; justify-content: space-between; margin-bottom: 30px; }
+    .address { flex: 1; }
+    .address h3 { color: ${template?.primaryColor || '#3B82F6'}; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; }
+    .address p { font-size: 14px; color: #555; }
+    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    .items-table th { background: ${template?.secondaryColor || '#1E40AF'}; color: white; padding: 12px; text-align: left; font-size: 14px; }
+    .items-table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .items-table tr:nth-child(even) { background: #f9f9f9; }
+    .text-right { text-align: right; }
+    .totals { display: flex; justify-content: flex-end; }
+    .totals-table { width: 300px; }
+    .totals-table td { padding: 8px 12px; font-size: 14px; }
+    .totals-table .total-row { background: ${template?.primaryColor || '#3B82F6'}; color: white; font-size: 18px; font-weight: bold; }
+    .footer { background: #f9f9f9; padding: 20px 30px; font-size: 12px; color: #666; }
+    .footer h4 { color: #333; margin-bottom: 10px; }
+    .bank-details { display: flex; gap: 40px; margin-top: 20px; }
+    .bank-details div { flex: 1; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+    .status-paid { background: #10B981; color: white; }
+    .status-sent, .status-viewed { background: #3B82F6; color: white; }
+    .status-draft { background: #9CA3AF; color: white; }
+    .status-overdue { background: #EF4444; color: white; }
+    @media print { body { background: white; padding: 0; } .invoice { box-shadow: none; } }
+  </style>
+</head>
+<body>
+  <div class="invoice">
+    <div class="header">
+      <div class="company-info">
+        ${template?.showLogo && template?.logoUrl ? `<img src="${template.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 10px;">` : ''}
+        <h1>${template?.companyName || 'Your Company'}</h1>
+        <p>${template?.companyAddress || ''}</p>
+        <p>${template?.companyPhone || ''} | ${template?.companyEmail || ''}</p>
+        ${template?.showGst && template?.companyGst ? `<p>GSTIN: ${template.companyGst}</p>` : ''}
+      </div>
+      <div class="invoice-info">
+        <h2>INVOICE</h2>
+        <p><strong>${invoice.invoiceNumber}</strong></p>
+        <p>Issue Date: ${new Date(invoice.issueDate).toLocaleDateString('en-IN')}</p>
+        <p>Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}</p>
+        <p style="margin-top: 10px;"><span class="status-badge status-${invoice.status}">${invoice.status}</span></p>
+      </div>
+    </div>
+    <div class="body">
+      <div class="addresses">
+        <div class="address">
+          <h3>Bill To</h3>
+          <p><strong>${invoice.clientName || ''}</strong></p>
+          <p>${invoice.clientAddress || ''}</p>
+          <p>${invoice.clientEmail || ''}</p>
+          <p>${invoice.clientPhone || ''}</p>
+          ${invoice.clientGst ? `<p>GSTIN: ${invoice.clientGst}</p>` : ''}
+        </div>
+        ${invoice.shippingAddress ? `
+        <div class="address">
+          <h3>Ship To</h3>
+          <p>${invoice.shippingAddress}</p>
+        </div>
+        ` : ''}
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Description</th>
+            <th>HSN/SAC</th>
+            <th class="text-right">Qty</th>
+            <th class="text-right">Rate</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invoice.items?.map((item, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${item.name}</strong>${item.description ? `<br><small style="color:#666;">${item.description}</small>` : ''}</td>
+            <td>${item.hsnCode || item.sacCode || '-'}</td>
+            <td class="text-right">${item.quantity} ${item.unit || ''}</td>
+            <td class="text-right">${formatCurrency(item.unitPrice)}</td>
+            <td class="text-right">${formatCurrency(item.amount)}</td>
+          </tr>
+          `).join('') || '<tr><td colspan="6">No items</td></tr>'}
+        </tbody>
+      </table>
+      <div class="totals">
+        <table class="totals-table">
+          <tr><td>Subtotal</td><td class="text-right">${formatCurrency(invoice.subtotal || 0)}</td></tr>
+          ${invoice.discountAmount ? `<tr><td>Discount</td><td class="text-right">-${formatCurrency(invoice.discountAmount)}</td></tr>` : ''}
+          ${invoice.cgstAmount ? `<tr><td>CGST (${invoice.cgstRate}%)</td><td class="text-right">${formatCurrency(invoice.cgstAmount)}</td></tr>` : ''}
+          ${invoice.sgstAmount ? `<tr><td>SGST (${invoice.sgstRate}%)</td><td class="text-right">${formatCurrency(invoice.sgstAmount)}</td></tr>` : ''}
+          ${invoice.igstAmount ? `<tr><td>IGST (${invoice.igstRate}%)</td><td class="text-right">${formatCurrency(invoice.igstAmount)}</td></tr>` : ''}
+          <tr class="total-row"><td>Total</td><td class="text-right">${formatCurrency(invoice.totalAmount || 0)}</td></tr>
+          ${invoice.paidAmount ? `<tr><td>Paid</td><td class="text-right">${formatCurrency(invoice.paidAmount)}</td></tr>` : ''}
+          ${invoice.balanceDue ? `<tr><td><strong>Balance Due</strong></td><td class="text-right"><strong>${formatCurrency(invoice.balanceDue)}</strong></td></tr>` : ''}
+        </table>
+      </div>
+    </div>
+    <div class="footer">
+      ${invoice.notes ? `<div style="margin-bottom: 15px;"><h4>Notes</h4><p>${invoice.notes}</p></div>` : ''}
+      ${invoice.termsAndConditions || template?.termsAndConditions ? `<div style="margin-bottom: 15px;"><h4>Terms & Conditions</h4><p>${invoice.termsAndConditions || template?.termsAndConditions}</p></div>` : ''}
+      ${template?.showBankDetails && (template?.bankName || template?.bankAccountNumber) ? `
+      <div class="bank-details">
+        <div>
+          <h4>Bank Details</h4>
+          <p><strong>Bank:</strong> ${template.bankName || ''}</p>
+          <p><strong>Account:</strong> ${template.bankAccountNumber || ''}</p>
+          <p><strong>IFSC:</strong> ${template.bankIfsc || ''}</p>
+          <p><strong>Branch:</strong> ${template.bankBranch || ''}</p>
+        </div>
+        ${template?.showUpi && template?.upiId ? `
+        <div>
+          <h4>UPI Payment</h4>
+          <p><strong>UPI ID:</strong> ${template.upiId}</p>
+        </div>
+        ` : ''}
+      </div>
+      ` : ''}
+      ${template?.showSignature && template?.signatureUrl ? `
+      <div style="margin-top: 30px; text-align: right;">
+        <img src="${template.signatureUrl}" alt="Signature" style="height: 60px;">
+        <p><strong>Authorized Signature</strong></p>
+      </div>
+      ` : ''}
+      <p style="margin-top: 20px; text-align: center; color: #999;">${template?.footerText || 'Thank you for your business!'}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
+    } catch (error) {
+      console.error("Get invoice HTML error:", error);
+      res.status(500).json({ message: "Failed to generate invoice HTML" });
+    }
+  });
+
+  app.post("/api/invoices", isAuthenticated, async (req, res) => {
+    try {
+      const result = insertInvoiceSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      
+      const invoiceData = {
+        ...result.data,
+        createdBy: (req.user as Express.User).id,
+      };
+      
+      const invoice = await storage.createInvoice(invoiceData);
+      res.status(201).json(invoice);
+    } catch (error) {
+      console.error("Create invoice error:", error);
+      res.status(500).json({ message: "Failed to create invoice" });
+    }
+  });
+
+  app.patch("/api/invoices/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateInvoiceSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const invoice = await storage.updateInvoice(req.params.id, result.data);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      console.error("Update invoice error:", error);
+      res.status(500).json({ message: "Failed to update invoice" });
+    }
+  });
+
+  app.post("/api/invoices/:id/send", isAuthenticated, async (req, res) => {
+    try {
+      const invoice = await storage.updateInvoice(req.params.id, { 
+        status: 'sent',
+      } as any);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json(invoice);
+    } catch (error) {
+      console.error("Send invoice error:", error);
+      res.status(500).json({ message: "Failed to send invoice" });
+    }
+  });
+
+  app.delete("/api/invoices/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteInvoice(req.params.id);
+      res.json({ message: "Invoice deleted successfully" });
+    } catch (error) {
+      console.error("Delete invoice error:", error);
+      res.status(500).json({ message: "Failed to delete invoice" });
+    }
+  });
+
+  app.get("/api/invoices/:id/items", isAuthenticated, async (req, res) => {
+    try {
+      const items = await storage.getInvoiceItems(req.params.id);
+      res.json(items);
+    } catch (error) {
+      console.error("Get invoice items error:", error);
+      res.status(500).json({ message: "Failed to fetch invoice items" });
+    }
+  });
+
+  app.post("/api/invoices/:id/items", isAuthenticated, async (req, res) => {
+    try {
+      const result = insertInvoiceItemSchema.safeParse({
+        ...req.body,
+        invoiceId: req.params.id,
+      });
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const item = await storage.createInvoiceItem(result.data);
+      res.status(201).json(item);
+    } catch (error) {
+      console.error("Create invoice item error:", error);
+      res.status(500).json({ message: "Failed to create invoice item" });
+    }
+  });
+
+  app.patch("/api/invoice-items/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateInvoiceItemSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const item = await storage.updateInvoiceItem(req.params.id, result.data);
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      console.error("Update invoice item error:", error);
+      res.status(500).json({ message: "Failed to update invoice item" });
+    }
+  });
+
+  app.delete("/api/invoice-items/:id", isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteInvoiceItem(req.params.id);
+      res.json({ message: "Item deleted successfully" });
+    } catch (error) {
+      console.error("Delete invoice item error:", error);
+      res.status(500).json({ message: "Failed to delete invoice item" });
+    }
+  });
+
+  app.get("/api/invoices/:id/payments", isAuthenticated, async (req, res) => {
+    try {
+      const payments = await storage.getInvoicePayments(req.params.id);
+      res.json(payments);
+    } catch (error) {
+      console.error("Get invoice payments error:", error);
+      res.status(500).json({ message: "Failed to fetch invoice payments" });
+    }
+  });
+
+  app.post("/api/invoices/:id/payments", isAuthenticated, async (req, res) => {
+    try {
+      const result = insertInvoicePaymentSchema.safeParse({
+        ...req.body,
+        invoiceId: req.params.id,
+        receivedBy: (req.user as Express.User).id,
+      });
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const payment = await storage.createInvoicePayment(result.data);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Create invoice payment error:", error);
+      res.status(500).json({ message: "Failed to create invoice payment" });
+    }
+  });
+
+  app.delete("/api/invoice-payments/:id", isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteInvoicePayment(req.params.id);
+      res.json({ message: "Payment deleted successfully" });
+    } catch (error) {
+      console.error("Delete invoice payment error:", error);
+      res.status(500).json({ message: "Failed to delete invoice payment" });
     }
   });
 

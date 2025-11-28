@@ -610,3 +610,271 @@ export const updateUserSettingsSchema = z.object({
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 export type UpdateUserSettings = z.infer<typeof updateUserSettingsSchema>;
 export type UserSettings = typeof userSettings.$inferSelect;
+
+export const invoiceStatuses = ["draft", "sent", "viewed", "paid", "partially_paid", "overdue", "cancelled", "refunded"] as const;
+export type InvoiceStatus = typeof invoiceStatuses[number];
+
+export const invoiceTemplates = pgTable("invoice_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  isDefault: boolean("is_default").notNull().default(false),
+  layout: text("layout").notNull().default("modern"),
+  primaryColor: text("primary_color").notNull().default("#3B82F6"),
+  secondaryColor: text("secondary_color").notNull().default("#1E40AF"),
+  accentColor: text("accent_color").notNull().default("#60A5FA"),
+  fontFamily: text("font_family").notNull().default("Inter"),
+  logoUrl: text("logo_url"),
+  companyName: text("company_name"),
+  companyAddress: text("company_address"),
+  companyPhone: text("company_phone"),
+  companyEmail: text("company_email"),
+  companyWebsite: text("company_website"),
+  companyGst: text("company_gst"),
+  companyPan: text("company_pan"),
+  bankName: text("bank_name"),
+  bankAccountNumber: text("bank_account_number"),
+  bankIfsc: text("bank_ifsc"),
+  bankBranch: text("bank_branch"),
+  upiId: text("upi_id"),
+  headerText: text("header_text"),
+  footerText: text("footer_text"),
+  termsAndConditions: text("terms_and_conditions"),
+  notes: text("notes"),
+  showLogo: boolean("show_logo").notNull().default(true),
+  showGst: boolean("show_gst").notNull().default(true),
+  showBankDetails: boolean("show_bank_details").notNull().default(true),
+  showUpi: boolean("show_upi").notNull().default(true),
+  showSignature: boolean("show_signature").notNull().default(true),
+  signatureUrl: text("signature_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertInvoiceTemplateSchema = createInsertSchema(invoiceTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateInvoiceTemplateSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  isDefault: z.boolean().optional(),
+  layout: z.string().optional(),
+  primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
+  accentColor: z.string().optional(),
+  fontFamily: z.string().optional(),
+  logoUrl: z.string().optional(),
+  companyName: z.string().optional(),
+  companyAddress: z.string().optional(),
+  companyPhone: z.string().optional(),
+  companyEmail: z.string().optional(),
+  companyWebsite: z.string().optional(),
+  companyGst: z.string().optional(),
+  companyPan: z.string().optional(),
+  bankName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankIfsc: z.string().optional(),
+  bankBranch: z.string().optional(),
+  upiId: z.string().optional(),
+  headerText: z.string().optional(),
+  footerText: z.string().optional(),
+  termsAndConditions: z.string().optional(),
+  notes: z.string().optional(),
+  showLogo: z.boolean().optional(),
+  showGst: z.boolean().optional(),
+  showBankDetails: z.boolean().optional(),
+  showUpi: z.boolean().optional(),
+  showSignature: z.boolean().optional(),
+  signatureUrl: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type InsertInvoiceTemplate = z.infer<typeof insertInvoiceTemplateSchema>;
+export type UpdateInvoiceTemplate = z.infer<typeof updateInvoiceTemplateSchema>;
+export type InvoiceTemplate = typeof invoiceTemplates.$inferSelect;
+
+export const invoices = pgTable("invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  templateId: varchar("template_id").references(() => invoiceTemplates.id),
+  clientId: varchar("client_id").references(() => clients.id),
+  eventId: varchar("event_id").references(() => events.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  issueDate: timestamp("issue_date").notNull().defaultNow(),
+  dueDate: timestamp("due_date").notNull(),
+  status: text("status").notNull().default("draft"),
+  subtotal: integer("subtotal").notNull().default(0),
+  discountType: text("discount_type").default("percentage"),
+  discountValue: integer("discount_value").default(0),
+  discountAmount: integer("discount_amount").default(0),
+  taxType: text("tax_type").default("gst"),
+  cgstRate: integer("cgst_rate").default(9),
+  sgstRate: integer("sgst_rate").default(9),
+  igstRate: integer("igst_rate").default(18),
+  cgstAmount: integer("cgst_amount").default(0),
+  sgstAmount: integer("sgst_amount").default(0),
+  igstAmount: integer("igst_amount").default(0),
+  totalTax: integer("total_tax").default(0),
+  totalAmount: integer("total_amount").notNull().default(0),
+  paidAmount: integer("paid_amount").notNull().default(0),
+  balanceDue: integer("balance_due").notNull().default(0),
+  currency: text("currency").notNull().default("INR"),
+  notes: text("notes"),
+  internalNotes: text("internal_notes"),
+  termsAndConditions: text("terms_and_conditions"),
+  clientName: text("client_name"),
+  clientEmail: text("client_email"),
+  clientPhone: text("client_phone"),
+  clientAddress: text("client_address"),
+  clientGst: text("client_gst"),
+  billingAddress: text("billing_address"),
+  shippingAddress: text("shipping_address"),
+  sentAt: timestamp("sent_at"),
+  viewedAt: timestamp("viewed_at"),
+  paidAt: timestamp("paid_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  cancelReason: text("cancel_reason"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  sentAt: true,
+  viewedAt: true,
+  paidAt: true,
+  cancelledAt: true,
+}).extend({
+  issueDate: z.date().or(z.string()),
+  dueDate: z.date().or(z.string()),
+});
+
+export const updateInvoiceSchema = z.object({
+  templateId: z.string().optional(),
+  clientId: z.string().nullable().optional(),
+  eventId: z.string().nullable().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  issueDate: z.date().or(z.string()).optional(),
+  dueDate: z.date().or(z.string()).optional(),
+  status: z.enum(invoiceStatuses).optional(),
+  subtotal: z.number().optional(),
+  discountType: z.string().optional(),
+  discountValue: z.number().optional(),
+  discountAmount: z.number().optional(),
+  taxType: z.string().optional(),
+  cgstRate: z.number().optional(),
+  sgstRate: z.number().optional(),
+  igstRate: z.number().optional(),
+  cgstAmount: z.number().optional(),
+  sgstAmount: z.number().optional(),
+  igstAmount: z.number().optional(),
+  totalTax: z.number().optional(),
+  totalAmount: z.number().optional(),
+  paidAmount: z.number().optional(),
+  balanceDue: z.number().optional(),
+  notes: z.string().optional(),
+  internalNotes: z.string().optional(),
+  termsAndConditions: z.string().optional(),
+  clientName: z.string().optional(),
+  clientEmail: z.string().optional(),
+  clientPhone: z.string().optional(),
+  clientAddress: z.string().optional(),
+  clientGst: z.string().optional(),
+  billingAddress: z.string().optional(),
+  shippingAddress: z.string().optional(),
+  cancelReason: z.string().optional(),
+});
+
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type UpdateInvoice = z.infer<typeof updateInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+
+export const invoiceItems = pgTable("invoice_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: varchar("invoice_id").references(() => invoices.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  quantity: integer("quantity").notNull().default(1),
+  unit: text("unit").default("unit"),
+  unitPrice: integer("unit_price").notNull().default(0),
+  discount: integer("discount").default(0),
+  taxable: boolean("taxable").notNull().default(true),
+  hsnCode: text("hsn_code"),
+  sacCode: text("sac_code"),
+  amount: integer("amount").notNull().default(0),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const updateInvoiceItemSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  quantity: z.number().optional(),
+  unit: z.string().optional(),
+  unitPrice: z.number().optional(),
+  discount: z.number().optional(),
+  taxable: z.boolean().optional(),
+  hsnCode: z.string().optional(),
+  sacCode: z.string().optional(),
+  amount: z.number().optional(),
+  displayOrder: z.number().optional(),
+});
+
+export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
+export type UpdateInvoiceItem = z.infer<typeof updateInvoiceItemSchema>;
+export type InvoiceItem = typeof invoiceItems.$inferSelect;
+
+export const invoicePayments = pgTable("invoice_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: varchar("invoice_id").references(() => invoices.id).notNull(),
+  amount: integer("amount").notNull(),
+  paymentDate: timestamp("payment_date").notNull().defaultNow(),
+  paymentMethod: text("payment_method").notNull().default("bank_transfer"),
+  transactionId: text("transaction_id"),
+  notes: text("notes"),
+  receivedBy: varchar("received_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertInvoicePaymentSchema = createInsertSchema(invoicePayments).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  paymentDate: z.date().or(z.string()),
+});
+
+export type InsertInvoicePayment = z.infer<typeof insertInvoicePaymentSchema>;
+export type InvoicePayment = typeof invoicePayments.$inferSelect;
+
+export const paymentMethods = [
+  { value: "cash", label: "Cash" },
+  { value: "bank_transfer", label: "Bank Transfer" },
+  { value: "upi", label: "UPI" },
+  { value: "cheque", label: "Cheque" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "debit_card", label: "Debit Card" },
+  { value: "net_banking", label: "Net Banking" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const invoiceLayouts = [
+  { value: "modern", label: "Modern" },
+  { value: "classic", label: "Classic" },
+  { value: "minimal", label: "Minimal" },
+  { value: "professional", label: "Professional" },
+  { value: "elegant", label: "Elegant" },
+] as const;
