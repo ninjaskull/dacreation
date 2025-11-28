@@ -380,8 +380,8 @@ export function Navbar() {
                 </Link>
 
                 {/* Contact Link */}
-                <a
-                  href="/#contact"
+                <Link
+                  href="/contact"
                   className={cn(
                     "px-4 py-2 text-sm font-medium tracking-wide uppercase transition-all rounded-lg",
                     showTransparent 
@@ -391,7 +391,7 @@ export function Navbar() {
                   data-testid="link-contact-nav"
                 >
                   Contact
-                </a>
+                </Link>
               </div>
 
               {/* CTA Buttons */}
@@ -561,14 +561,14 @@ export function Navbar() {
                 </Link>
 
                 {/* Contact */}
-                <a
-                  href="/#contact"
+                <Link
+                  href="/contact"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block py-4 border-b border-border/50"
                   data-testid="link-mobile-contact"
                 >
                   <span className="text-xl font-serif font-medium text-foreground">Contact</span>
-                </a>
+                </Link>
               </div>
 
               {/* Mobile CTA Section */}

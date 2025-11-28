@@ -42,7 +42,7 @@ export function Footer() {
   const quickLinks = [
     { name: "Get a Quote", href: "/inquire" },
     { name: "FAQs", href: "/#faq" },
-    { name: "Contact Us", href: "/#contact" },
+    { name: "Contact Us", href: "/contact" },
     { name: "Client Portal", href: "/admin/login" },
   ];
 

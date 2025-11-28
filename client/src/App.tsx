@@ -16,6 +16,7 @@ import PortfolioPage from "@/pages/portfolio";
 import TestimonialsPage from "@/pages/testimonials";
 import CareersPage from "@/pages/careers";
 import PressPage from "@/pages/press";
+import ContactPage from "@/pages/contact";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import LeadsPage from "@/pages/admin/leads";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/testimonials" component={TestimonialsPage} />
       <Route path="/careers" component={CareersPage} />
       <Route path="/press" component={PressPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route path="/services/weddings" component={WeddingsPage} />
       <Route path="/services/corporate" component={CorporatePage} />
       <Route path="/services/social" component={SocialPage} />
