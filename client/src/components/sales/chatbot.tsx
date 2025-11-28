@@ -174,7 +174,7 @@ export function Chatbot() {
   };
 
   return (
-    <>
+    <div className="floating-widget">
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-24 right-4 md:bottom-6 md:left-6 md:right-auto z-50 w-14 h-14 bg-secondary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/90 transition-colors"
@@ -331,6 +331,6 @@ export function Chatbot() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

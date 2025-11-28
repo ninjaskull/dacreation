@@ -143,3 +143,8 @@
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
 }
+
+/* Hide floating widgets when mobile menu is open */
+body[data-mobile-menu-open="true"] .floating-widget {
+  display: none !important;
+}

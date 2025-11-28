@@ -81,11 +81,14 @@ export function Navbar() {
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.setAttribute('data-mobile-menu-open', 'true');
     } else {
       document.body.style.overflow = '';
+      document.body.removeAttribute('data-mobile-menu-open');
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.removeAttribute('data-mobile-menu-open');
     };
   }, [isMobileMenuOpen]);
 
@@ -110,7 +113,7 @@ export function Navbar() {
       {/* Top Bar - Hidden on mobile, visible on scroll or non-home pages */}
       <div 
         className={cn(
-          "fixed top-0 w-full z-[60] transition-all duration-300",
+          "fixed top-0 w-full z-[60] transition-all duration-300 hidden lg:block",
           showTransparent 
             ? "bg-black/20 backdrop-blur-sm border-b border-white/10" 
             : "bg-primary border-b border-primary-foreground/10"
@@ -572,16 +575,16 @@ export function Navbar() {
               </div>
 
               {/* Mobile CTA Section */}
-              <div className="mt-8 space-y-4">
+              <div className="mt-6 space-y-3">
                 <Link href="/inquire" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full rounded-full py-6 text-lg gap-2" data-testid="button-mobile-get-quote">
-                    <Calendar className="w-5 h-5" />
+                  <Button className="w-full rounded-full py-3 text-sm gap-2" data-testid="button-mobile-get-quote">
+                    <Calendar className="w-4 h-4" />
                     Get a Free Quote
                   </Button>
                 </Link>
                 <a href="tel:+919876543210" className="block">
-                  <Button variant="outline" className="w-full rounded-full py-6 text-lg gap-2" data-testid="button-mobile-call">
-                    <Phone className="w-5 h-5" />
+                  <Button variant="outline" className="w-full rounded-full py-3 text-sm gap-2" data-testid="button-mobile-call">
+                    <Phone className="w-4 h-4" />
                     Call +91 98765 43210
                   </Button>
                 </a>

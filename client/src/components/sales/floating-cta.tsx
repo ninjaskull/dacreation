@@ -79,7 +79,7 @@ export function FloatingCTA() {
   };
 
   return (
-    <>
+    <div className="floating-widget">
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-4 md:right-6 z-50 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
@@ -236,6 +236,6 @@ export function FloatingCTA() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
