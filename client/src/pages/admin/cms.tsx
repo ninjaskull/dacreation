@@ -933,12 +933,8 @@ export default function CMSPage() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Content Management" description="Manage your website content">
       <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Content Management</h1>
-          <p className="text-gray-600">Manage your website content</p>
-        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
