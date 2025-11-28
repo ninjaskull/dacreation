@@ -19,15 +19,19 @@ export default function PortfolioPage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   
-  const { data: portfolioItems, isLoading } = useQuery<PortfolioItem[]>({
+  const { data: portfolioItems = [], isLoading } = useQuery<PortfolioItem[]>({
     queryKey: ["/api/cms/portfolio", { active: true }],
     queryFn: async () => {
       const res = await fetch("/api/cms/portfolio?active=true");
-      return res.json();
+      if (!res.ok) {
+        return [];
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const filteredItems = portfolioItems?.filter(
+  const filteredItems = portfolioItems.filter(
     item => activeCategory === "all" || item.category === activeCategory
   );
 
@@ -94,7 +98,7 @@ export default function PortfolioPage() {
                 </div>
               ))}
             </div>
-          ) : filteredItems && filteredItems.length > 0 ? (
+          ) : filteredItems.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredItems.map((item, index) => (
                 <motion.div
