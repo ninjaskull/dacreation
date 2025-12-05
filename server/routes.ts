@@ -16,7 +16,10 @@ import {
   insertInvoiceTemplateSchema, updateInvoiceTemplateSchema,
   insertInvoiceSchema, updateInvoiceSchema,
   insertInvoiceItemSchema, updateInvoiceItemSchema,
-  insertInvoicePaymentSchema
+  insertInvoicePaymentSchema,
+  insertCallbackRequestSchema, updateCallbackRequestSchema,
+  insertConversationSchema, updateConversationSchema,
+  insertChatMessageSchema
 } from "@shared/schema";
 import { crypto } from "./auth";
 import type { User } from "@shared/schema";
@@ -1879,6 +1882,239 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete invoice payment error:", error);
       res.status(500).json({ message: "Failed to delete invoice payment" });
+    }
+  });
+
+  // ==================== Callback Requests ====================
+  
+  app.post("/api/callback-requests", async (req, res) => {
+    try {
+      const result = insertCallbackRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const request = await storage.createCallbackRequest(result.data);
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Create callback request error:", error);
+      res.status(500).json({ message: "Failed to create callback request" });
+    }
+  });
+
+  app.get("/api/callback-requests", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status;
+      if (req.query.priority) filters.priority = req.query.priority;
+      if (req.query.assignedTo) filters.assignedTo = req.query.assignedTo;
+      if (req.query.search) filters.search = req.query.search;
+      if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
+      if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
+      
+      const requests = await storage.getAllCallbackRequests(filters);
+      res.json(requests);
+    } catch (error) {
+      console.error("Get callback requests error:", error);
+      res.status(500).json({ message: "Failed to fetch callback requests" });
+    }
+  });
+
+  app.get("/api/callback-requests/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getCallbackRequestStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get callback request stats error:", error);
+      res.status(500).json({ message: "Failed to fetch callback request stats" });
+    }
+  });
+
+  app.get("/api/callback-requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const request = await storage.getCallbackRequestById(req.params.id);
+      if (!request) {
+        return res.status(404).json({ message: "Callback request not found" });
+      }
+      res.json(request);
+    } catch (error) {
+      console.error("Get callback request error:", error);
+      res.status(500).json({ message: "Failed to fetch callback request" });
+    }
+  });
+
+  app.patch("/api/callback-requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateCallbackRequestSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const request = await storage.updateCallbackRequest(req.params.id, result.data);
+      if (!request) {
+        return res.status(404).json({ message: "Callback request not found" });
+      }
+      res.json(request);
+    } catch (error) {
+      console.error("Update callback request error:", error);
+      res.status(500).json({ message: "Failed to update callback request" });
+    }
+  });
+
+  app.delete("/api/callback-requests/:id", isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteCallbackRequest(req.params.id);
+      res.json({ message: "Callback request deleted successfully" });
+    } catch (error) {
+      console.error("Delete callback request error:", error);
+      res.status(500).json({ message: "Failed to delete callback request" });
+    }
+  });
+
+  // ==================== Conversations ====================
+  
+  app.post("/api/conversations", async (req, res) => {
+    try {
+      const result = insertConversationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      
+      const existing = await storage.getConversationByVisitorId(result.data.visitorId);
+      if (existing) {
+        return res.json(existing);
+      }
+      
+      const conversation = await storage.createConversation(result.data);
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error("Create conversation error:", error);
+      res.status(500).json({ message: "Failed to create conversation" });
+    }
+  });
+
+  app.get("/api/conversations", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status;
+      if (req.query.assignedTo) filters.assignedTo = req.query.assignedTo;
+      if (req.query.search) filters.search = req.query.search;
+      
+      const conversations = await storage.getAllConversations(filters);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Get conversations error:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  app.get("/api/conversations/stats", isAuthenticated, async (req, res) => {
+    try {
+      const stats = await storage.getConversationStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get conversation stats error:", error);
+      res.status(500).json({ message: "Failed to fetch conversation stats" });
+    }
+  });
+
+  app.get("/api/conversations/visitor/:visitorId", async (req, res) => {
+    try {
+      const conversation = await storage.getConversationByVisitorId(req.params.visitorId);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+      res.json(conversation);
+    } catch (error) {
+      console.error("Get conversation by visitor error:", error);
+      res.status(500).json({ message: "Failed to fetch conversation" });
+    }
+  });
+
+  app.get("/api/conversations/:id", isAuthenticated, async (req, res) => {
+    try {
+      const conversation = await storage.getConversationById(req.params.id);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+      res.json(conversation);
+    } catch (error) {
+      console.error("Get conversation error:", error);
+      res.status(500).json({ message: "Failed to fetch conversation" });
+    }
+  });
+
+  app.patch("/api/conversations/:id", isAuthenticated, async (req, res) => {
+    try {
+      const result = updateConversationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const conversation = await storage.updateConversation(req.params.id, result.data);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+      res.json(conversation);
+    } catch (error) {
+      console.error("Update conversation error:", error);
+      res.status(500).json({ message: "Failed to update conversation" });
+    }
+  });
+
+  app.delete("/api/conversations/:id", isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteConversation(req.params.id);
+      res.json({ message: "Conversation deleted successfully" });
+    } catch (error) {
+      console.error("Delete conversation error:", error);
+      res.status(500).json({ message: "Failed to delete conversation" });
+    }
+  });
+
+  // ==================== Chat Messages ====================
+  
+  app.post("/api/conversations/:conversationId/messages", async (req, res) => {
+    try {
+      const result = insertChatMessageSchema.safeParse({
+        ...req.body,
+        conversationId: req.params.conversationId,
+      });
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      const message = await storage.createChatMessage(result.data);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Create chat message error:", error);
+      res.status(500).json({ message: "Failed to create chat message" });
+    }
+  });
+
+  app.get("/api/conversations/:conversationId/messages", async (req, res) => {
+    try {
+      const messages = await storage.getMessagesByConversationId(req.params.conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Get chat messages error:", error);
+      res.status(500).json({ message: "Failed to fetch chat messages" });
+    }
+  });
+
+  app.post("/api/conversations/:conversationId/mark-read", isAuthenticated, async (req, res) => {
+    try {
+      await storage.markMessagesAsRead(req.params.conversationId, 'visitor');
+      res.json({ message: "Messages marked as read" });
+    } catch (error) {
+      console.error("Mark messages read error:", error);
+      res.status(500).json({ message: "Failed to mark messages as read" });
+    }
+  });
+
+  app.get("/api/messages/unread-count", isAuthenticated, async (req, res) => {
+    try {
+      const count = await storage.getUnreadMessageCount();
+      res.json({ count });
+    } catch (error) {
+      console.error("Get unread count error:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
     }
   });
 
