@@ -90,6 +90,7 @@ const sidebarSections: SidebarSection[] = [
 
 const bottomItems: SidebarItem[] = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Website Settings", href: "/admin/website-settings", icon: Sparkles },
   { name: "Help & Support", href: "/admin/help", icon: HelpCircle },
 ];
 

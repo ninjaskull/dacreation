@@ -40,6 +40,7 @@ import AdminTeamPage from "@/pages/admin/team";
 import AdminCareersPage from "@/pages/admin/careers";
 import AdminChatPage from "@/pages/admin/chat";
 import AdminCallbacksPage from "@/pages/admin/callbacks";
+import WebsiteSettingsPage from "@/pages/admin/website-settings";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/admin/vendors" component={VendorsPage} />
       <Route path="/admin/reports" component={ReportsPage} />
       <Route path="/admin/settings" component={SettingsPage} />
+      <Route path="/admin/website-settings" component={WebsiteSettingsPage} />
       <Route path="/admin/notifications" component={NotificationsPage} />
       <Route path="/admin/inquiries" component={InquiriesPage} />
       <Route path="/admin/bookings" component={BookingsPage} />

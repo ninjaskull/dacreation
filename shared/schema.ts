@@ -570,12 +570,28 @@ export const companySettings = pgTable("company_settings", {
   currency: text("currency").notNull().default("INR"),
   timezone: text("timezone").notNull().default("Asia/Kolkata"),
   fiscalYearStart: text("fiscal_year_start").notNull().default("04"),
+  whatsappNumber: text("whatsapp_number"),
+  mapEmbedCode: text("map_embed_code"),
+  topBarAddress: text("top_bar_address"),
+  secondaryAddress: text("secondary_address"),
+  socialMedia: jsonb("social_media").default(sql`'[]'`),
+  numberOfEventsHeld: integer("number_of_events_held").default(0),
+  ratings: integer("ratings").default(0),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertCompanySettingsSchema = createInsertSchema(companySettings).omit({
   id: true,
   updatedAt: true,
+}).extend({
+  name: z.string().optional(),
+  socialMedia: z.array(z.object({
+    platform: z.string(),
+    url: z.string(),
+    icon: z.string().optional(),
+  })).optional(),
+  numberOfEventsHeld: z.number().optional(),
+  ratings: z.number().optional(),
 });
 
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
