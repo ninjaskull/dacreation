@@ -52,79 +52,6 @@ const cultureHighlights = [
   },
 ];
 
-const defaultCareers = [
-  {
-    id: 1,
-    title: "Senior Event Manager",
-    department: "Event Operations",
-    location: "Mumbai",
-    type: "Full-time",
-    experience: "5-7 years",
-    salary: "12-18 LPA",
-    description: "Lead and execute large-scale events, manage client relationships, and mentor junior team members. You'll be responsible for end-to-end event management including budgeting, vendor coordination, and on-ground execution.",
-    requirements: [
-      "5+ years of event management experience",
-      "Strong leadership and communication skills",
-      "Experience with budget management",
-      "Ability to handle high-pressure situations",
-      "Willingness to travel for events"
-    ],
-    benefits: [
-      "Competitive salary with performance bonuses",
-      "Health insurance for family",
-      "Annual learning allowance",
-      "Flexible working hours"
-    ],
-    applicationEmail: "careers@dacreation.in",
-    isActive: true,
-  },
-  {
-    id: 2,
-    title: "Creative Designer",
-    department: "Design & Decor",
-    location: "Mumbai",
-    type: "Full-time",
-    experience: "3-5 years",
-    salary: "8-12 LPA",
-    description: "Create stunning visual concepts for events, including decor designs, 3D renders, and presentation materials. Work closely with clients to bring their vision to life.",
-    requirements: [
-      "Proficiency in Adobe Creative Suite",
-      "Experience with 3D visualization tools",
-      "Strong portfolio of event design work",
-      "Creative thinking and attention to detail"
-    ],
-    benefits: [
-      "Creative freedom and expression",
-      "Latest design tools and software",
-      "Opportunity to work on premium events"
-    ],
-    applicationEmail: "careers@dacreation.in",
-    isActive: true,
-  },
-  {
-    id: 3,
-    title: "Event Coordinator",
-    department: "Event Operations",
-    location: "Delhi NCR",
-    type: "Full-time",
-    experience: "1-3 years",
-    salary: "4-6 LPA",
-    description: "Support event managers in planning and executing events. Handle vendor coordination, logistics, and on-site event management.",
-    requirements: [
-      "1+ years in event industry",
-      "Excellent organizational skills",
-      "Strong communication abilities",
-      "Flexibility to work weekends"
-    ],
-    benefits: [
-      "Mentorship from senior professionals",
-      "Hands-on experience with premium events",
-      "Fast-track career growth"
-    ],
-    applicationEmail: "careers@dacreation.in",
-    isActive: true,
-  },
-];
 
 type CareerDisplayItem = {
   id: number | string;
@@ -168,8 +95,7 @@ export default function CareersPage() {
     },
   });
 
-  const displayCareers: CareerDisplayItem[] = careers.length > 0 ? careers : defaultCareers;
-  const departments = Array.from(new Set(displayCareers.map(c => c.department)));
+  const departments = Array.from(new Set(careers.map(c => c.department)));
 
   return (
     <div className="min-h-screen bg-white">
@@ -289,7 +215,7 @@ export default function CareersPage() {
                 </div>
               ))}
             </div>
-          ) : displayCareers.length > 0 ? (
+          ) : careers.length > 0 ? (
             <div className="max-w-4xl mx-auto">
               {departments.map((dept) => (
                 <div key={dept} className="mb-10">
@@ -298,9 +224,9 @@ export default function CareersPage() {
                     {dept}
                   </h3>
                   <div className="space-y-4">
-                    {displayCareers
-                      .filter(c => c.department === dept)
-                      .map((career, index) => (
+                    {careers
+                      .filter((c: CareerDisplayItem) => c.department === dept)
+                      .map((career: CareerDisplayItem, index: number) => (
                         <motion.div
                           key={career.id}
                           initial={{ opacity: 0, x: -20 }}

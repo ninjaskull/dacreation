@@ -37,6 +37,7 @@ import {
   HelpPage 
 } from "@/pages/admin/placeholder";
 import AdminTeamPage from "@/pages/admin/team";
+import AdminCareersPage from "@/pages/admin/careers";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -82,6 +83,7 @@ function Router() {
       <Route path="/admin/bookings" component={BookingsPage} />
       <Route path="/admin/venues" component={VenuesPage} />
       <Route path="/admin/team" component={AdminTeamPage} />
+      <Route path="/admin/careers" component={AdminCareersPage} />
       <Route path="/admin/tasks" component={TasksPage} />
       <Route path="/admin/help" component={HelpPage} />
       <Route component={NotFound} />
