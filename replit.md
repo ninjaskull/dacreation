@@ -156,7 +156,8 @@ The admin area features a collapsible sidebar with comprehensive CRM navigation:
 **CRM Section**
 - Leads - Full lead management with filtering and status updates
 - Clients - Client directory with VIP tracking and contact history
-- Inquiries - Manage customer inquiries
+- Chat - Real-time customer chat with admin response capability
+- Callbacks - Callback request management with status tracking
 
 **Event Management Section**
 - Events - View and manage all events and bookings
@@ -212,7 +213,23 @@ The admin area features a collapsible sidebar with comprehensive CRM navigation:
    - Monthly performance charts
    - Export functionality
 
-7. **Security**
+7. **Customer Chat** (`/admin/chat`)
+   - Real-time conversation list with visitor details
+   - Status filters: Active, Waiting, Resolved, Archived
+   - Message thread view with admin reply capability
+   - Unread message counts with automatic polling
+   - Resolve and archive conversation actions
+   - Visitor information display (name, phone, email, event type)
+
+8. **Callback Requests** (`/admin/callbacks`)
+   - Dedicated callback request management
+   - Status tracking: Pending, Scheduled, Completed, Missed
+   - Priority levels: Low, Normal, High, Urgent
+   - Quick status actions and detailed notes
+   - Filtering by status, priority, and search
+   - Statistics cards for quick overview
+
+9. **Security**
    - Session-based authentication with Passport.js
    - Password hashing using scrypt algorithm
    - Protected API routes requiring authentication
@@ -243,11 +260,14 @@ The website includes a comprehensive lead capture system designed to maximize vi
    - Sticky "Talk to Event Planner" button (bottom right)
    - Quick callback request form (name, phone, event type)
    - Expandable widget interface
+   - Saves to dedicated callback_requests table for admin management
 
 5. **Conversational Chatbot**
    - AI-style chatbot (bottom left)
    - Step-by-step data collection: Event → Date → Location → Name → Phone
    - Validates phone number before submission
+   - Creates conversations and saves all messages to database
+   - Admin can respond via Chat management page
 
 6. **Lead Magnets Section**
    - Free downloadable resources requiring contact form
