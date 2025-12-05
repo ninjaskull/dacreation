@@ -42,6 +42,7 @@ import AdminChatPage from "@/pages/admin/chat";
 import AdminCallbacksPage from "@/pages/admin/callbacks";
 import WebsiteSettingsPage from "@/pages/admin/website-settings";
 import AdminPortfolioPage from "@/pages/admin/portfolio";
+import EmailSettingsPage from "@/pages/admin/email-settings";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/admin/chat" component={AdminChatPage} />
       <Route path="/admin/callbacks" component={AdminCallbacksPage} />
       <Route path="/admin/tasks" component={TasksPage} />
+      <Route path="/admin/email-settings" component={EmailSettingsPage} />
       <Route path="/admin/help" component={HelpPage} />
       <Route component={NotFound} />
     </Switch>

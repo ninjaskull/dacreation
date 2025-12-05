@@ -23,6 +23,7 @@ import {
   Phone,
   MessagesSquare,
   Image,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ const sidebarSections: SidebarSection[] = [
 const bottomItems: SidebarItem[] = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
   { name: "Website Settings", href: "/admin/website-settings", icon: Sparkles },
+  { name: "Email Settings", href: "/admin/email-settings", icon: Mail },
   { name: "Help & Support", href: "/admin/help", icon: HelpCircle },
 ];
 

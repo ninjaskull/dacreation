@@ -19,8 +19,10 @@ import {
   insertInvoicePaymentSchema,
   insertCallbackRequestSchema, updateCallbackRequestSchema,
   insertConversationSchema, updateConversationSchema,
-  insertChatMessageSchema
+  insertChatMessageSchema,
+  insertSmtpSettingsSchema, insertEmailTemplateSchema
 } from "@shared/schema";
+import { encryptPassword, isPasswordEncrypted, testSmtpConnection, clearTransporterCache, sendEmail } from "./email";
 import { crypto } from "./auth";
 import type { User } from "@shared/schema";
 
@@ -2150,6 +2152,250 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get unread count error:", error);
       res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  // ==================== Email Settings ====================
+
+  app.get("/api/settings/smtp", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getSmtpSettings();
+      if (!settings) {
+        return res.json(null);
+      }
+      const { password, ...safeSettings } = settings;
+      res.json({ ...safeSettings, hasPassword: !!password });
+    } catch (error) {
+      console.error("Get SMTP settings error:", error);
+      res.status(500).json({ message: "Failed to fetch SMTP settings" });
+    }
+  });
+
+  app.post("/api/settings/smtp", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertSmtpSettingsSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+
+      let passwordToStore = result.data.password;
+      if (passwordToStore && !isPasswordEncrypted(passwordToStore)) {
+        passwordToStore = encryptPassword(passwordToStore);
+      }
+
+      const settings = await storage.upsertSmtpSettings({
+        ...result.data,
+        password: passwordToStore,
+      });
+
+      clearTransporterCache();
+
+      const { password, ...safeSettings } = settings;
+      res.json({ ...safeSettings, hasPassword: !!password });
+    } catch (error) {
+      console.error("Save SMTP settings error:", error);
+      res.status(500).json({ message: "Failed to save SMTP settings" });
+    }
+  });
+
+  app.patch("/api/settings/smtp", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const existingSettings = await storage.getSmtpSettings();
+      if (!existingSettings) {
+        return res.status(404).json({ message: "SMTP settings not found" });
+      }
+
+      const { password, ...updateData } = req.body;
+      
+      let updates: any = { ...updateData };
+      
+      if (password && password.trim() !== '') {
+        updates.password = isPasswordEncrypted(password) ? password : encryptPassword(password);
+      }
+
+      const settings = await storage.updateSmtpSettings(existingSettings.id, updates);
+      if (!settings) {
+        return res.status(404).json({ message: "SMTP settings not found" });
+      }
+
+      clearTransporterCache();
+
+      const { password: pwd, ...safeSettings } = settings;
+      res.json({ ...safeSettings, hasPassword: !!pwd });
+    } catch (error) {
+      console.error("Update SMTP settings error:", error);
+      res.status(500).json({ message: "Failed to update SMTP settings" });
+    }
+  });
+
+  app.post("/api/settings/smtp/test", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { testEmail } = req.body;
+      if (!testEmail) {
+        return res.status(400).json({ message: "Test email address is required" });
+      }
+
+      const result = await testSmtpConnection(testEmail);
+      res.json(result);
+    } catch (error) {
+      console.error("Test SMTP error:", error);
+      res.status(500).json({ message: "Failed to test SMTP connection" });
+    }
+  });
+
+  // ==================== Email Type Settings ====================
+
+  app.get("/api/settings/email-types", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.getEmailTypeSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Get email type settings error:", error);
+      res.status(500).json({ message: "Failed to fetch email type settings" });
+    }
+  });
+
+  app.post("/api/settings/email-types", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const settings = await storage.upsertEmailTypeSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Save email type settings error:", error);
+      res.status(500).json({ message: "Failed to save email type settings" });
+    }
+  });
+
+  // ==================== Email Templates ====================
+
+  app.get("/api/email-templates", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const templates = await storage.getAllEmailTemplates();
+      res.json(templates);
+    } catch (error) {
+      console.error("Get email templates error:", error);
+      res.status(500).json({ message: "Failed to fetch email templates" });
+    }
+  });
+
+  app.get("/api/email-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const template = await storage.getEmailTemplateById(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Get email template error:", error);
+      res.status(500).json({ message: "Failed to fetch email template" });
+    }
+  });
+
+  app.post("/api/email-templates", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const result = insertEmailTemplateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+
+      const existing = await storage.getEmailTemplateByKey(result.data.templateKey);
+      if (existing) {
+        return res.status(400).json({ message: "Template key already exists" });
+      }
+
+      const template = await storage.createEmailTemplate(result.data);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Create email template error:", error);
+      res.status(500).json({ message: "Failed to create email template" });
+    }
+  });
+
+  app.patch("/api/email-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const template = await storage.updateEmailTemplate(req.params.id, req.body);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Update email template error:", error);
+      res.status(500).json({ message: "Failed to update email template" });
+    }
+  });
+
+  app.delete("/api/email-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteEmailTemplate(req.params.id);
+      res.json({ message: "Template deleted successfully" });
+    } catch (error) {
+      console.error("Delete email template error:", error);
+      res.status(500).json({ message: "Failed to delete email template" });
+    }
+  });
+
+  app.post("/api/email-templates/:id/preview", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const template = await storage.getEmailTemplateById(req.params.id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const { renderTemplate } = await import('./email');
+      const companySettings = await storage.getCompanySettings();
+      
+      const sampleVariables: Record<string, string> = {
+        recipient_name: 'John Doe',
+        recipient_email: 'john@example.com',
+        event_name: 'Sample Wedding',
+        event_date: new Date().toLocaleDateString(),
+        event_location: 'Beautiful Venue',
+        amount: '$5,000',
+        invoice_number: 'INV-001',
+        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        ...req.body.variables,
+      };
+
+      const rendered = renderTemplate(template, sampleVariables, companySettings);
+      res.json(rendered);
+    } catch (error) {
+      console.error("Preview email template error:", error);
+      res.status(500).json({ message: "Failed to preview email template" });
+    }
+  });
+
+  // ==================== Email Logs ====================
+
+  app.get("/api/email-logs", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getEmailLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Get email logs error:", error);
+      res.status(500).json({ message: "Failed to fetch email logs" });
+    }
+  });
+
+  // ==================== Send Email ====================
+
+  app.post("/api/send-email", isAuthenticated, async (req, res) => {
+    try {
+      const { to, toName, subject, html, text, type } = req.body;
+      
+      if (!to || !subject || !html) {
+        return res.status(400).json({ message: "Missing required fields: to, subject, html" });
+      }
+
+      const result = await sendEmail({ to, toName, subject, html, text, type });
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("Send email error:", error);
+      res.status(500).json({ message: "Failed to send email" });
     }
   });
 

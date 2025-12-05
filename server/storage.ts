@@ -21,11 +21,16 @@ import {
   type CallbackRequest, type InsertCallbackRequest, type UpdateCallbackRequest,
   type Conversation, type InsertConversation, type UpdateConversation,
   type ChatMessage, type InsertChatMessage,
+  type SmtpSettings, type InsertSmtpSettings, type UpdateSmtpSettings,
+  type EmailTypeSettings, type InsertEmailTypeSettings, type UpdateEmailTypeSettings,
+  type EmailTemplate, type InsertEmailTemplate, type UpdateEmailTemplate,
+  type EmailLog, type InsertEmailLog,
   users, leads, appointments, activityLogs, leadNotes,
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
   invoiceTemplates, invoices, invoiceItems, invoicePayments,
-  callbackRequests, conversations, chatMessages
+  callbackRequests, conversations, chatMessages,
+  smtpSettings, emailTypeSettings, emailTemplates, emailLogs
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -345,6 +350,25 @@ export interface IStorage {
   getInvoicePayments(invoiceId: string): Promise<InvoicePayment[]>;
   createInvoicePayment(payment: InsertInvoicePayment): Promise<InvoicePayment>;
   deleteInvoicePayment(id: string): Promise<boolean>;
+  
+  getSmtpSettings(): Promise<SmtpSettings | undefined>;
+  upsertSmtpSettings(settings: InsertSmtpSettings): Promise<SmtpSettings>;
+  updateSmtpSettings(id: string, data: UpdateSmtpSettings): Promise<SmtpSettings | undefined>;
+  updateSmtpTestResult(id: string, result: string): Promise<SmtpSettings | undefined>;
+  
+  getEmailTypeSettings(): Promise<EmailTypeSettings | undefined>;
+  upsertEmailTypeSettings(settings: InsertEmailTypeSettings | UpdateEmailTypeSettings): Promise<EmailTypeSettings>;
+  
+  getAllEmailTemplates(activeOnly?: boolean): Promise<EmailTemplate[]>;
+  getEmailTemplateById(id: string): Promise<EmailTemplate | undefined>;
+  getEmailTemplateByKey(templateKey: string): Promise<EmailTemplate | undefined>;
+  createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate>;
+  updateEmailTemplate(id: string, data: UpdateEmailTemplate): Promise<EmailTemplate | undefined>;
+  deleteEmailTemplate(id: string): Promise<boolean>;
+  
+  createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
+  updateEmailLogStatus(id: string, status: string, errorMessage?: string): Promise<EmailLog | undefined>;
+  getEmailLogs(limit?: number): Promise<EmailLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2167,6 +2191,136 @@ export class DatabaseStorage implements IStorage {
         eq(chatMessages.senderType, 'visitor')
       ));
     return result[0]?.count || 0;
+  }
+
+  async getSmtpSettings(): Promise<SmtpSettings | undefined> {
+    const [settings] = await db.select().from(smtpSettings).limit(1);
+    return settings;
+  }
+
+  async upsertSmtpSettings(settings: InsertSmtpSettings): Promise<SmtpSettings> {
+    const existing = await this.getSmtpSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(smtpSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(smtpSettings.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(smtpSettings).values(settings).returning();
+    return created;
+  }
+
+  async updateSmtpSettings(id: string, data: UpdateSmtpSettings): Promise<SmtpSettings | undefined> {
+    const [updated] = await db
+      .update(smtpSettings)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(smtpSettings.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateSmtpTestResult(id: string, result: string): Promise<SmtpSettings | undefined> {
+    const [updated] = await db
+      .update(smtpSettings)
+      .set({ lastTestedAt: new Date(), lastTestResult: result, updatedAt: new Date() })
+      .where(eq(smtpSettings.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getEmailTypeSettings(): Promise<EmailTypeSettings | undefined> {
+    const [settings] = await db.select().from(emailTypeSettings).limit(1);
+    return settings;
+  }
+
+  async upsertEmailTypeSettings(settings: InsertEmailTypeSettings | UpdateEmailTypeSettings): Promise<EmailTypeSettings> {
+    const existing = await this.getEmailTypeSettings();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(emailTypeSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(emailTypeSettings.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(emailTypeSettings).values(settings as InsertEmailTypeSettings).returning();
+    return created;
+  }
+
+  async getAllEmailTemplates(activeOnly?: boolean): Promise<EmailTemplate[]> {
+    if (activeOnly) {
+      return await db
+        .select()
+        .from(emailTemplates)
+        .where(eq(emailTemplates.isActive, true))
+        .orderBy(asc(emailTemplates.name));
+    }
+    return await db.select().from(emailTemplates).orderBy(asc(emailTemplates.name));
+  }
+
+  async getEmailTemplateById(id: string): Promise<EmailTemplate | undefined> {
+    const [template] = await db.select().from(emailTemplates).where(eq(emailTemplates.id, id));
+    return template;
+  }
+
+  async getEmailTemplateByKey(templateKey: string): Promise<EmailTemplate | undefined> {
+    const [template] = await db.select().from(emailTemplates).where(eq(emailTemplates.templateKey, templateKey));
+    return template;
+  }
+
+  async createEmailTemplate(template: InsertEmailTemplate): Promise<EmailTemplate> {
+    const [created] = await db.insert(emailTemplates).values(template).returning();
+    return created;
+  }
+
+  async updateEmailTemplate(id: string, data: UpdateEmailTemplate): Promise<EmailTemplate | undefined> {
+    const [updated] = await db
+      .update(emailTemplates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(emailTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteEmailTemplate(id: string): Promise<boolean> {
+    await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+    return true;
+  }
+
+  async createEmailLog(log: InsertEmailLog): Promise<EmailLog> {
+    const [created] = await db.insert(emailLogs).values(log).returning();
+    return created;
+  }
+
+  async updateEmailLogStatus(id: string, status: string, errorMessage?: string): Promise<EmailLog | undefined> {
+    const updateData: any = { status };
+    if (status === 'sent') {
+      updateData.sentAt = new Date();
+    }
+    if (errorMessage) {
+      updateData.errorMessage = errorMessage;
+    }
+    
+    const [updated] = await db
+      .update(emailLogs)
+      .set(updateData)
+      .where(eq(emailLogs.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getEmailLogs(limit: number = 100): Promise<EmailLog[]> {
+    return await db
+      .select()
+      .from(emailLogs)
+      .orderBy(desc(emailLogs.createdAt))
+      .limit(limit);
   }
 }
 
