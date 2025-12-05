@@ -558,7 +558,7 @@ export type Vendor = typeof vendors.$inferSelect;
 
 export const companySettings = pgTable("company_settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
+  name: text("name"),
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
