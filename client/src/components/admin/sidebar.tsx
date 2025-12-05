@@ -20,6 +20,8 @@ import {
   Bell,
   HelpCircle,
   Briefcase,
+  Phone,
+  MessagesSquare,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -56,7 +58,8 @@ const sidebarSections: SidebarSection[] = [
     items: [
       { name: "Leads", href: "/admin/leads", icon: Users },
       { name: "Clients", href: "/admin/clients", icon: UserCheck },
-      { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
+      { name: "Chat", href: "/admin/chat", icon: MessagesSquare },
+      { name: "Callbacks", href: "/admin/callbacks", icon: Phone },
     ],
   },
   {
