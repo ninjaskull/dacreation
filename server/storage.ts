@@ -18,10 +18,14 @@ import {
   type Invoice, type InsertInvoice, type UpdateInvoice,
   type InvoiceItem, type InsertInvoiceItem, type UpdateInvoiceItem,
   type InvoicePayment, type InsertInvoicePayment,
+  type CallbackRequest, type InsertCallbackRequest, type UpdateCallbackRequest,
+  type Conversation, type InsertConversation, type UpdateConversation,
+  type ChatMessage, type InsertChatMessage,
   users, leads, appointments, activityLogs, leadNotes,
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
-  invoiceTemplates, invoices, invoiceItems, invoicePayments
+  invoiceTemplates, invoices, invoiceItems, invoicePayments,
+  callbackRequests, conversations, chatMessages
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -169,6 +173,47 @@ export interface ReportData {
     new: number;
     returning: number;
   };
+}
+
+export interface CallbackRequestFilters {
+  status?: string;
+  priority?: string;
+  assignedTo?: string;
+  search?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export interface CallbackRequestWithAssignee extends CallbackRequest {
+  assignee?: { id: string; name: string | null; username: string } | null;
+}
+
+export interface CallbackRequestStats {
+  total: number;
+  pending: number;
+  called: number;
+  scheduled: number;
+  completed: number;
+  byPriority: Record<string, number>;
+}
+
+export interface ConversationFilters {
+  status?: string;
+  assignedTo?: string;
+  search?: string;
+}
+
+export interface ConversationWithDetails extends Conversation {
+  assignee?: { id: string; name: string | null; username: string } | null;
+  lastMessage?: ChatMessage | null;
+}
+
+export interface ConversationStats {
+  total: number;
+  active: number;
+  waiting: number;
+  resolved: number;
+  unreadCount: number;
 }
 
 export interface IStorage {
@@ -1808,6 +1853,320 @@ export class DatabaseStorage implements IStorage {
     }
 
     return true;
+  }
+
+  // Callback Requests
+  async createCallbackRequest(request: InsertCallbackRequest): Promise<CallbackRequest> {
+    const [created] = await db.insert(callbackRequests).values(request).returning();
+    return created;
+  }
+
+  async getAllCallbackRequests(filters?: CallbackRequestFilters): Promise<CallbackRequestWithAssignee[]> {
+    const conditions: any[] = [];
+    
+    if (filters?.status) {
+      conditions.push(eq(callbackRequests.status, filters.status));
+    }
+    if (filters?.priority) {
+      conditions.push(eq(callbackRequests.priority, filters.priority));
+    }
+    if (filters?.assignedTo) {
+      conditions.push(eq(callbackRequests.assignedTo, filters.assignedTo));
+    }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          like(callbackRequests.name, `%${filters.search}%`),
+          like(callbackRequests.phone, `%${filters.search}%`),
+          like(callbackRequests.email, `%${filters.search}%`)
+        )
+      );
+    }
+    if (filters?.dateFrom) {
+      conditions.push(gte(callbackRequests.createdAt, filters.dateFrom));
+    }
+    if (filters?.dateTo) {
+      conditions.push(lte(callbackRequests.createdAt, filters.dateTo));
+    }
+
+    const results = await db
+      .select({
+        request: callbackRequests,
+        assignee: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(callbackRequests)
+      .leftJoin(users, eq(callbackRequests.assignedTo, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(callbackRequests.createdAt));
+
+    return results.map(r => ({
+      ...r.request,
+      assignee: r.assignee?.id ? r.assignee : null,
+    }));
+  }
+
+  async getCallbackRequestById(id: string): Promise<CallbackRequestWithAssignee | undefined> {
+    const [result] = await db
+      .select({
+        request: callbackRequests,
+        assignee: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(callbackRequests)
+      .leftJoin(users, eq(callbackRequests.assignedTo, users.id))
+      .where(eq(callbackRequests.id, id));
+
+    if (!result) return undefined;
+
+    return {
+      ...result.request,
+      assignee: result.assignee?.id ? result.assignee : null,
+    };
+  }
+
+  async updateCallbackRequest(id: string, data: UpdateCallbackRequest): Promise<CallbackRequest | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.calledAt) updateData.calledAt = new Date(data.calledAt);
+    if (data.scheduledCallAt) updateData.scheduledCallAt = new Date(data.scheduledCallAt);
+
+    const [updated] = await db
+      .update(callbackRequests)
+      .set(updateData)
+      .where(eq(callbackRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCallbackRequest(id: string): Promise<boolean> {
+    await db.delete(callbackRequests).where(eq(callbackRequests.id, id));
+    return true;
+  }
+
+  async getCallbackRequestStats(): Promise<CallbackRequestStats> {
+    const allRequests = await db.select().from(callbackRequests);
+    
+    const stats: CallbackRequestStats = {
+      total: allRequests.length,
+      pending: 0,
+      called: 0,
+      scheduled: 0,
+      completed: 0,
+      byPriority: {},
+    };
+
+    allRequests.forEach(request => {
+      if (request.status === 'pending') stats.pending++;
+      if (request.status === 'called' || request.status === 'no_answer') stats.called++;
+      if (request.status === 'scheduled') stats.scheduled++;
+      if (request.status === 'completed') stats.completed++;
+
+      const priority = request.priority || 'normal';
+      stats.byPriority[priority] = (stats.byPriority[priority] || 0) + 1;
+    });
+
+    return stats;
+  }
+
+  // Conversations
+  async createConversation(conversation: InsertConversation): Promise<Conversation> {
+    const [created] = await db.insert(conversations).values(conversation).returning();
+    return created;
+  }
+
+  async getConversationByVisitorId(visitorId: string): Promise<Conversation | undefined> {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(and(
+        eq(conversations.visitorId, visitorId),
+        or(
+          eq(conversations.status, 'active'),
+          eq(conversations.status, 'waiting')
+        )
+      ))
+      .orderBy(desc(conversations.lastMessageAt))
+      .limit(1);
+    return conversation;
+  }
+
+  async getAllConversations(filters?: ConversationFilters): Promise<ConversationWithDetails[]> {
+    const conditions: any[] = [];
+    
+    if (filters?.status) {
+      conditions.push(eq(conversations.status, filters.status));
+    }
+    if (filters?.assignedTo) {
+      conditions.push(eq(conversations.assignedTo, filters.assignedTo));
+    }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          like(conversations.visitorName, `%${filters.search}%`),
+          like(conversations.visitorPhone, `%${filters.search}%`),
+          like(conversations.visitorEmail, `%${filters.search}%`)
+        )
+      );
+    }
+
+    const results = await db
+      .select({
+        conversation: conversations,
+        assignee: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(conversations)
+      .leftJoin(users, eq(conversations.assignedTo, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(conversations.lastMessageAt));
+
+    const conversationsWithDetails: ConversationWithDetails[] = [];
+    
+    for (const r of results) {
+      const [lastMessage] = await db
+        .select()
+        .from(chatMessages)
+        .where(eq(chatMessages.conversationId, r.conversation.id))
+        .orderBy(desc(chatMessages.createdAt))
+        .limit(1);
+
+      conversationsWithDetails.push({
+        ...r.conversation,
+        assignee: r.assignee?.id ? r.assignee : null,
+        lastMessage: lastMessage || null,
+      });
+    }
+
+    return conversationsWithDetails;
+  }
+
+  async getConversationById(id: string): Promise<ConversationWithDetails | undefined> {
+    const [result] = await db
+      .select({
+        conversation: conversations,
+        assignee: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(conversations)
+      .leftJoin(users, eq(conversations.assignedTo, users.id))
+      .where(eq(conversations.id, id));
+
+    if (!result) return undefined;
+
+    const [lastMessage] = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.conversationId, id))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(1);
+
+    return {
+      ...result.conversation,
+      assignee: result.assignee?.id ? result.assignee : null,
+      lastMessage: lastMessage || null,
+    };
+  }
+
+  async updateConversation(id: string, data: UpdateConversation): Promise<Conversation | undefined> {
+    const [updated] = await db
+      .update(conversations)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(conversations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteConversation(id: string): Promise<boolean> {
+    await db.delete(chatMessages).where(eq(chatMessages.conversationId, id));
+    await db.delete(conversations).where(eq(conversations.id, id));
+    return true;
+  }
+
+  async getConversationStats(): Promise<ConversationStats> {
+    const allConversations = await db.select().from(conversations);
+    
+    const stats: ConversationStats = {
+      total: allConversations.length,
+      active: 0,
+      waiting: 0,
+      resolved: 0,
+      unreadCount: 0,
+    };
+
+    allConversations.forEach(conv => {
+      if (conv.status === 'active') stats.active++;
+      if (conv.status === 'waiting') stats.waiting++;
+      if (conv.status === 'resolved' || conv.status === 'closed') stats.resolved++;
+      stats.unreadCount += conv.unreadCount || 0;
+    });
+
+    return stats;
+  }
+
+  // Chat Messages
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [created] = await db.insert(chatMessages).values(message).returning();
+    
+    await db.update(conversations)
+      .set({ 
+        lastMessageAt: new Date(),
+        unreadCount: message.senderType === 'visitor' 
+          ? sql`${conversations.unreadCount} + 1`
+          : conversations.unreadCount,
+        status: message.senderType === 'visitor' ? 'waiting' : 'active',
+        updatedAt: new Date(),
+      })
+      .where(eq(conversations.id, message.conversationId));
+
+    return created;
+  }
+
+  async getMessagesByConversationId(conversationId: string): Promise<ChatMessage[]> {
+    return await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.conversationId, conversationId))
+      .orderBy(asc(chatMessages.createdAt));
+  }
+
+  async markMessagesAsRead(conversationId: string, senderType?: string): Promise<void> {
+    const conditions = [eq(chatMessages.conversationId, conversationId)];
+    if (senderType) {
+      conditions.push(eq(chatMessages.senderType, senderType));
+    }
+
+    await db.update(chatMessages)
+      .set({ isRead: true })
+      .where(and(...conditions));
+
+    if (senderType === 'visitor') {
+      await db.update(conversations)
+        .set({ unreadCount: 0 })
+        .where(eq(conversations.id, conversationId));
+    }
+  }
+
+  async getUnreadMessageCount(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(chatMessages)
+      .where(and(
+        eq(chatMessages.isRead, false),
+        eq(chatMessages.senderType, 'visitor')
+      ));
+    return result[0]?.count || 0;
   }
 }
 

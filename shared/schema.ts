@@ -878,3 +878,122 @@ export const invoiceLayouts = [
   { value: "professional", label: "Professional" },
   { value: "elegant", label: "Elegant" },
 ] as const;
+
+// Callback Requests Schema
+export const callbackRequestStatuses = ["pending", "called", "no_answer", "scheduled", "completed", "cancelled"] as const;
+export type CallbackRequestStatus = typeof callbackRequestStatuses[number];
+
+export const callbackRequests = pgTable("callback_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  eventType: text("event_type"),
+  message: text("message"),
+  source: text("source").notNull().default("floating_cta"),
+  status: text("status").notNull().default("pending"),
+  priority: text("priority").notNull().default("normal"),
+  assignedTo: varchar("assigned_to").references(() => users.id),
+  notes: text("notes"),
+  calledAt: timestamp("called_at"),
+  scheduledCallAt: timestamp("scheduled_call_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCallbackRequestSchema = createInsertSchema(callbackRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  assignedTo: true,
+  notes: true,
+  calledAt: true,
+  scheduledCallAt: true,
+});
+
+export const updateCallbackRequestSchema = z.object({
+  status: z.enum(callbackRequestStatuses).optional(),
+  priority: z.string().optional(),
+  assignedTo: z.string().nullable().optional(),
+  notes: z.string().optional(),
+  calledAt: z.date().or(z.string()).optional(),
+  scheduledCallAt: z.date().or(z.string()).nullable().optional(),
+});
+
+export type InsertCallbackRequest = z.infer<typeof insertCallbackRequestSchema>;
+export type UpdateCallbackRequest = z.infer<typeof updateCallbackRequestSchema>;
+export type CallbackRequest = typeof callbackRequests.$inferSelect;
+
+// Chat Conversations Schema
+export const conversationStatuses = ["active", "waiting", "resolved", "closed"] as const;
+export type ConversationStatus = typeof conversationStatuses[number];
+
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitorId: text("visitor_id").notNull(),
+  visitorName: text("visitor_name"),
+  visitorPhone: text("visitor_phone"),
+  visitorEmail: text("visitor_email"),
+  eventType: text("event_type"),
+  status: text("status").notNull().default("active"),
+  assignedTo: varchar("assigned_to").references(() => users.id),
+  lastMessageAt: timestamp("last_message_at").notNull().defaultNow(),
+  unreadCount: integer("unread_count").notNull().default(0),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  assignedTo: true,
+  unreadCount: true,
+});
+
+export const updateConversationSchema = z.object({
+  visitorName: z.string().optional(),
+  visitorPhone: z.string().optional(),
+  visitorEmail: z.string().optional(),
+  eventType: z.string().optional(),
+  status: z.enum(conversationStatuses).optional(),
+  assignedTo: z.string().nullable().optional(),
+  unreadCount: z.number().optional(),
+  metadata: z.any().optional(),
+});
+
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type UpdateConversation = z.infer<typeof updateConversationSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+
+// Chat Messages Schema
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").references(() => conversations.id).notNull(),
+  senderId: text("sender_id").notNull(),
+  senderType: text("sender_type").notNull().default("visitor"),
+  senderName: text("sender_name"),
+  content: text("content").notNull(),
+  messageType: text("message_type").notNull().default("text"),
+  isRead: boolean("is_read").notNull().default(false),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+  isRead: true,
+});
+
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+
+export const senderTypes = ["visitor", "admin", "system"] as const;
+export type SenderType = typeof senderTypes[number];
+
+export const messageTypes = ["text", "image", "file", "system"] as const;
+export type MessageType = typeof messageTypes[number];
