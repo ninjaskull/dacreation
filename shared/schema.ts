@@ -1013,3 +1013,144 @@ export type SenderType = typeof senderTypes[number];
 
 export const messageTypes = ["text", "image", "file", "system"] as const;
 export type MessageType = typeof messageTypes[number];
+
+// SMTP Settings Schema
+export const encryptionTypes = ["none", "tls", "ssl"] as const;
+export type EncryptionType = typeof encryptionTypes[number];
+
+export const smtpSettings = pgTable("smtp_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  host: text("host").notNull(),
+  port: integer("port").notNull().default(587),
+  encryption: text("encryption").notNull().default("tls"),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  senderName: text("sender_name").notNull(),
+  senderEmail: text("sender_email").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  lastTestedAt: timestamp("last_tested_at"),
+  lastTestResult: text("last_test_result"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertSmtpSettingsSchema = createInsertSchema(smtpSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastTestedAt: true,
+  lastTestResult: true,
+}).extend({
+  encryption: z.enum(encryptionTypes),
+  port: z.number().min(1).max(65535),
+});
+
+export const updateSmtpSettingsSchema = z.object({
+  host: z.string().optional(),
+  port: z.number().min(1).max(65535).optional(),
+  encryption: z.enum(encryptionTypes).optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  senderName: z.string().optional(),
+  senderEmail: z.string().email().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type InsertSmtpSettings = z.infer<typeof insertSmtpSettingsSchema>;
+export type UpdateSmtpSettings = z.infer<typeof updateSmtpSettingsSchema>;
+export type SmtpSettings = typeof smtpSettings.$inferSelect;
+
+// Email Type Settings Schema
+export const emailTypeSettings = pgTable("email_type_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
+  transactionalEnabled: boolean("transactional_enabled").notNull().default(true),
+  internalEnabled: boolean("internal_enabled").notNull().default(true),
+  marketingEnabled: boolean("marketing_enabled").notNull().default(false),
+  reminderEnabled: boolean("reminder_enabled").notNull().default(true),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertEmailTypeSettingsSchema = createInsertSchema(emailTypeSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const updateEmailTypeSettingsSchema = z.object({
+  notificationsEnabled: z.boolean().optional(),
+  transactionalEnabled: z.boolean().optional(),
+  internalEnabled: z.boolean().optional(),
+  marketingEnabled: z.boolean().optional(),
+  reminderEnabled: z.boolean().optional(),
+});
+
+export type InsertEmailTypeSettings = z.infer<typeof insertEmailTypeSettingsSchema>;
+export type UpdateEmailTypeSettings = z.infer<typeof updateEmailTypeSettingsSchema>;
+export type EmailTypeSettings = typeof emailTypeSettings.$inferSelect;
+
+// Email Templates Schema
+export const emailTemplateTypes = ["notification", "transactional", "internal", "marketing", "reminder"] as const;
+export type EmailTemplateType = typeof emailTemplateTypes[number];
+
+export const emailTemplates = pgTable("email_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  templateKey: text("template_key").notNull().unique(),
+  type: text("type").notNull().default("notification"),
+  subject: text("subject").notNull(),
+  htmlContent: text("html_content").notNull(),
+  textContent: text("text_content"),
+  variables: text("variables").array(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  type: z.enum(emailTemplateTypes),
+  variables: z.array(z.string()).optional(),
+});
+
+export const updateEmailTemplateSchema = z.object({
+  name: z.string().optional(),
+  templateKey: z.string().optional(),
+  type: z.enum(emailTemplateTypes).optional(),
+  subject: z.string().optional(),
+  htmlContent: z.string().optional(),
+  textContent: z.string().optional(),
+  variables: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
+export type UpdateEmailTemplate = z.infer<typeof updateEmailTemplateSchema>;
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+
+// Email Logs Schema for tracking sent emails
+export const emailLogs = pgTable("email_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").references(() => emailTemplates.id),
+  recipientEmail: text("recipient_email").notNull(),
+  recipientName: text("recipient_name"),
+  subject: text("subject").notNull(),
+  type: text("type").notNull(),
+  status: text("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
+  id: true,
+  createdAt: true,
+  sentAt: true,
+  status: true,
+  errorMessage: true,
+});
+
+export type InsertEmailLog = z.infer<typeof insertEmailLogSchema>;
+export type EmailLog = typeof emailLogs.$inferSelect;
