@@ -1285,6 +1285,41 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/settings/website", async (req, res) => {
+    try {
+      const settings = await storage.getCompanySettings();
+      if (!settings) {
+        return res.json({
+          address: null,
+          phone: null,
+          email: null,
+          whatsappNumber: null,
+          mapEmbedCode: null,
+          topBarAddress: null,
+          secondaryAddress: null,
+          socialMedia: [],
+          numberOfEventsHeld: 0,
+          ratings: 0,
+        });
+      }
+      res.json({
+        address: settings.address,
+        phone: settings.phone,
+        email: settings.email,
+        whatsappNumber: settings.whatsappNumber,
+        mapEmbedCode: settings.mapEmbedCode,
+        topBarAddress: settings.topBarAddress,
+        secondaryAddress: settings.secondaryAddress,
+        socialMedia: settings.socialMedia || [],
+        numberOfEventsHeld: settings.numberOfEventsHeld || 0,
+        ratings: settings.ratings || 0,
+      });
+    } catch (error) {
+      console.error("Get website settings error:", error);
+      res.status(500).json({ message: "Failed to fetch website settings" });
+    }
+  });
+
   app.get("/api/settings/company", isAuthenticated, async (req, res) => {
     try {
       const settings = await storage.getCompanySettings();

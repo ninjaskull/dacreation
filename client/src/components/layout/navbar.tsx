@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Menu, 
   X, 
@@ -20,6 +21,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface WebsiteSettings {
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  whatsappNumber: string | null;
+  mapEmbedCode: string | null;
+  topBarAddress: string | null;
+  secondaryAddress: string | null;
+  socialMedia: { platform: string; url: string; icon?: string }[];
+  numberOfEventsHeld: number;
+  ratings: number;
+}
 
 const servicesData = [
   {
@@ -61,6 +75,13 @@ const companyLinks = [
   { name: "Press", href: "/press" }
 ];
 
+const DEFAULT_SETTINGS = {
+  phone: "+91 98765 43210",
+  email: "hello@dacreation.com",
+  topBarAddress: "Mumbai, India",
+  numberOfEventsHeld: 500,
+};
+
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -69,6 +90,25 @@ export function Navbar() {
   const [location] = useLocation();
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+
+  const { data: settings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/website");
+      if (!response.ok) throw new Error("Failed to fetch settings");
+      return response.json();
+    },
+  });
+
+  const currentPhone = settings?.phone || DEFAULT_SETTINGS.phone;
+  const currentEmail = settings?.email || DEFAULT_SETTINGS.email;
+  const currentAddress = settings?.topBarAddress || DEFAULT_SETTINGS.topBarAddress;
+  const currentEventsCount = settings?.numberOfEventsHeld || DEFAULT_SETTINGS.numberOfEventsHeld;
+
+  const phoneLink = useMemo(() => {
+    const phoneClean = currentPhone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+    return `tel:${phoneClean}`;
+  }, [currentPhone]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,7 +163,7 @@ export function Navbar() {
           <div className="hidden lg:flex justify-between items-center h-10 text-xs">
             <div className="flex items-center gap-6">
               <a 
-                href="tel:+919876543210" 
+                href={phoneLink}
                 className={cn(
                   "flex items-center gap-2 transition-colors",
                   showTransparent 
@@ -133,10 +173,10 @@ export function Navbar() {
                 data-testid="link-phone"
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>+91 98765 43210</span>
+                <span>{currentPhone}</span>
               </a>
               <a 
-                href="mailto:hello@dacreation.com" 
+                href={`mailto:${currentEmail}`}
                 className={cn(
                   "flex items-center gap-2 transition-colors",
                   showTransparent 
@@ -146,7 +186,7 @@ export function Navbar() {
                 data-testid="link-email"
               >
                 <Mail className="w-3.5 h-3.5" />
-                <span>hello@dacreation.com</span>
+                <span>{currentEmail}</span>
               </a>
               <span 
                 className={cn(
@@ -157,7 +197,7 @@ export function Navbar() {
                 )}
               >
                 <MapPin className="w-3.5 h-3.5" />
-                <span>Mumbai, India</span>
+                <span>{currentAddress}</span>
               </span>
             </div>
             <div className="flex items-center gap-6">
@@ -185,8 +225,8 @@ export function Navbar() {
                   showTransparent 
                     ? "text-white/80" 
                     : "text-primary-foreground/80"
-                )}>
-                  500+ Events Delivered
+                )} data-testid="topbar-events-count">
+                  {currentEventsCount}+ Events Delivered
                 </span>
               </div>
             </div>
@@ -413,7 +453,7 @@ export function Navbar() {
                     Get a Quote
                   </Button>
                 </Link>
-                <a href="tel:+919876543210">
+                <a href={phoneLink}>
                   <Button 
                     variant="ghost"
                     size="sm"
@@ -582,10 +622,10 @@ export function Navbar() {
                     Get a Free Quote
                   </Button>
                 </Link>
-                <a href="tel:+919876543210" className="block">
+                <a href={phoneLink} className="block">
                   <Button variant="outline" className="w-full rounded-full py-3 text-sm gap-2" data-testid="button-mobile-call">
                     <Phone className="w-4 h-4" />
-                    Call +91 98765 43210
+                    Call {currentPhone}
                   </Button>
                 </a>
               </div>
@@ -594,13 +634,13 @@ export function Navbar() {
               <div className="mt-8 pt-8 border-t border-border/50 space-y-4">
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Mail className="w-5 h-5" />
-                  <a href="mailto:hello@dacreation.com" className="hover:text-primary transition-colors">
-                    hello@dacreation.com
+                  <a href={`mailto:${currentEmail}`} className="hover:text-primary transition-colors">
+                    {currentEmail}
                   </a>
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <MapPin className="w-5 h-5" />
-                  <span>Mumbai, India</span>
+                  <span>{currentAddress}</span>
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Clock className="w-5 h-5" />
@@ -612,7 +652,7 @@ export function Navbar() {
               <div className="mt-8 p-4 bg-primary/5 rounded-xl">
                 <div className="flex items-center gap-2 text-primary">
                   <Star className="w-5 h-5 fill-current" />
-                  <span className="font-semibold">500+ Events Successfully Delivered</span>
+                  <span className="font-semibold">{currentEventsCount}+ Events Successfully Delivered</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   Trusted by families and businesses across India

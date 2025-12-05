@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,31 @@ import {
   Linkedin,
   Youtube,
   ArrowRight,
-  Building2,
   Globe,
-  Sparkles
+  Sparkles,
+  type LucideIcon
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { budgetRanges } from "@shared/schema";
+
+interface SocialLink {
+  platform: string;
+  url: string;
+  icon?: string;
+}
+
+interface WebsiteSettings {
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  whatsappNumber: string | null;
+  mapEmbedCode: string | null;
+  topBarAddress: string | null;
+  secondaryAddress: string | null;
+  socialMedia: SocialLink[];
+  numberOfEventsHeld: number;
+  ratings: number;
+}
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -56,43 +76,7 @@ const eventTypes = [
   { value: "destination", label: "Destination Event" },
 ];
 
-const contactMethods = [
-  {
-    icon: Phone,
-    title: "Phone",
-    description: "Call us directly for immediate assistance",
-    value: "+91 98765 43210",
-    href: "tel:+919876543210",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    icon: MessageCircle,
-    title: "WhatsApp",
-    description: "Chat with us on WhatsApp for quick responses",
-    value: "+91 98765 43210",
-    href: "https://wa.me/919876543210",
-    color: "bg-green-50 text-green-600",
-  },
-  {
-    icon: Mail,
-    title: "Email",
-    description: "Send us an email for detailed inquiries",
-    value: "hello@dacreation.com",
-    href: "mailto:hello@dacreation.com",
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    icon: Calendar,
-    title: "Book Consultation",
-    description: "Schedule a free consultation with our team",
-    value: "Get Free Quote",
-    href: "/inquire",
-    color: "bg-amber-50 text-amber-600",
-  },
-];
-
 const officeDetails = {
-  address: "123 Event Avenue, Bandra West, Mumbai, Maharashtra 400050, India",
   workingHours: [
     { day: "Monday - Friday", time: "10:00 AM - 7:00 PM" },
     { day: "Saturday", time: "10:00 AM - 5:00 PM" },
@@ -107,18 +91,103 @@ const officeDetails = {
   ],
 };
 
-const socialLinks = [
-  { icon: Instagram, href: "https://instagram.com/dacreation", label: "Instagram", followers: "50K+" },
-  { icon: Facebook, href: "https://facebook.com/dacreation", label: "Facebook", followers: "25K+" },
-  { icon: Youtube, href: "https://youtube.com/dacreation", label: "YouTube", followers: "10K+" },
-  { icon: Linkedin, href: "https://linkedin.com/company/dacreation", label: "LinkedIn", followers: "5K+" },
-  { icon: Twitter, href: "https://twitter.com/dacreation", label: "Twitter", followers: "8K+" },
-];
+const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
+  instagram: Instagram,
+  facebook: Facebook,
+  twitter: Twitter,
+  linkedin: Linkedin,
+  youtube: Youtube,
+};
+
+const DEFAULT_SETTINGS: WebsiteSettings = {
+  address: "123 Event Avenue, Bandra West, Mumbai, Maharashtra 400050, India",
+  phone: "+91 98765 43210",
+  email: "hello@dacreation.com",
+  whatsappNumber: "+91 98765 43210",
+  mapEmbedCode: null,
+  topBarAddress: "Mumbai, India",
+  secondaryAddress: null,
+  socialMedia: [],
+  numberOfEventsHeld: 500,
+  ratings: 5,
+};
 
 export default function ContactPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const { data: settings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/website");
+      if (!response.ok) throw new Error("Failed to fetch settings");
+      return response.json();
+    },
+  });
+
+  const currentSettings = settings || DEFAULT_SETTINGS;
+
+  const contactMethods = useMemo(() => {
+    const methods = [];
+    
+    if (currentSettings.phone) {
+      const phoneClean = currentSettings.phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+      methods.push({
+        icon: Phone,
+        title: "Phone",
+        description: "Call us directly for immediate assistance",
+        value: currentSettings.phone,
+        href: `tel:${phoneClean}`,
+        color: "bg-blue-50 text-blue-600",
+      });
+    }
+    
+    if (currentSettings.whatsappNumber) {
+      const waClean = currentSettings.whatsappNumber.replace(/\s+/g, '').replace(/[^+\d]/g, '').replace('+', '');
+      methods.push({
+        icon: MessageCircle,
+        title: "WhatsApp",
+        description: "Chat with us on WhatsApp for quick responses",
+        value: currentSettings.whatsappNumber,
+        href: `https://wa.me/${waClean}`,
+        color: "bg-green-50 text-green-600",
+      });
+    }
+    
+    if (currentSettings.email) {
+      methods.push({
+        icon: Mail,
+        title: "Email",
+        description: "Send us an email for detailed inquiries",
+        value: currentSettings.email,
+        href: `mailto:${currentSettings.email}`,
+        color: "bg-purple-50 text-purple-600",
+      });
+    }
+
+    methods.push({
+      icon: Calendar,
+      title: "Book Consultation",
+      description: "Schedule a free consultation with our team",
+      value: "Get Free Quote",
+      href: "/inquire",
+      color: "bg-amber-50 text-amber-600",
+    });
+
+    return methods;
+  }, [currentSettings]);
+
+  const socialLinks = useMemo(() => {
+    if (!currentSettings.socialMedia || currentSettings.socialMedia.length === 0) {
+      return [];
+    }
+    return currentSettings.socialMedia.filter(link => link.url).map(link => ({
+      icon: SOCIAL_ICON_MAP[link.platform.toLowerCase()] || Globe,
+      href: link.url,
+      label: link.platform.charAt(0).toUpperCase() + link.platform.slice(1),
+    }));
+  }, [currentSettings.socialMedia]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -168,6 +237,22 @@ export default function ContactPage() {
       setIsSubmitting(false);
     }
   }
+
+  const whatsappLink = useMemo(() => {
+    if (currentSettings.whatsappNumber) {
+      const waClean = currentSettings.whatsappNumber.replace(/\s+/g, '').replace(/[^+\d]/g, '').replace('+', '');
+      return `https://wa.me/${waClean}`;
+    }
+    return "https://wa.me/919876543210";
+  }, [currentSettings.whatsappNumber]);
+
+  const phoneLink = useMemo(() => {
+    if (currentSettings.phone) {
+      const phoneClean = currentSettings.phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+      return `tel:${phoneClean}`;
+    }
+    return "tel:+919876543210";
+  }, [currentSettings.phone]);
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
@@ -261,7 +346,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-foreground mb-1">Head Office</h4>
-                      <p className="text-muted-foreground">{officeDetails.address}</p>
+                      <p className="text-muted-foreground">{currentSettings.address || DEFAULT_SETTINGS.address}</p>
                       <a 
                         href="https://maps.google.com/?q=Bandra+West+Mumbai" 
                         target="_blank" 
@@ -312,41 +397,44 @@ export default function ContactPage() {
                 </div>
 
                 {/* Social Media */}
-                <div className="border-t border-border pt-8">
-                  <h4 className="font-semibold text-foreground mb-4">Follow Us</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {socialLinks.map((social) => (
-                      <a
-                        key={social.label}
-                        href={social.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg hover:bg-primary hover:text-white transition-colors group"
-                        data-testid={`contact-social-${social.label.toLowerCase()}`}
-                      >
-                        <social.icon className="w-5 h-5" />
-                        <span className="text-sm font-medium">{social.label}</span>
-                        <span className="text-xs text-muted-foreground group-hover:text-white/70">
-                          {social.followers}
-                        </span>
-                      </a>
-                    ))}
+                {socialLinks.length > 0 && (
+                  <div className="border-t border-border pt-8">
+                    <h4 className="font-semibold text-foreground mb-4">Follow Us</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {socialLinks.map((social) => (
+                        <a
+                          key={social.label}
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg hover:bg-primary hover:text-white transition-colors group"
+                          data-testid={`contact-social-${social.label.toLowerCase()}`}
+                        >
+                          <social.icon className="w-5 h-5" />
+                          <span className="text-sm font-medium">{social.label}</span>
+                        </a>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Map Embed */}
                 <div className="mt-10 rounded-xl overflow-hidden border border-border shadow-sm">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.0!2d72.8347!3d19.0596!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDAzJzM0LjYiTiA3MsKwNTAnMDQuOSJF!5e0!3m2!1sen!2sin!4v1699000000000!5m2!1sen!2sin"
-                    width="100%"
-                    height="250"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="DA Creation Office Location"
-                    data-testid="contact-map"
-                  />
+                  {currentSettings.mapEmbedCode ? (
+                    <div dangerouslySetInnerHTML={{ __html: currentSettings.mapEmbedCode }} />
+                  ) : (
+                    <iframe
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.0!2d72.8347!3d19.0596!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTnCsDAzJzM0LjYiTiA3MsKwNTAnMDQuOSJF!5e0!3m2!1sen!2sin!4v1699000000000!5m2!1sen!2sin"
+                      width="100%"
+                      height="250"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="DA Creation Office Location"
+                      data-testid="contact-map"
+                    />
+                  )}
                 </div>
               </motion.div>
 
@@ -382,13 +470,13 @@ export default function ContactPage() {
                         We've received your inquiry and will contact you within 24 hours.
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                           <Button variant="outline" className="gap-2">
                             <MessageCircle className="w-4 h-4" />
                             Chat on WhatsApp
                           </Button>
                         </a>
-                        <a href="tel:+919876543210">
+                        <a href={phoneLink}>
                           <Button variant="outline" className="gap-2">
                             <Phone className="w-4 h-4" />
                             Call Us Now
@@ -554,11 +642,15 @@ export default function ContactPage() {
                 {/* Quick Stats */}
                 <div className="grid grid-cols-3 gap-4 mt-6">
                   <div className="bg-muted/50 p-4 rounded-xl text-center">
-                    <div className="text-2xl font-bold text-primary">500+</div>
+                    <div className="text-2xl font-bold text-primary" data-testid="stat-events">
+                      {currentSettings.numberOfEventsHeld || 500}+
+                    </div>
                     <div className="text-xs text-muted-foreground">Events Delivered</div>
                   </div>
                   <div className="bg-muted/50 p-4 rounded-xl text-center">
-                    <div className="text-2xl font-bold text-primary">4.9</div>
+                    <div className="text-2xl font-bold text-primary" data-testid="stat-rating">
+                      {currentSettings.ratings || 4.9}
+                    </div>
                     <div className="text-xs text-muted-foreground">Client Rating</div>
                   </div>
                   <div className="bg-muted/50 p-4 rounded-xl text-center">

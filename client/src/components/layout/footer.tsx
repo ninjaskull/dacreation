@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Instagram, 
   Facebook, 
@@ -14,14 +16,94 @@ import {
   Award,
   Shield,
   Star,
-  Sparkles
+  Sparkles,
+  Globe,
+  type LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
+interface SocialLink {
+  platform: string;
+  url: string;
+  icon?: string;
+}
+
+interface WebsiteSettings {
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  whatsappNumber: string | null;
+  mapEmbedCode: string | null;
+  topBarAddress: string | null;
+  secondaryAddress: string | null;
+  socialMedia: SocialLink[];
+  numberOfEventsHeld: number;
+  ratings: number;
+}
+
+const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
+  instagram: Instagram,
+  facebook: Facebook,
+  twitter: Twitter,
+  linkedin: Linkedin,
+  youtube: Youtube,
+};
+
+const DEFAULT_SETTINGS = {
+  address: "123 Event Avenue,\nMumbai, MH 400001",
+  phone: "+91 98765 43210",
+  email: "hello@dacreation.com",
+  numberOfEventsHeld: 500,
+  ratings: 4.9,
+};
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
+
+  const { data: settings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/website");
+      if (!response.ok) throw new Error("Failed to fetch settings");
+      return response.json();
+    },
+  });
+
+  const currentAddress = settings?.address || DEFAULT_SETTINGS.address;
+  const currentPhone = settings?.phone || DEFAULT_SETTINGS.phone;
+  const currentEmail = settings?.email || DEFAULT_SETTINGS.email;
+  const currentEventsCount = settings?.numberOfEventsHeld || DEFAULT_SETTINGS.numberOfEventsHeld;
+  const currentRating = settings?.ratings || DEFAULT_SETTINGS.ratings;
+
+  const phoneLink = useMemo(() => {
+    const phoneClean = currentPhone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+    return `tel:${phoneClean}`;
+  }, [currentPhone]);
+
+  const socialLinks = useMemo(() => {
+    if (!settings?.socialMedia || settings.socialMedia.length === 0) {
+      return [
+        { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+        { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
+        { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
+        { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
+        { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
+      ];
+    }
+    return settings.socialMedia.filter(link => link.url).map(link => ({
+      icon: SOCIAL_ICON_MAP[link.platform.toLowerCase()] || Globe,
+      href: link.url,
+      label: link.platform.charAt(0).toUpperCase() + link.platform.slice(1),
+    }));
+  }, [settings?.socialMedia]);
+
+  const trustBadges = useMemo(() => [
+    { icon: Award, text: `${currentEventsCount}+ Events` },
+    { icon: Star, text: `${currentRating}/5 Rating` },
+    { icon: Shield, text: "Insured & Certified" },
+  ], [currentEventsCount, currentRating]);
 
   const services = [
     { name: "Wedding Planning", href: "/services/weddings" },
@@ -50,20 +132,6 @@ export function Footer() {
     { name: "Privacy Policy", href: "#" },
     { name: "Terms of Service", href: "#" },
     { name: "Cookie Policy", href: "#" },
-  ];
-
-  const socialLinks = [
-    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-    { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-    { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
-  ];
-
-  const trustBadges = [
-    { icon: Award, text: "500+ Events" },
-    { icon: Star, text: "4.9/5 Rating" },
-    { icon: Shield, text: "Insured & Certified" },
   ];
 
   return (
@@ -227,29 +295,28 @@ export function Footer() {
                   <ul className="space-y-4">
                     <li className="flex items-start gap-3">
                       <MapPin className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
-                      <span className="text-primary-foreground/70 text-sm">
-                        123 Event Avenue,<br />
-                        Mumbai, MH 400001
+                      <span className="text-primary-foreground/70 text-sm whitespace-pre-line" data-testid="footer-address">
+                        {currentAddress}
                       </span>
                     </li>
                     <li className="flex items-center gap-3">
                       <Phone className="h-5 w-5 text-secondary shrink-0" />
                       <a 
-                        href="tel:+919876543210" 
+                        href={phoneLink}
                         className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
                         data-testid="footer-phone"
                       >
-                        +91 98765 43210
+                        {currentPhone}
                       </a>
                     </li>
                     <li className="flex items-center gap-3">
                       <Mail className="h-5 w-5 text-secondary shrink-0" />
                       <a 
-                        href="mailto:hello@dacreation.com" 
+                        href={`mailto:${currentEmail}`}
                         className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
                         data-testid="footer-email"
                       >
-                        hello@dacreation.com
+                        {currentEmail}
                       </a>
                     </li>
                     <li className="flex items-center gap-3">
@@ -273,6 +340,7 @@ export function Footer() {
               <div 
                 key={index}
                 className="flex items-center gap-2 text-primary-foreground/60"
+                data-testid={`footer-badge-${index}`}
               >
                 <badge.icon className="h-5 w-5 text-secondary" />
                 <span className="text-sm font-medium">{badge.text}</span>

@@ -17,13 +17,13 @@ interface SocialLink {
 }
 
 interface WebsiteSettings {
-  address: string | null;
-  phone: string | null;
-  email: string | null;
-  whatsappNumber: string | null;
-  mapEmbedCode: string | null;
-  topBarAddress: string | null;
-  secondaryAddress: string | null;
+  address: string;
+  phone: string;
+  email: string;
+  whatsappNumber: string;
+  mapEmbedCode: string;
+  topBarAddress: string;
+  secondaryAddress: string;
   socialMedia: SocialLink[];
   numberOfEventsHeld: number;
   ratings: number;
@@ -63,24 +63,27 @@ export default function WebsiteSettingsPage() {
       if (!response.ok) throw new Error("Failed to fetch settings");
       return response.json();
     },
-    onSuccess: (data) => {
-      setFormData({
-        address: data.address || "",
-        phone: data.phone || "",
-        email: data.email || "",
-        whatsappNumber: data.whatsappNumber || "",
-        mapEmbedCode: data.mapEmbedCode || "",
-        topBarAddress: data.topBarAddress || "",
-        secondaryAddress: data.secondaryAddress || "",
-        socialMedia: Array.isArray(data.socialMedia) ? data.socialMedia : [],
-        numberOfEventsHeld: data.numberOfEventsHeld || 0,
-        ratings: data.ratings || 0,
-      });
-    },
   });
 
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        address: settings.address || "",
+        phone: settings.phone || "",
+        email: settings.email || "",
+        whatsappNumber: settings.whatsappNumber || "",
+        mapEmbedCode: settings.mapEmbedCode || "",
+        topBarAddress: settings.topBarAddress || "",
+        secondaryAddress: settings.secondaryAddress || "",
+        socialMedia: Array.isArray(settings.socialMedia) ? settings.socialMedia : [],
+        numberOfEventsHeld: settings.numberOfEventsHeld || 0,
+        ratings: settings.ratings || 0,
+      });
+    }
+  }, [settings]);
+
   const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: WebsiteSettings) => {
       const response = await fetch("/api/settings/company", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,6 +94,7 @@ export default function WebsiteSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings/company"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/website"] });
       toast({ title: "Settings saved successfully" });
     },
     onError: () => {
