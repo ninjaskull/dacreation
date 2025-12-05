@@ -21,12 +21,22 @@ const eventTypeOptions = [
   { value: "destination", label: "Destination Event" },
 ];
 
+function getVisitorId(): string {
+  let visitorId = localStorage.getItem('da_visitor_id');
+  if (!visitorId) {
+    visitorId = 'visitor_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    localStorage.setItem('da_visitor_id', visitorId);
+  }
+  return visitorId;
+}
+
 export function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<ChatStep>("greeting");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     eventType: "",
     date: "",
@@ -36,6 +46,7 @@ export function Chatbot() {
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const visitorId = getVisitorId();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,16 +56,60 @@ export function Chatbot() {
     scrollToBottom();
   }, [messages]);
 
+  const initializeConversation = async () => {
+    try {
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          visitorId,
+          lastMessageAt: new Date().toISOString(),
+        }),
+      });
+      if (response.ok) {
+        const conversation = await response.json();
+        setConversationId(conversation.id);
+        return conversation.id;
+      }
+    } catch (error) {
+      console.error("Failed to initialize conversation:", error);
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      setTimeout(() => {
-        addBotMessage("Hi there! I'm your event planning assistant. What type of event are you planning?", eventTypeOptions);
-        setStep("event_type");
-      }, 500);
+      initializeConversation().then((convId) => {
+        setTimeout(() => {
+          addBotMessage("Hi there! I'm your event planning assistant. What type of event are you planning?", eventTypeOptions, convId);
+          setStep("event_type");
+        }, 500);
+      });
     }
   }, [isOpen]);
 
-  const addBotMessage = (text: string, options?: { value: string; label: string }[]) => {
+  const sendMessageToServer = async (content: string, senderType: string, convId?: string) => {
+    const activeConvId = convId || conversationId;
+    if (!activeConvId) return;
+    
+    try {
+      await fetch(`/api/conversations/${activeConvId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: senderType === 'visitor' ? visitorId : 'system',
+          senderType,
+          senderName: senderType === 'visitor' ? formData.name || 'Visitor' : 'DA Assistant',
+          content,
+          messageType: 'text',
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
+  };
+
+  const addBotMessage = (text: string, options?: { value: string; label: string }[], convId?: string) => {
     setIsTyping(true);
     setTimeout(() => {
       setMessages((prev) => [
@@ -62,6 +117,7 @@ export function Chatbot() {
         { id: Date.now().toString(), type: "bot", text, options },
       ]);
       setIsTyping(false);
+      sendMessageToServer(text, 'system', convId);
     }, 800);
   };
 
@@ -70,6 +126,7 @@ export function Chatbot() {
       ...prev,
       { id: Date.now().toString(), type: "user", text },
     ]);
+    sendMessageToServer(text, 'visitor');
   };
 
   const handleOptionClick = (value: string, label: string) => {
@@ -86,10 +143,24 @@ export function Chatbot() {
     setInputValue("");
   };
 
+  const updateConversationDetails = async (updates: Record<string, any>) => {
+    if (!conversationId) return;
+    try {
+      await fetch(`/api/conversations/${conversationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error("Failed to update conversation:", error);
+    }
+  };
+
   const processStep = async (value: string) => {
     switch (step) {
       case "event_type":
         setFormData((prev) => ({ ...prev, eventType: value }));
+        updateConversationDetails({ eventType: value });
         setStep("date");
         addBotMessage("Great choice! When is your event? (You can give me a rough date or month)");
         break;
@@ -112,6 +183,7 @@ export function Chatbot() {
           return;
         }
         setFormData((prev) => ({ ...prev, name: value.trim() }));
+        updateConversationDetails({ visitorName: value.trim() });
         setStep("phone");
         addBotMessage("Thanks, " + value.trim() + "! Last step - what's the best phone number to reach you? Our team will call within 24 hours.");
         break;
@@ -128,6 +200,11 @@ export function Chatbot() {
         const finalData = { ...formData, phone: value };
         setFormData(finalData);
         setStep("complete");
+
+        updateConversationDetails({ 
+          visitorPhone: value,
+          status: 'waiting',
+        });
 
         try {
           const response = await fetch("/api/leads", {
@@ -170,6 +247,7 @@ export function Chatbot() {
       name: "",
       phone: "",
     });
+    setConversationId(null);
     setIsOpen(false);
   };
 

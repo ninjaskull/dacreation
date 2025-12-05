@@ -43,14 +43,15 @@ export function FloatingCTA() {
   const onSubmit = async (data: QuickFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/leads", {
+      const response = await fetch("/api/callback-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
-          email: `${data.phone}@callback.request`,
-          leadSource: "floating_cta",
-          contactMethod: "call",
+          name: data.name,
+          phone: data.phone,
+          eventType: data.eventType,
+          source: "floating_cta",
+          priority: "normal",
         }),
       });
 
