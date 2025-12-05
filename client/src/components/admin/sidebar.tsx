@@ -22,6 +22,7 @@ import {
   Briefcase,
   Phone,
   MessagesSquare,
+  Image,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ const sidebarSections: SidebarSection[] = [
     items: [
       { name: "Vendors", href: "/admin/vendors", icon: Truck },
       { name: "Team", href: "/admin/team", icon: Building2 },
+      { name: "Portfolio", href: "/admin/portfolio", icon: Image },
       { name: "Careers", href: "/admin/careers", icon: Briefcase },
       { name: "Tasks", href: "/admin/tasks", icon: FileText },
     ],
