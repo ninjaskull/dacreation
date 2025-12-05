@@ -78,19 +78,20 @@ export function LeadCaptureWizard() {
     setStep((prev) => prev - 1);
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async () => {
     const isValid = await trigger();
     if (!isValid) return;
     
     setIsSubmitting(true);
     try {
+      const allValues = getValues();
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...data,
+          ...allValues,
           leadSource: "inquiry_form",
         }),
       });
@@ -440,7 +441,7 @@ export function LeadCaptureWizard() {
 
               <div className="flex gap-4 mt-8">
                 <Button variant="outline" onClick={prevStep} className="flex-1">Back</Button>
-                <Button onClick={form.handleSubmit(onSubmit)} className="flex-1" disabled={isSubmitting}>
+                <Button onClick={onSubmit} className="flex-1" disabled={isSubmitting}>
                   {isSubmitting ? "Sending..." : "Get My Free Quote"}
                 </Button>
               </div>
