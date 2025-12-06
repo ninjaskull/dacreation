@@ -24,63 +24,53 @@ export function TrustedClients({
   
   return (
     <section 
-      className={`py-16 md:py-20 ${isDark ? "bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320]" : "bg-white"} ${className}`}
+      className={`py-20 md:py-28 ${isDark ? "bg-[#0f0f0f]" : "bg-white"} ${className}`}
       data-testid="section-trusted-clients"
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-6 max-w-7xl">
         {showTitle && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
-            <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">
-              Our Clients
-            </span>
-            <h2 className={`text-3xl md:text-4xl font-bold mt-2 mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
-              Trusted by Leading Organizations
+            <div className="flex items-center justify-center gap-6 mb-4">
+              <div className="h-px w-16 bg-[#d4af37]/50" />
+              <span className="text-[#d4af37] font-medium uppercase tracking-[0.25em] text-[11px]">
+                Trusted Partners
+              </span>
+              <div className="h-px w-16 bg-[#d4af37]/50" />
+            </div>
+            <h2 className={`text-2xl md:text-3xl font-serif font-normal tracking-wide ${isDark ? "text-white" : "text-gray-900"}`}>
+              Preferred by Leading Organizations
             </h2>
-            <p className={`max-w-2xl mx-auto ${isDark ? "text-white/70" : "text-gray-600"}`}>
-              We are proud to have partnered with some of the most prestigious organizations in India
-            </p>
           </motion.div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8 items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 md:gap-6 items-center">
           {clientLogos.map((client, index) => (
             <motion.div
               key={client.name}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className={`flex items-center justify-center p-6 md:p-8 rounded-xl transition-all duration-300 group ${
+              transition={{ delay: index * 0.07, duration: 0.4 }}
+              className={`flex items-center justify-center h-20 md:h-24 px-4 rounded-lg transition-all duration-300 group ${
                 isDark 
-                  ? "bg-white rounded-xl shadow-lg hover:shadow-xl hover:scale-105" 
-                  : "bg-gray-50 border border-gray-100 hover:shadow-lg hover:border-[#601a29]/20"
+                  ? "bg-white" 
+                  : "bg-gray-50/80 hover:bg-gray-100/80"
               }`}
               data-testid={`logo-client-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <img
                 src={client.logo}
                 alt={`${client.name} logo`}
-                className="max-h-12 md:max-h-14 w-auto object-contain transition-all duration-300 group-hover:scale-110"
+                className="max-h-10 md:max-h-12 max-w-[120px] md:max-w-[140px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </motion.div>
           ))}
         </div>
-
-        {!showTitle && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className={`text-center mt-8 text-sm ${isDark ? "text-white/60" : "text-gray-500"}`}
-          >
-            Trusted by leading financial institutions and organizations across India
-          </motion.p>
-        )}
       </div>
     </section>
   );
@@ -93,11 +83,15 @@ export function TrustedClientsCompact({
   const isDark = variant === "dark";
   
   return (
-    <div className={`py-8 ${className}`} data-testid="section-trusted-clients-compact">
-      <p className={`text-center text-sm font-medium uppercase tracking-wider mb-6 ${isDark ? "text-white/60" : "text-gray-500"}`}>
-        Trusted by
-      </p>
-      <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+    <div className={`py-12 ${className}`} data-testid="section-trusted-clients-compact">
+      <div className="flex items-center justify-center gap-4 mb-10">
+        <div className="h-px w-10 bg-[#d4af37]/40" />
+        <p className={`text-[11px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-white/40" : "text-gray-400"}`}>
+          Trusted by
+        </p>
+        <div className="h-px w-10 bg-[#d4af37]/40" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-4 items-center max-w-5xl mx-auto px-4">
         {clientLogos.map((client, index) => (
           <motion.div
             key={client.name}
@@ -105,17 +99,15 @@ export function TrustedClientsCompact({
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: index * 0.05 }}
-            className={`flex items-center justify-center px-4 py-3 rounded-lg transition-all duration-300 ${
-              isDark 
-                ? "bg-white/95 hover:bg-white shadow-md hover:shadow-lg" 
-                : "bg-white hover:bg-gray-50"
+            className={`flex items-center justify-center h-16 md:h-[72px] px-3 rounded transition-opacity duration-300 ${
+              isDark ? "bg-white/95" : "bg-gray-50"
             }`}
             data-testid={`logo-compact-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
           >
             <img
               src={client.logo}
               alt={`${client.name} logo`}
-              className="h-8 md:h-10 w-auto object-contain"
+              className="max-h-8 md:max-h-10 max-w-[100px] w-auto object-contain"
             />
           </motion.div>
         ))}
