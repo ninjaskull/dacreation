@@ -63,12 +63,10 @@ export function TrustedClients({
               <img
                 src={client.logo}
                 alt={`${client.name} logo`}
-                className={`max-h-12 md:max-h-14 max-w-[130px] md:max-w-[150px] w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
-                  isDark 
-                    ? "brightness-0 invert opacity-80 group-hover:opacity-100" 
-                    : "opacity-90 group-hover:opacity-100"
-                }`}
-                style={isDark ? { filter: 'brightness(0) invert(1) drop-shadow(0 0 8px rgba(255,255,255,0.3))' } : {}}
+                className="max-h-12 md:max-h-14 max-w-[130px] md:max-w-[150px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                style={isDark ? { 
+                  filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.6)) drop-shadow(0 0 4px rgba(255,255,255,0.8))'
+                } : {}}
               />
             </motion.div>
           ))}
@@ -108,12 +106,10 @@ export function TrustedClientsCompact({
             <img
               src={client.logo}
               alt={`${client.name} logo`}
-              className={`max-h-10 md:max-h-12 max-w-[110px] w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
-                isDark 
-                  ? "brightness-0 invert opacity-75 group-hover:opacity-100" 
-                  : "opacity-85 group-hover:opacity-100"
-              }`}
-              style={isDark ? { filter: 'brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,0.25))' } : {}}
+              className="max-h-10 md:max-h-12 max-w-[110px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
+              style={isDark ? { 
+                filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5)) drop-shadow(0 0 3px rgba(255,255,255,0.7))'
+              } : {}}
             />
           </motion.div>
         ))}
