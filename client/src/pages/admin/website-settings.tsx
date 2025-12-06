@@ -65,6 +65,10 @@ interface WebsiteSettings {
   socialMedia: SocialLink[];
   numberOfEventsHeld: number;
   ratings: number;
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
 }
 
 const SOCIAL_PLATFORMS = [
@@ -106,6 +110,10 @@ export default function WebsiteSettingsPage() {
     socialMedia: [],
     numberOfEventsHeld: 0,
     ratings: 0,
+    weddingsCount: 0,
+    corporateCount: 0,
+    socialCount: 0,
+    awardsCount: 0,
   });
   const [newSocial, setNewSocial] = useState({ platform: "", url: "" });
 
@@ -147,6 +155,10 @@ export default function WebsiteSettingsPage() {
         socialMedia: Array.isArray(settings.socialMedia) ? settings.socialMedia : [],
         numberOfEventsHeld: settings.numberOfEventsHeld || 0,
         ratings: settings.ratings || 0,
+        weddingsCount: settings.weddingsCount || 0,
+        corporateCount: settings.corporateCount || 0,
+        socialCount: settings.socialCount || 0,
+        awardsCount: settings.awardsCount || 0,
       });
     }
   }, [settings]);
@@ -236,7 +248,7 @@ export default function WebsiteSettingsPage() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes("Events") || name === "ratings" ? parseInt(value) || 0 : value,
+      [name]: name.includes("Events") || name === "ratings" || name.includes("Count") ? parseInt(value) || 0 : value,
     }));
   };
 
@@ -573,7 +585,7 @@ export default function WebsiteSettingsPage() {
               <CardDescription>Website statistics displayed on your homepage</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="numberOfEventsHeld">Number of Events Held</Label>
                   <Input
@@ -598,6 +610,54 @@ export default function WebsiteSettingsPage() {
                     min="0"
                     max="5"
                     step="0.1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="weddingsCount">Weddings</Label>
+                  <Input
+                    id="weddingsCount"
+                    name="weddingsCount"
+                    type="number"
+                    value={formData.weddingsCount}
+                    onChange={handleInputChange}
+                    data-testid="input-weddings-count"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="corporateCount">Corporate Events</Label>
+                  <Input
+                    id="corporateCount"
+                    name="corporateCount"
+                    type="number"
+                    value={formData.corporateCount}
+                    onChange={handleInputChange}
+                    data-testid="input-corporate-count"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="socialCount">Social Events</Label>
+                  <Input
+                    id="socialCount"
+                    name="socialCount"
+                    type="number"
+                    value={formData.socialCount}
+                    onChange={handleInputChange}
+                    data-testid="input-social-count"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="awardsCount">Awards</Label>
+                  <Input
+                    id="awardsCount"
+                    name="awardsCount"
+                    type="number"
+                    value={formData.awardsCount}
+                    onChange={handleInputChange}
+                    data-testid="input-awards-count"
+                    min="0"
                   />
                 </div>
               </div>

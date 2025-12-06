@@ -583,6 +583,10 @@ export const companySettings = pgTable("company_settings", {
   socialMedia: jsonb("social_media").default(sql`'[]'`),
   numberOfEventsHeld: integer("number_of_events_held").default(0),
   ratings: integer("ratings").default(0),
+  weddingsCount: integer("weddings_count").default(0),
+  corporateCount: integer("corporate_count").default(0),
+  socialCount: integer("social_count").default(0),
+  awardsCount: integer("awards_count").default(0),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -598,6 +602,10 @@ export const insertCompanySettingsSchema = createInsertSchema(companySettings).o
   })).optional(),
   numberOfEventsHeld: z.number().optional(),
   ratings: z.number().optional(),
+  weddingsCount: z.number().optional(),
+  corporateCount: z.number().optional(),
+  socialCount: z.number().optional(),
+  awardsCount: z.number().optional(),
 });
 
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
