@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import passport from "passport";
+import { broadcastNewMessage, broadcastConversationUpdate } from "./websocket";
 import { 
   insertLeadSchema, insertUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
@@ -2118,6 +2119,18 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid data", errors: result.error });
       }
       const message = await storage.createChatMessage(result.data);
+      
+      broadcastNewMessage(req.params.conversationId, {
+        id: message.id,
+        content: message.content,
+        senderId: message.senderId,
+        senderType: message.senderType,
+        senderName: message.senderName,
+        messageType: message.messageType,
+        isRead: message.isRead,
+        createdAt: message.createdAt,
+      });
+      
       res.status(201).json(message);
     } catch (error) {
       console.error("Create chat message error:", error);
