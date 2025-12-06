@@ -24,10 +24,15 @@ export function TrustedClients({
   
   return (
     <section 
-      className={`py-20 md:py-28 ${isDark ? "bg-[#0f0f0f]" : "bg-white"} ${className}`}
+      className={`py-20 md:py-28 relative overflow-hidden ${className}`}
+      style={isDark ? {} : { backgroundColor: '#fafafa' }}
       data-testid="section-trusted-clients"
     >
-      <div className="container mx-auto px-6 max-w-7xl">
+      {isDark && (
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#d4af37]/5 to-transparent pointer-events-none" />
+      )}
+      
+      <div className="container mx-auto px-6 max-w-7xl relative z-10">
         {showTitle && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -36,41 +41,63 @@ export function TrustedClients({
             className="text-center mb-16"
           >
             <div className="flex items-center justify-center gap-6 mb-4">
-              <div className="h-px w-16 bg-[#d4af37]/50" />
-              <span className="text-[#d4af37] font-medium uppercase tracking-[0.25em] text-[11px]">
+              <div className={`h-px w-16 ${isDark ? "bg-[#d4af37]/40" : "bg-[#d4af37]/50"}`} />
+              <span className={`font-medium uppercase tracking-[0.25em] text-[11px] ${isDark ? "text-[#d4af37]/80" : "text-[#d4af37]"}`}>
                 Trusted Partners
               </span>
-              <div className="h-px w-16 bg-[#d4af37]/50" />
+              <div className={`h-px w-16 ${isDark ? "bg-[#d4af37]/40" : "bg-[#d4af37]/50"}`} />
             </div>
-            <h2 className={`text-2xl md:text-3xl font-serif font-normal tracking-wide ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-2xl md:text-3xl font-serif font-normal tracking-wide ${isDark ? "text-white/90" : "text-gray-900"}`}>
               Preferred by Leading Organizations
             </h2>
           </motion.div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 md:gap-6 items-center">
-          {clientLogos.map((client, index) => (
-            <motion.div
-              key={client.name}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.07, duration: 0.4 }}
-              className={`flex items-center justify-center h-20 md:h-24 px-4 rounded-lg transition-all duration-300 group ${
-                isDark 
-                  ? "bg-white" 
-                  : "bg-gray-50/80 hover:bg-gray-100/80"
-              }`}
-              data-testid={`logo-client-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <img
-                src={client.logo}
-                alt={`${client.name} logo`}
-                className="max-h-10 md:max-h-12 max-w-[120px] md:max-w-[140px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-              />
-            </motion.div>
-          ))}
-        </div>
+        {isDark ? (
+          <div className="relative">
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-24 bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 items-center relative">
+              {clientLogos.map((client, index) => (
+                <motion.div
+                  key={client.name}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.07, duration: 0.4 }}
+                  className="flex items-center justify-center h-20 md:h-24 px-4 rounded-xl border border-[#d4af37]/20 bg-white/5 backdrop-blur-sm transition-all duration-500 group hover:border-[#d4af37]/40 hover:bg-white/10"
+                  data-testid={`logo-client-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <img
+                    src={client.logo}
+                    alt={`${client.name} logo`}
+                    className="max-h-10 md:max-h-12 max-w-[120px] md:max-w-[140px] w-auto object-contain transition-all duration-500 brightness-0 invert opacity-70 group-hover:brightness-100 group-hover:invert-0 group-hover:opacity-100"
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 md:gap-6 items-center">
+            {clientLogos.map((client, index) => (
+              <motion.div
+                key={client.name}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.07, duration: 0.4 }}
+                className="flex items-center justify-center h-20 md:h-24 px-4 rounded-lg bg-white border border-gray-100 shadow-sm transition-all duration-300 group hover:shadow-md hover:border-gray-200"
+                data-testid={`logo-client-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <img
+                  src={client.logo}
+                  alt={`${client.name} logo`}
+                  className="max-h-10 md:max-h-12 max-w-[120px] md:max-w-[140px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -83,15 +110,20 @@ export function TrustedClientsCompact({
   const isDark = variant === "dark";
   
   return (
-    <div className={`py-12 ${className}`} data-testid="section-trusted-clients-compact">
-      <div className="flex items-center justify-center gap-4 mb-10">
+    <div className={`py-12 relative ${className}`} data-testid="section-trusted-clients-compact">
+      {isDark && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#d4af37]/5 to-transparent pointer-events-none" />
+      )}
+      
+      <div className="flex items-center justify-center gap-4 mb-10 relative z-10">
         <div className="h-px w-10 bg-[#d4af37]/40" />
-        <p className={`text-[11px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-white/40" : "text-gray-400"}`}>
+        <p className={`text-[11px] font-medium uppercase tracking-[0.2em] ${isDark ? "text-[#d4af37]/60" : "text-gray-400"}`}>
           Trusted by
         </p>
         <div className="h-px w-10 bg-[#d4af37]/40" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-4 items-center max-w-5xl mx-auto px-4">
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-4 items-center max-w-5xl mx-auto px-4 relative z-10">
         {clientLogos.map((client, index) => (
           <motion.div
             key={client.name}
@@ -99,15 +131,21 @@ export function TrustedClientsCompact({
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: index * 0.05 }}
-            className={`flex items-center justify-center h-16 md:h-[72px] px-3 rounded transition-opacity duration-300 ${
-              isDark ? "bg-white/95" : "bg-gray-50"
+            className={`flex items-center justify-center h-16 md:h-[72px] px-3 rounded-lg transition-all duration-300 group ${
+              isDark 
+                ? "border border-[#d4af37]/15 bg-white/5 backdrop-blur-sm hover:border-[#d4af37]/30" 
+                : "bg-white border border-gray-100 shadow-sm"
             }`}
             data-testid={`logo-compact-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
           >
             <img
               src={client.logo}
               alt={`${client.name} logo`}
-              className="max-h-8 md:max-h-10 max-w-[100px] w-auto object-contain"
+              className={`max-h-8 md:max-h-10 max-w-[100px] w-auto object-contain transition-all duration-500 ${
+                isDark 
+                  ? "brightness-0 invert opacity-60 group-hover:brightness-100 group-hover:invert-0 group-hover:opacity-100" 
+                  : ""
+              }`}
             />
           </motion.div>
         ))}
