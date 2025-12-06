@@ -109,7 +109,7 @@ export function Services() {
                       </li>
                     ))}
                   </ul>
-                  <div className="flex justify-center lg:justify-start">
+                  <div className="flex justify-center">
                     <Link href={data.link}>
                       <Button className="rounded-none bg-primary hover:bg-primary/90 text-white px-8 py-6 group">
                         Explore {data.title} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
