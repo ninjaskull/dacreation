@@ -1944,8 +1944,9 @@ export async function registerRoutes(
       
       if (request.email) {
         sendTemplatedEmail('callback_request_confirmation', request.email, request.name, {
-          client_name: request.name,
-          callback_id: request.id.substring(0, 8).toUpperCase(),
+          customer_name: request.name,
+          request_id: request.id.substring(0, 8).toUpperCase(),
+          phone_number: request.phone,
           preferred_time: 'As soon as possible'
         }).catch(err => console.error('Failed to send callback confirmation email:', err));
       }
