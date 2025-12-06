@@ -615,7 +615,7 @@ export function Navbar() {
               </div>
 
               {/* Mobile CTA Section */}
-              <div className="mt-6 space-y-3">
+              <div className="mt-6 space-y-4">
                 <Link href="/inquire" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button className="w-full rounded-full py-3 text-sm gap-2" data-testid="button-mobile-get-quote">
                     <Calendar className="w-4 h-4" />
