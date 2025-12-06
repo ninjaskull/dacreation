@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { TrustedClients } from "@/components/sections/trusted-clients";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import type { PageContent, TeamMember } from "@shared/schema";
@@ -365,6 +366,9 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* Trusted Clients */}
+      <TrustedClients variant="light" />
 
       {/* Team Preview */}
       {teamMembers.length > 0 && (

@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { TrustedClientsCompact } from "@/components/sections/trusted-clients";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import type { PortfolioItem } from "@shared/schema";
@@ -431,6 +432,8 @@ export default function PortfolioPage() {
               </Button>
             </Link>
           </motion.div>
+          
+          <TrustedClientsCompact variant="dark" className="mt-16" />
         </div>
       </section>
 

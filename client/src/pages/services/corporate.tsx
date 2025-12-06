@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Contact } from "@/components/sections/contact";
+import { TrustedClients } from "@/components/sections/trusted-clients";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { 
@@ -226,8 +227,11 @@ export default function CorporatePage() {
         </div>
       </section>
 
+      {/* Trusted Clients */}
+      <TrustedClients variant="dark" />
+
       {/* Industries */}
-      <section className="py-20 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] text-white">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -236,8 +240,8 @@ export default function CorporatePage() {
             className="text-center mb-16"
           >
             <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Industries We Serve</span>
-            <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-4">Trusted by Leading Brands</h2>
-            <p className="text-white/70 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-4 text-gray-900">Diverse Industry Experience</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
               We partner with organizations across diverse industries
             </p>
           </motion.div>
@@ -250,7 +254,7 @@ export default function CorporatePage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 border border-white/20 hover:bg-white/20 transition-colors"
+                className="bg-gray-50 rounded-full px-6 py-3 border border-gray-200 hover:bg-[#601a29] hover:text-white hover:border-[#601a29] transition-colors"
               >
                 <span className="font-medium">{industry}</span>
               </motion.div>

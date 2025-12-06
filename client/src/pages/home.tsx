@@ -10,6 +10,7 @@ import { FAQ } from "@/components/sections/faq";
 import { Contact } from "@/components/sections/contact";
 import { LeadMagnetsSection } from "@/components/sales/lead-magnets";
 import { ConsultationCTA } from "@/components/sales/consultation-cta";
+import { TrustedClients } from "@/components/sections/trusted-clients";
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <TrustedClients variant="light" />
         <About />
         <WhyChooseUs />
         <Services />
