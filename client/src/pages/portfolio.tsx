@@ -23,6 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
+interface WebsiteSettings {
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
+}
+
 const categories = [
   { value: "all", label: "All Events" },
   { value: "wedding", label: "Weddings" },
@@ -137,6 +144,15 @@ export default function PortfolioPage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedItem, setSelectedItem] = useState<PortfolioDisplayItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | string | null>(null);
+  
+  const { data: websiteSettings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      return res.json();
+    },
+  });
   
   const { data: portfolioItems = [], isLoading } = useQuery<PortfolioDisplayItem[]>({
     queryKey: ["/api/cms/portfolio", { active: true }],
@@ -397,10 +413,10 @@ export default function PortfolioPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Heart, title: "Weddings", count: "500+", desc: "Dream weddings crafted with love" },
-              { icon: Building2, title: "Corporate", count: "300+", desc: "Professional events that impress" },
-              { icon: Star, title: "Social", count: "200+", desc: "Celebrations that bring joy" },
-              { icon: Award, title: "Awards", count: "25+", desc: "Industry recognition earned" },
+              { icon: Heart, title: "Weddings", count: `${websiteSettings?.weddingsCount || 0}+`, desc: "Dream weddings crafted with love" },
+              { icon: Building2, title: "Corporate", count: `${websiteSettings?.corporateCount || 0}+`, desc: "Professional events that impress" },
+              { icon: Star, title: "Social", count: `${websiteSettings?.socialCount || 0}+`, desc: "Celebrations that bring joy" },
+              { icon: Award, title: "Awards", count: `${websiteSettings?.awardsCount || 0}+`, desc: "Industry recognition earned" },
             ].map((item, index) => (
               <motion.div
                 key={index}

@@ -1312,6 +1312,10 @@ export async function registerRoutes(
           socialMedia: [],
           numberOfEventsHeld: 0,
           ratings: 0,
+          weddingsCount: 0,
+          corporateCount: 0,
+          socialCount: 0,
+          awardsCount: 0,
         });
       }
       res.json({
@@ -1325,6 +1329,10 @@ export async function registerRoutes(
         socialMedia: settings.socialMedia || [],
         numberOfEventsHeld: settings.numberOfEventsHeld || 0,
         ratings: settings.ratings || 0,
+        weddingsCount: settings.weddingsCount || 0,
+        corporateCount: settings.corporateCount || 0,
+        socialCount: settings.socialCount || 0,
+        awardsCount: settings.awardsCount || 0,
       });
     } catch (error) {
       console.error("Get website settings error:", error);
