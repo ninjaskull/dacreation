@@ -55,9 +55,9 @@ export function TrustedClients({
 
         {isDark ? (
           <div className="relative">
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-24 bg-gradient-to-r from-transparent via-[#d4af37]/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-32 bg-gradient-to-r from-transparent via-[#d4af37]/8 to-transparent rounded-full blur-3xl pointer-events-none" />
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 items-center relative">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5 items-center relative">
               {clientLogos.map((client, index) => (
                 <motion.div
                   key={client.name}
@@ -65,13 +65,17 @@ export function TrustedClients({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.07, duration: 0.4 }}
-                  className="flex items-center justify-center h-20 md:h-24 px-4 rounded-xl border border-[#d4af37]/20 bg-white/5 backdrop-blur-sm transition-all duration-500 group hover:border-[#d4af37]/40 hover:bg-white/10"
+                  className="flex items-center justify-center h-20 md:h-24 px-4 rounded-xl transition-all duration-300 group"
+                  style={{ 
+                    background: 'rgba(255, 250, 245, 0.92)',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5)'
+                  }}
                   data-testid={`logo-client-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <img
                     src={client.logo}
                     alt={`${client.name} logo`}
-                    className="max-h-10 md:max-h-12 max-w-[120px] md:max-w-[140px] w-auto object-contain transition-all duration-500 brightness-0 invert opacity-70 group-hover:brightness-100 group-hover:invert-0 group-hover:opacity-100"
+                    className="max-h-10 md:max-h-12 max-w-[120px] md:max-w-[140px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                 </motion.div>
               ))}
@@ -131,21 +135,21 @@ export function TrustedClientsCompact({
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: index * 0.05 }}
-            className={`flex items-center justify-center h-16 md:h-[72px] px-3 rounded-lg transition-all duration-300 group ${
-              isDark 
-                ? "border border-[#d4af37]/15 bg-white/5 backdrop-blur-sm hover:border-[#d4af37]/30" 
-                : "bg-white border border-gray-100 shadow-sm"
-            }`}
+            className="flex items-center justify-center h-16 md:h-[72px] px-3 rounded-lg transition-all duration-300 group"
+            style={isDark ? { 
+              background: 'rgba(255, 250, 245, 0.92)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+            } : {
+              background: 'white',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            }}
             data-testid={`logo-compact-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
           >
             <img
               src={client.logo}
               alt={`${client.name} logo`}
-              className={`max-h-8 md:max-h-10 max-w-[100px] w-auto object-contain transition-all duration-500 ${
-                isDark 
-                  ? "brightness-0 invert opacity-60 group-hover:brightness-100 group-hover:invert-0 group-hover:opacity-100" 
-                  : ""
-              }`}
+              className="max-h-8 md:max-h-10 max-w-[100px] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
             />
           </motion.div>
         ))}
