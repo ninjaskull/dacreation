@@ -2237,7 +2237,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "SMTP settings not found" });
       }
 
-      const { password, ...updateData } = req.body;
+      const { password, id, createdAt, updatedAt, lastTestedAt, lastTestResult, hasPassword, ...updateData } = req.body;
       
       let updates: any = { ...updateData };
       
