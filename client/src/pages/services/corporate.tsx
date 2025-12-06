@@ -21,16 +21,17 @@ import {
   Calendar
 } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import heroImage from "@assets/generated_images/corporate_conference_stage.png";
 import galaImg from "@assets/generated_images/corporate_event_gala.png";
 import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
-const stats = [
-  { value: "300+", label: "Corporate Events", icon: Building2 },
-  { value: "50+", label: "Fortune 500 Clients", icon: Award },
-  { value: "100K+", label: "Attendees Served", icon: Users },
-  { value: "99%", label: "Client Retention", icon: Star },
-];
+interface WebsiteSettings {
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
+}
 
 const services = [
   {
@@ -84,6 +85,22 @@ const processSteps = [
 ];
 
 export default function CorporatePage() {
+  const { data: websiteSettings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      return res.json();
+    },
+  });
+
+  const stats = [
+    { value: `${websiteSettings?.corporateCount || 0}+`, label: "Corporate Events", icon: Building2 },
+    { value: "50+", label: "Fortune 500 Clients", icon: Award },
+    { value: "100K+", label: "Attendees Served", icon: Users },
+    { value: "99%", label: "Client Retention", icon: Star },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       <SEOHead

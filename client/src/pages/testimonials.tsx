@@ -10,12 +10,13 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
-const stats = [
-  { value: "98%", label: "Happy Clients", icon: Heart },
-  { value: "4.9/5", label: "Average Rating", icon: Star },
-  { value: "500+", label: "Reviews", icon: MessageSquare },
-  { value: "25+", label: "Awards Won", icon: Award },
-];
+interface WebsiteSettings {
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
+  ratings: number;
+}
 
 const defaultTestimonials = [
   {
@@ -95,6 +96,22 @@ const defaultTestimonials = [
 export default function TestimonialsPage() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   
+  const { data: websiteSettings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0, ratings: 0 };
+      return res.json();
+    },
+  });
+
+  const stats = [
+    { value: "98%", label: "Happy Clients", icon: Heart },
+    { value: "4.9/5", label: "Average Rating", icon: Star },
+    { value: "500+", label: "Reviews", icon: MessageSquare },
+    { value: `${websiteSettings?.awardsCount || 0}+`, label: "Awards Won", icon: Award },
+  ];
+
   const { data: testimonials = [], isLoading } = useQuery<Testimonial[]>({
     queryKey: ["/api/cms/testimonials", { active: true }],
     queryFn: async () => {

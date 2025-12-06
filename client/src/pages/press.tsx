@@ -19,12 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
-const stats = [
-  { value: "100+", label: "Media Features", icon: Newspaper },
-  { value: "25+", label: "TV Appearances", icon: Tv },
-  { value: "50+", label: "Awards", icon: Award },
-  { value: "15+", label: "Publications", icon: BookOpen },
-];
+interface WebsiteSettings {
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
+}
 
 const mediaLogos = [
   "Times of India",
@@ -107,6 +107,22 @@ const defaultArticles = [
 ];
 
 export default function PressPage() {
+  const { data: websiteSettings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      return res.json();
+    },
+  });
+
+  const stats = [
+    { value: "100+", label: "Media Features", icon: Newspaper },
+    { value: "25+", label: "TV Appearances", icon: Tv },
+    { value: `${websiteSettings?.awardsCount || 0}+`, label: "Awards", icon: Award },
+    { value: "15+", label: "Publications", icon: BookOpen },
+  ];
+
   const { data: articles = [], isLoading } = useQuery<PressArticle[]>({
     queryKey: ["/api/cms/press", { active: true }],
     queryFn: async () => {

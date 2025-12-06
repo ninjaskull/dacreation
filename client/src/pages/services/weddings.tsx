@@ -19,16 +19,17 @@ import {
   Gift
 } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import heroImage from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
 import decorImg from "@assets/generated_images/indian_wedding_decor_detail.png";
 import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
-const stats = [
-  { value: "500+", label: "Weddings Planned", icon: Heart },
-  { value: "15+", label: "Years Experience", icon: Calendar },
-  { value: "98%", label: "Happy Couples", icon: Star },
-  { value: "50+", label: "Destinations", icon: Award },
-];
+interface WebsiteSettings {
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
+}
 
 const services = [
   {
@@ -80,6 +81,22 @@ const processSteps = [
 ];
 
 export default function WeddingsPage() {
+  const { data: websiteSettings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      return res.json();
+    },
+  });
+
+  const stats = [
+    { value: `${websiteSettings?.weddingsCount || 0}+`, label: "Weddings Planned", icon: Heart },
+    { value: "15+", label: "Years Experience", icon: Calendar },
+    { value: "98%", label: "Happy Couples", icon: Star },
+    { value: "50+", label: "Destinations", icon: Award },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       <SEOHead

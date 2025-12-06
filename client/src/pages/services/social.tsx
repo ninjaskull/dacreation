@@ -20,15 +20,16 @@ import {
   Baby
 } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import heroImage from "@assets/generated_images/luxury_private_dinner.png";
 import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
-const stats = [
-  { value: "200+", label: "Social Events", icon: PartyPopper },
-  { value: "100%", label: "Custom Themes", icon: Sparkles },
-  { value: "5000+", label: "Happy Guests", icon: Users },
-  { value: "4.9/5", label: "Client Rating", icon: Star },
-];
+interface WebsiteSettings {
+  weddingsCount: number;
+  corporateCount: number;
+  socialCount: number;
+  awardsCount: number;
+}
 
 const services = [
   {
@@ -80,6 +81,22 @@ const processSteps = [
 ];
 
 export default function SocialPage() {
+  const { data: websiteSettings } = useQuery<WebsiteSettings>({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      return res.json();
+    },
+  });
+
+  const stats = [
+    { value: `${websiteSettings?.socialCount || 0}+`, label: "Social Events", icon: PartyPopper },
+    { value: "100%", label: "Custom Themes", icon: Sparkles },
+    { value: "5000+", label: "Happy Guests", icon: Users },
+    { value: "4.9/5", label: "Client Rating", icon: Star },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
