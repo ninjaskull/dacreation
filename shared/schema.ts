@@ -30,6 +30,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+export const sessions = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+});
+
 export const leadStatuses = ["new", "contacted", "follow-up", "qualified", "converted", "lost"] as const;
 export type LeadStatus = typeof leadStatuses[number];
 

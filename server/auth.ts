@@ -2,7 +2,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { type Express } from "express";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
@@ -39,14 +40,34 @@ declare global {
 }
 
 export function setupAuth(app: Express) {
-  const MemoryStore = createMemoryStore(session);
+  const PgSession = connectPgSimple(session);
+  
+  const isProduction = app.get("env") === "production";
+  const sessionSecret = process.env.SESSION_SECRET || process.env.REPL_ID;
+  
+  if (isProduction && !process.env.SESSION_SECRET) {
+    throw new Error("SESSION_SECRET environment variable is required in production. Please set a strong random secret.");
+  }
+  
+  if (!sessionSecret) {
+    console.warn("Warning: SESSION_SECRET not set. Using development fallback. Set SESSION_SECRET for production.");
+  }
+  
+  const developmentOnlyFallback = `dev-${Date.now()}-${Math.random().toString(36)}`;
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.REPL_ID || "da-creation-secret-key",
+    secret: sessionSecret || developmentOnlyFallback,
     resave: false,
     saveUninitialized: false,
-    cookie: {},
-    store: new MemoryStore({
-      checkPeriod: 86400000,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      httpOnly: true,
+      sameSite: 'lax',
+    },
+    store: new PgSession({
+      pool: pool as any,
+      tableName: 'session',
+      createTableIfMissing: false,
     }),
   };
 
@@ -54,6 +75,9 @@ export function setupAuth(app: Express) {
     app.set("trust proxy", 1);
     sessionSettings.cookie = {
       secure: true,
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     };
   }
 
