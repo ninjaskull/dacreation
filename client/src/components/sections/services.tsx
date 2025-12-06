@@ -109,11 +109,13 @@ export function Services() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={data.link}>
-                    <Button className="rounded-none bg-primary hover:bg-primary/90 text-white px-8 py-6 group">
-                      Explore {data.title} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  </Link>
+                  <div className="flex justify-center lg:justify-start">
+                    <Link href={data.link}>
+                      <Button className="rounded-none bg-primary hover:bg-primary/90 text-white px-8 py-6 group">
+                        Explore {data.title} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
                 <div className="order-1 lg:order-2 relative h-[400px] md:h-[500px]">
                   <div className="absolute inset-0 bg-secondary/10 transform translate-x-4 translate-y-4 -z-10"></div>
