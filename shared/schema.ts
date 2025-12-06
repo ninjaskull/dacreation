@@ -587,6 +587,9 @@ export const companySettings = pgTable("company_settings", {
   corporateCount: integer("corporate_count").default(0),
   socialCount: integer("social_count").default(0),
   awardsCount: integer("awards_count").default(0),
+  destinationsCount: integer("destinations_count").default(0),
+  happyGuestsCount: integer("happy_guests_count").default(0),
+  clientSatisfaction: integer("client_satisfaction").default(0),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -606,6 +609,9 @@ export const insertCompanySettingsSchema = createInsertSchema(companySettings).o
   corporateCount: z.number().optional(),
   socialCount: z.number().optional(),
   awardsCount: z.number().optional(),
+  destinationsCount: z.number().optional(),
+  happyGuestsCount: z.number().optional(),
+  clientSatisfaction: z.number().optional(),
 });
 
 export type InsertCompanySettings = z.infer<typeof insertCompanySettingsSchema>;
