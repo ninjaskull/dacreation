@@ -69,6 +69,9 @@ interface WebsiteSettings {
   corporateCount: number;
   socialCount: number;
   awardsCount: number;
+  destinationsCount: number;
+  happyGuestsCount: number;
+  clientSatisfaction: number;
 }
 
 const SOCIAL_PLATFORMS = [
@@ -114,6 +117,9 @@ export default function WebsiteSettingsPage() {
     corporateCount: 0,
     socialCount: 0,
     awardsCount: 0,
+    destinationsCount: 0,
+    happyGuestsCount: 0,
+    clientSatisfaction: 0,
   });
   const [newSocial, setNewSocial] = useState({ platform: "", url: "" });
 
@@ -159,6 +165,9 @@ export default function WebsiteSettingsPage() {
         corporateCount: settings.corporateCount || 0,
         socialCount: settings.socialCount || 0,
         awardsCount: settings.awardsCount || 0,
+        destinationsCount: settings.destinationsCount || 0,
+        happyGuestsCount: settings.happyGuestsCount || 0,
+        clientSatisfaction: settings.clientSatisfaction || 0,
       });
     }
   }, [settings]);
@@ -248,7 +257,7 @@ export default function WebsiteSettingsPage() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes("Events") || name === "ratings" || name.includes("Count") ? parseInt(value) || 0 : value,
+      [name]: name.includes("Events") || name === "ratings" || name.includes("Count") || name.includes("Satisfaction") ? parseInt(value) || 0 : value,
     }));
   };
 
@@ -658,6 +667,43 @@ export default function WebsiteSettingsPage() {
                     onChange={handleInputChange}
                     data-testid="input-awards-count"
                     min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="destinationsCount">Destinations</Label>
+                  <Input
+                    id="destinationsCount"
+                    name="destinationsCount"
+                    type="number"
+                    value={formData.destinationsCount}
+                    onChange={handleInputChange}
+                    data-testid="input-destinations-count"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="happyGuestsCount">Happy Guests</Label>
+                  <Input
+                    id="happyGuestsCount"
+                    name="happyGuestsCount"
+                    type="number"
+                    value={formData.happyGuestsCount}
+                    onChange={handleInputChange}
+                    data-testid="input-happy-guests-count"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="clientSatisfaction">Client Satisfaction (%)</Label>
+                  <Input
+                    id="clientSatisfaction"
+                    name="clientSatisfaction"
+                    type="number"
+                    value={formData.clientSatisfaction}
+                    onChange={handleInputChange}
+                    data-testid="input-client-satisfaction"
+                    min="0"
+                    max="100"
                   />
                 </div>
               </div>

@@ -28,6 +28,10 @@ interface WebsiteSettings {
   corporateCount: number;
   socialCount: number;
   awardsCount: number;
+  numberOfEventsHeld: number;
+  destinationsCount: number;
+  happyGuestsCount: number;
+  clientSatisfaction: number;
 }
 
 const categories = [
@@ -38,12 +42,6 @@ const categories = [
   { value: "destination", label: "Destination" },
 ];
 
-const stats = [
-  { value: "1000+", label: "Events Executed", icon: Calendar },
-  { value: "50+", label: "Destinations", icon: MapPin },
-  { value: "10K+", label: "Happy Guests", icon: Users },
-  { value: "98%", label: "Client Satisfaction", icon: Star },
-];
 
 const defaultPortfolioItems = [
   {
@@ -149,10 +147,26 @@ export default function PortfolioPage() {
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
       const res = await fetch("/api/settings/website");
-      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      if (!res.ok) return { 
+        weddingsCount: 0, 
+        corporateCount: 0, 
+        socialCount: 0, 
+        awardsCount: 0,
+        numberOfEventsHeld: 0,
+        destinationsCount: 0,
+        happyGuestsCount: 0,
+        clientSatisfaction: 0
+      };
       return res.json();
     },
   });
+  
+  const dynamicStats = [
+    { value: `${websiteSettings?.numberOfEventsHeld || 0}+`, label: "Events Executed", icon: Calendar },
+    { value: `${websiteSettings?.destinationsCount || 0}+`, label: "Destinations", icon: MapPin },
+    { value: `${(websiteSettings?.happyGuestsCount || 0) >= 1000 ? Math.floor((websiteSettings?.happyGuestsCount || 0) / 1000) + 'K' : websiteSettings?.happyGuestsCount || 0}+`, label: "Happy Guests", icon: Users },
+    { value: `${websiteSettings?.clientSatisfaction || 0}%`, label: "Client Satisfaction", icon: Star },
+  ];
   
   const { data: portfolioItems = [], isLoading } = useQuery<PortfolioDisplayItem[]>({
     queryKey: ["/api/cms/portfolio", { active: true }],
@@ -233,7 +247,7 @@ export default function PortfolioPage() {
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
+              {dynamicStats.map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
