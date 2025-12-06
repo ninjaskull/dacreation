@@ -24,6 +24,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const benefits = [
   { icon: Heart, title: "Health Insurance", desc: "Comprehensive health coverage for you and family" },
@@ -99,6 +100,16 @@ export default function CareersPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.careers.title}
+        description={SEO_DATA.careers.description}
+        keywords={SEO_DATA.careers.keywords}
+        canonicalUrl="https://dacreation.com/careers"
+        structuredData={getBreadcrumbSchema([
+          { name: "Home", url: "https://dacreation.com" },
+          { name: "Careers", url: "https://dacreation.com/careers" }
+        ])}
+      />
       <Navbar />
       
       {/* Hero Section */}

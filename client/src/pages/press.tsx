@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { value: "100+", label: "Media Features", icon: Newspaper },
@@ -122,6 +123,16 @@ export default function PressPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.press.title}
+        description={SEO_DATA.press.description}
+        keywords={SEO_DATA.press.keywords}
+        canonicalUrl="https://dacreation.com/press"
+        structuredData={getBreadcrumbSchema([
+          { name: "Home", url: "https://dacreation.com" },
+          { name: "Press & Media", url: "https://dacreation.com/press" }
+        ])}
+      />
       <Navbar />
       
       {/* Hero Section */}

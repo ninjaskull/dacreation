@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const departments = [
   { name: "Leadership", description: "Visionary leaders guiding our success" },
@@ -55,6 +56,16 @@ export default function TeamPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.team.title}
+        description={SEO_DATA.team.description}
+        keywords={SEO_DATA.team.keywords}
+        canonicalUrl="https://dacreation.com/team"
+        structuredData={getBreadcrumbSchema([
+          { name: "Home", url: "https://dacreation.com" },
+          { name: "Our Team", url: "https://dacreation.com/team" }
+        ])}
+      />
       <Navbar />
       
       {/* Hero Section */}

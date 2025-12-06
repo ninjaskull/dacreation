@@ -23,6 +23,7 @@ import {
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/corporate_conference_stage.png";
 import galaImg from "@assets/generated_images/corporate_event_gala.png";
+import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { value: "300+", label: "Corporate Events", icon: Building2 },
@@ -85,6 +86,20 @@ const processSteps = [
 export default function CorporatePage() {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.corporate.title}
+        description={SEO_DATA.corporate.description}
+        keywords={SEO_DATA.corporate.keywords}
+        canonicalUrl="https://dacreation.com/services/corporate"
+        structuredData={{
+          ...getServiceSchema("Corporate Event Management", SEO_DATA.corporate.description, "https://dacreation.com/services/corporate"),
+          ...getBreadcrumbSchema([
+            { name: "Home", url: "https://dacreation.com" },
+            { name: "Services", url: "https://dacreation.com/services" },
+            { name: "Corporate Events", url: "https://dacreation.com/services/corporate" }
+          ])
+        }}
+      />
       <Navbar />
       
       {/* Hero Section */}

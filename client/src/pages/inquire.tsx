@@ -2,10 +2,21 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { LeadCaptureWizard } from "@/components/sales/lead-capture-wizard";
 import { Check } from "lucide-react";
+import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 export default function InquirePage() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary selection:text-white">
+      <SEOHead
+        title={SEO_DATA.inquire.title}
+        description={SEO_DATA.inquire.description}
+        keywords={SEO_DATA.inquire.keywords}
+        canonicalUrl="https://dacreation.com/inquire"
+        structuredData={getBreadcrumbSchema([
+          { name: "Home", url: "https://dacreation.com" },
+          { name: "Book Event", url: "https://dacreation.com/inquire" }
+        ])}
+      />
       <Navbar />
       <main className="pt-28 lg:pt-36 pb-20 bg-muted/30">
         <div className="container mx-auto px-6">

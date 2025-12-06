@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { SEOHead, SEO_DATA, getOrganizationSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { icon: Calendar, value: "15+", label: "Years of Experience", description: "Crafting memorable events since 2009" },
@@ -86,6 +87,19 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.about.title}
+        description={SEO_DATA.about.description}
+        keywords={SEO_DATA.about.keywords}
+        canonicalUrl="https://dacreation.com/about"
+        structuredData={{
+          ...getOrganizationSchema(),
+          ...getBreadcrumbSchema([
+            { name: "Home", url: "https://dacreation.com" },
+            { name: "About Us", url: "https://dacreation.com/about" }
+          ])
+        }}
+      />
       <Navbar />
       
       {/* Hero Section */}

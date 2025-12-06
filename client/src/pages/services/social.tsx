@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/luxury_private_dinner.png";
+import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { value: "200+", label: "Social Events", icon: PartyPopper },
@@ -81,6 +82,20 @@ const processSteps = [
 export default function SocialPage() {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.social.title}
+        description={SEO_DATA.social.description}
+        keywords={SEO_DATA.social.keywords}
+        canonicalUrl="https://dacreation.com/services/social"
+        structuredData={{
+          ...getServiceSchema("Social Event Planning", SEO_DATA.social.description, "https://dacreation.com/services/social"),
+          ...getBreadcrumbSchema([
+            { name: "Home", url: "https://dacreation.com" },
+            { name: "Services", url: "https://dacreation.com/services" },
+            { name: "Social Events", url: "https://dacreation.com/services/social" }
+          ])
+        }}
+      />
       <Navbar />
       
       {/* Hero Section */}

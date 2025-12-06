@@ -21,6 +21,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const categories = [
   { value: "all", label: "All Events" },
@@ -170,6 +171,16 @@ export default function PortfolioPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.portfolio.title}
+        description={SEO_DATA.portfolio.description}
+        keywords={SEO_DATA.portfolio.keywords}
+        canonicalUrl="https://dacreation.com/portfolio"
+        structuredData={getBreadcrumbSchema([
+          { name: "Home", url: "https://dacreation.com" },
+          { name: "Portfolio", url: "https://dacreation.com/portfolio" }
+        ])}
+      />
       <Navbar />
       
       {/* Hero Section */}

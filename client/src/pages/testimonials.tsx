@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { value: "98%", label: "Happy Clients", icon: Heart },
@@ -110,6 +111,16 @@ export default function TestimonialsPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.testimonials.title}
+        description={SEO_DATA.testimonials.description}
+        keywords={SEO_DATA.testimonials.keywords}
+        canonicalUrl="https://dacreation.com/testimonials"
+        structuredData={getBreadcrumbSchema([
+          { name: "Home", url: "https://dacreation.com" },
+          { name: "Testimonials", url: "https://dacreation.com/testimonials" }
+        ])}
+      />
       <Navbar />
       
       {/* Hero Section */}

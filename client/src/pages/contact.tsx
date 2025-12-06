@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { budgetRanges } from "@shared/schema";
+import { SEOHead, SEO_DATA, getLocalBusinessSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 interface SocialLink {
   platform: string;
@@ -256,6 +257,19 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
+      <SEOHead
+        title={SEO_DATA.contact.title}
+        description={SEO_DATA.contact.description}
+        keywords={SEO_DATA.contact.keywords}
+        canonicalUrl="https://dacreation.com/contact"
+        structuredData={{
+          ...getLocalBusinessSchema(),
+          ...getBreadcrumbSchema([
+            { name: "Home", url: "https://dacreation.com" },
+            { name: "Contact", url: "https://dacreation.com/contact" }
+          ])
+        }}
+      />
       <Navbar />
       
       <main className="pt-24 lg:pt-32">

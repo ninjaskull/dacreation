@@ -11,10 +11,18 @@ import { Contact } from "@/components/sections/contact";
 import { LeadMagnetsSection } from "@/components/sales/lead-magnets";
 import { ConsultationCTA } from "@/components/sales/consultation-cta";
 import { TrustedClients } from "@/components/sections/trusted-clients";
+import { SEOHead, SEO_DATA, getOrganizationSchema, getLocalBusinessSchema } from "@/components/seo/SEOHead";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary selection:text-white">
+      <SEOHead
+        title={SEO_DATA.home.title}
+        description={SEO_DATA.home.description}
+        keywords={SEO_DATA.home.keywords}
+        canonicalUrl="https://dacreation.com/"
+        structuredData={{...getOrganizationSchema(), ...getLocalBusinessSchema()}}
+      />
       <Navbar />
       <main>
         <Hero />

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/destination_event_beach.png";
+import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { value: "50+", label: "Destinations", icon: MapPin },
@@ -90,6 +91,20 @@ const processSteps = [
 export default function DestinationPage() {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.destination.title}
+        description={SEO_DATA.destination.description}
+        keywords={SEO_DATA.destination.keywords}
+        canonicalUrl="https://dacreation.com/services/destination"
+        structuredData={{
+          ...getServiceSchema("Destination Event Planning", SEO_DATA.destination.description, "https://dacreation.com/services/destination"),
+          ...getBreadcrumbSchema([
+            { name: "Home", url: "https://dacreation.com" },
+            { name: "Services", url: "https://dacreation.com/services" },
+            { name: "Destination Events", url: "https://dacreation.com/services/destination" }
+          ])
+        }}
+      />
       <Navbar />
       
       {/* Hero Section */}

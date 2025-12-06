@@ -21,6 +21,7 @@ import {
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
 import decorImg from "@assets/generated_images/indian_wedding_decor_detail.png";
+import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 
 const stats = [
   { value: "500+", label: "Weddings Planned", icon: Heart },
@@ -81,6 +82,20 @@ const processSteps = [
 export default function WeddingsPage() {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title={SEO_DATA.weddings.title}
+        description={SEO_DATA.weddings.description}
+        keywords={SEO_DATA.weddings.keywords}
+        canonicalUrl="https://dacreation.com/services/weddings"
+        structuredData={{
+          ...getServiceSchema("Wedding Planning", SEO_DATA.weddings.description, "https://dacreation.com/services/weddings"),
+          ...getBreadcrumbSchema([
+            { name: "Home", url: "https://dacreation.com" },
+            { name: "Services", url: "https://dacreation.com/services" },
+            { name: "Weddings", url: "https://dacreation.com/services/weddings" }
+          ])
+        }}
+      />
       <Navbar />
       
       {/* Hero Section */}
