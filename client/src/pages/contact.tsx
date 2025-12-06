@@ -262,13 +262,13 @@ export default function ContactPage() {
         description={SEO_DATA.contact.description}
         keywords={SEO_DATA.contact.keywords}
         canonicalUrl="https://dacreation.com/contact"
-        structuredData={{
-          ...getLocalBusinessSchema(),
-          ...getBreadcrumbSchema([
+        structuredData={[
+          getLocalBusinessSchema(),
+          getBreadcrumbSchema([
             { name: "Home", url: "https://dacreation.com" },
             { name: "Contact", url: "https://dacreation.com/contact" }
           ])
-        }}
+        ]}
       />
       <Navbar />
       
