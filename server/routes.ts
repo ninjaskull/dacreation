@@ -23,7 +23,7 @@ import {
   insertChatMessageSchema,
   insertSmtpSettingsSchema, insertEmailTemplateSchema
 } from "@shared/schema";
-import { encryptPassword, isPasswordEncrypted, testSmtpConnection, clearTransporterCache, sendEmail } from "./email";
+import { encryptPassword, isPasswordEncrypted, testSmtpConnection, clearTransporterCache, sendEmail, sendTemplatedEmail } from "./email";
 import { crypto } from "./auth";
 import type { User } from "@shared/schema";
 
@@ -232,6 +232,15 @@ export async function registerRoutes(
       }
 
       const lead = await storage.createLead(result.data);
+      
+      sendTemplatedEmail('inquiry_confirmation', lead.email, lead.name, {
+        lead_name: lead.name,
+        event_type: lead.eventType || 'Event',
+        event_date: lead.date ? new Date(lead.date).toLocaleDateString() : 'TBD',
+        guest_count: lead.guestCount?.toString() || 'TBD',
+        inquiry_id: lead.id.substring(0, 8).toUpperCase()
+      }).catch(err => console.error('Failed to send inquiry confirmation email:', err));
+      
       res.status(201).json(lead);
     } catch (error) {
       console.error("Lead creation error:", error);
@@ -1932,6 +1941,15 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid data", errors: result.error });
       }
       const request = await storage.createCallbackRequest(result.data);
+      
+      if (request.email) {
+        sendTemplatedEmail('callback_request_confirmation', request.email, request.name, {
+          client_name: request.name,
+          callback_id: request.id.substring(0, 8).toUpperCase(),
+          preferred_time: 'As soon as possible'
+        }).catch(err => console.error('Failed to send callback confirmation email:', err));
+      }
+      
       res.status(201).json(request);
     } catch (error) {
       console.error("Create callback request error:", error);
