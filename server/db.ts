@@ -5,7 +5,11 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-let connectionString = process.env.DATABASE_URL;
+let connectionString = process.env.postgresql || process.env.DATABASE_URL;
+
+if (connectionString && connectionString.startsWith('//')) {
+  connectionString = 'postgresql:' + connectionString;
+}
 
 if (!connectionString || connectionString.trim() === '') {
   const { PGUSER, PGPASSWORD, PGHOST, PGPORT, PGDATABASE } = process.env;
