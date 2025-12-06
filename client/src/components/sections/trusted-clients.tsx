@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 
 const clientLogos = [
-  { name: "Axis Bank", logo: "/images/clients/axis_bank_logo.png" },
-  { name: "BNP Paribas", logo: "/images/clients/Bnp_paribhas_logo.png" },
-  { name: "HDFC Bank", logo: "/images/clients/hdfc_bank_logo.png" },
-  { name: "Kotak Bank", logo: "/images/clients/kotak_bank_logo.png" },
-  { name: "Standard Bank", logo: "/images/clients/standard_bank_logo.png" },
-  { name: "Yes Bank", logo: "/images/clients/yes_bank_logo.png" },
+  { name: "Axis Bank", logo: "/images/clients/axis_bank_logo.png", logoWhite: "/images/clients/axis_bank_logo_white.png" },
+  { name: "BNP Paribas", logo: "/images/clients/Bnp_paribhas_logo.png", logoWhite: "/images/clients/Bnp_paribhas_logo_white.png" },
+  { name: "HDFC Bank", logo: "/images/clients/hdfc_bank_logo.png", logoWhite: "/images/clients/hdfc_bank_logo_white.png" },
+  { name: "Kotak Bank", logo: "/images/clients/kotak_bank_logo.png", logoWhite: "/images/clients/kotak_bank_logo_white.png" },
+  { name: "Standard Bank", logo: "/images/clients/standard_bank_logo.png", logoWhite: "/images/clients/standard_bank_logo_white.png" },
+  { name: "Yes Bank", logo: "/images/clients/yes_bank_logo.png", logoWhite: "/images/clients/yes_bank_logo_white.png" },
 ];
 
 interface TrustedClientsProps {
@@ -61,12 +61,9 @@ export function TrustedClients({
               data-testid={`logo-client-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <img
-                src={client.logo}
+                src={isDark ? client.logoWhite : client.logo}
                 alt={`${client.name} logo`}
                 className="max-h-12 md:max-h-14 max-w-[130px] md:max-w-[150px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
-                style={isDark ? { 
-                  filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.6)) drop-shadow(0 0 4px rgba(255,255,255,0.8))'
-                } : {}}
               />
             </motion.div>
           ))}
@@ -104,12 +101,9 @@ export function TrustedClientsCompact({
             data-testid={`logo-compact-${client.name.toLowerCase().replace(/\s+/g, '-')}`}
           >
             <img
-              src={client.logo}
+              src={isDark ? client.logoWhite : client.logo}
               alt={`${client.name} logo`}
               className="max-h-10 md:max-h-12 max-w-[110px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
-              style={isDark ? { 
-                filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5)) drop-shadow(0 0 3px rgba(255,255,255,0.7))'
-              } : {}}
             />
           </motion.div>
         ))}
