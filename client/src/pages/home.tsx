@@ -26,7 +26,6 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <TrustedClients variant="light" />
         <About />
         <WhyChooseUs />
         <Services />
@@ -35,6 +34,7 @@ export default function Home() {
         <LeadMagnetsSection />
         <Testimonials />
         <FAQ />
+        <TrustedClients variant="light" />
         <Contact />
       </main>
       <Footer />
