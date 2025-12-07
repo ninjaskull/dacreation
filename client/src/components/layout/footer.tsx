@@ -131,7 +131,7 @@ export function Footer() {
     { name: "Get a Quote", href: "/inquire" },
     { name: "FAQs", href: "/#faq" },
     { name: "Contact Us", href: "/contact" },
-    { name: "Client Portal", href: "/admin/login" },
+    { name: "Sitemap", href: "/sitemap" },
   ];
 
   const legal = [
