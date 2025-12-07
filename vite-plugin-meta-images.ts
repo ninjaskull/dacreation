@@ -59,16 +59,26 @@ export function metaImagesPlugin(): Plugin {
 }
 
 function getDeploymentUrl(): string | null {
+  // For production deployment, use the custom domain
+  if (process.env.PRODUCTION_DOMAIN) {
+    const url = process.env.PRODUCTION_DOMAIN.startsWith('http') 
+      ? process.env.PRODUCTION_DOMAIN 
+      : `https://${process.env.PRODUCTION_DOMAIN}`;
+    log('[meta-images] using production domain:', url);
+    return url;
+  }
+
+  // For Replit deployment (publishing via Replit)
   if (process.env.REPLIT_INTERNAL_APP_DOMAIN) {
     const url = `https://${process.env.REPLIT_INTERNAL_APP_DOMAIN}`;
     log('[meta-images] using internal app domain:', url);
     return url;
   }
 
+  // Skip updating for development to preserve hardcoded production URLs
   if (process.env.REPLIT_DEV_DOMAIN) {
-    const url = `https://${process.env.REPLIT_DEV_DOMAIN}`;
-    log('[meta-images] using dev domain:', url);
-    return url;
+    log('[meta-images] dev environment - not modifying URLs to preserve production settings');
+    return null;
   }
 
   return null;
