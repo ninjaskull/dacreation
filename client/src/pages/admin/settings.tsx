@@ -107,7 +107,7 @@ export default function SettingsPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       toast({ title: "Profile updated successfully" });
     },
     onError: (error: Error) => {

@@ -33,6 +33,9 @@ declare global {
       id: string;
       username: string;
       role: string;
+      name?: string | null;
+      email?: string | null;
+      phone?: string | null;
     }
   }
 }

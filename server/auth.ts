@@ -36,6 +36,8 @@ declare global {
       username: string;
       role: string;
       name?: string | null;
+      email?: string | null;
+      phone?: string | null;
     }
   }
 }
@@ -100,7 +102,7 @@ export function setupAuth(app: Express) {
         if (!user || !(await crypto.compare(password, user.password))) {
           return done(null, false, { message: "Invalid credentials" });
         }
-        return done(null, { id: user.id, username: user.username, role: user.role, name: user.name });
+        return done(null, { id: user.id, username: user.username, role: user.role, name: user.name, email: user.email, phone: user.phone });
       } catch (err) {
         return done(err);
       }
@@ -117,7 +119,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(null, false);
       }
-      done(null, { id: user.id, username: user.username, role: user.role, name: user.name });
+      done(null, { id: user.id, username: user.username, role: user.role, name: user.name, email: user.email, phone: user.phone });
     } catch (err) {
       done(err);
     }
