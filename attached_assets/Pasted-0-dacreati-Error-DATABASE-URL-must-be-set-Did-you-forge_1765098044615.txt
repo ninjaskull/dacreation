@@ -1,0 +1,25 @@
+0|dacreati | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|dacreati | Please check your Replit workspace's Database tab to ensure the database is properly configured.
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:78:632
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:1:225
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:79:200
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:1:225
+0|dacreati |     at Object.<anonymous> (/var/www/dacreation/dacreation/dist/index.cjs:144:30622)
+0|dacreati |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+0|dacreati |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+0|dacreati |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+0|dacreati |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+0|dacreati |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+
+0|dacreation  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|dacreation  | Please check your Replit workspace's Database tab to ensure the database is properly configured.
+0|dacreation  |     at /var/www/dacreation/dacreation/dist/index.cjs:78:632
+0|dacreation  |     at /var/www/dacreation/dacreation/dist/index.cjs:1:225
+0|dacreation  |     at /var/www/dacreation/dacreation/dist/index.cjs:79:200
+0|dacreation  |     at /var/www/dacreation/dacreation/dist/index.cjs:1:225
+0|dacreation  |     at Object.<anonymous> (/var/www/dacreation/dacreation/dist/index.cjs:144:30622)
+0|dacreation  |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+0|dacreation  |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+0|dacreation  |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+0|dacreation  |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+0|dacreation  |     at cjsLoader (node:internal/modules/esm/translators:298:15)
