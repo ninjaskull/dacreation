@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
+  Trash2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -39,6 +40,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -46,6 +48,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 
 type CallbackRequest = {
@@ -110,6 +122,8 @@ export default function CallbacksPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [callbackToDelete, setCallbackToDelete] = useState<CallbackRequest | null>(null);
 
   const buildQueryParams = () => {
     const params = new URLSearchParams();
@@ -158,6 +172,37 @@ export default function CallbacksPage() {
       toast({ title: "Error", description: "Failed to update callback request", variant: "destructive" });
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/callback-requests/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete callback request");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["callbackRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["callbackStats"] });
+      toast({ title: "Deleted", description: "Callback request deleted successfully" });
+      setDeleteDialogOpen(false);
+      setCallbackToDelete(null);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete callback request", variant: "destructive" });
+    },
+  });
+
+  const handleDeleteClick = (callback: CallbackRequest) => {
+    setCallbackToDelete(callback);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (callbackToDelete) {
+      deleteMutation.mutate(callbackToDelete.id);
+    }
+  };
 
   const sortedCallbacks = useMemo(() => {
     if (!callbacks) return [];
@@ -494,6 +539,15 @@ export default function CallbacksPage() {
                                       <PhoneMissed className="w-4 h-4 mr-2 text-red-500" />
                                       Mark Missed
                                     </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDeleteClick(callback)}
+                                      className="text-red-600 focus:text-red-600"
+                                      data-testid={`button-delete-${callback.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
@@ -618,6 +672,31 @@ export default function CallbacksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) setCallbackToDelete(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Callback Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the callback request from "{callbackToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

@@ -23,6 +23,7 @@ import {
   UserPlus,
   RefreshCw,
   X,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -38,6 +39,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { leadSources, budgetRanges, eventTypes, leadStatuses } from "@shared/schema";
 
@@ -91,6 +102,8 @@ export default function LeadsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<LeadWithAssignee | null>(null);
 
   const buildQueryParams = () => {
     const params = new URLSearchParams();
@@ -130,6 +143,44 @@ export default function LeadsPage() {
       return response.json();
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (leadId: string) => {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete lead");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+      toast({
+        title: "Lead deleted",
+        description: "The lead has been successfully deleted.",
+      });
+      setDeleteDialogOpen(false);
+      setLeadToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete lead. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteClick = (lead: LeadWithAssignee) => {
+    setLeadToDelete(lead);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (leadToDelete) {
+      deleteMutation.mutate(leadToDelete.id);
+    }
+  };
 
   const sortedLeads = useMemo(() => {
     if (!leads) return [];
@@ -535,6 +586,15 @@ export default function LeadsPage() {
                                   <DropdownMenuItem>
                                     <a href={`mailto:${lead.email}`}>Send Email</a>
                                   </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDeleteClick(lead)}
+                                    className="text-red-600 focus:text-red-600"
+                                    data-testid={`button-delete-${lead.id}`}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Lead
+                                  </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
@@ -603,6 +663,31 @@ export default function LeadsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) setLeadToDelete(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lead</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the lead "{leadToDelete?.name}"? This action cannot be undone and will remove all associated notes and data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
