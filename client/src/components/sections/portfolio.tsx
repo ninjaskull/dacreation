@@ -58,6 +58,7 @@ export function Portfolio() {
                 <img 
                   src={item.image} 
                   alt={item.title} 
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute bottom-0 left-0 w-full p-8 z-30 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">

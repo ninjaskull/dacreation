@@ -123,6 +123,7 @@ export function Services() {
                   <img 
                     src={data.image} 
                     alt={data.title} 
+                    loading="lazy"
                     className="w-full h-full object-cover shadow-lg"
                   />
                 </div>

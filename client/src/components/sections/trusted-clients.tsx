@@ -63,6 +63,7 @@ export function TrustedClients({
               <img
                 src={isDark ? client.logoWhite : client.logo}
                 alt={`${client.name} logo`}
+                loading="lazy"
                 className="max-h-12 md:max-h-14 max-w-[130px] md:max-w-[150px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </motion.div>
@@ -103,6 +104,7 @@ export function TrustedClientsCompact({
             <img
               src={isDark ? client.logoWhite : client.logo}
               alt={`${client.name} logo`}
+              loading="lazy"
               className="max-h-10 md:max-h-12 max-w-[110px] w-auto object-contain transition-all duration-300 group-hover:scale-105"
             />
           </motion.div>
