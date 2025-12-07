@@ -75,11 +75,13 @@ const companyLinks = [
   { name: "Press", href: "/press" }
 ];
 
+import { BRAND } from "@shared/branding";
+
 const DEFAULT_SETTINGS = {
-  phone: "+91 98765 43210",
-  email: "hello@dacreation.in",
-  topBarAddress: "Mumbai, India",
-  numberOfEventsHeld: 500,
+  phone: BRAND.contact.phones.join(", "),
+  email: BRAND.contact.email,
+  topBarAddress: BRAND.addresses.topBar,
+  numberOfEventsHeld: BRAND.stats.eventsCompleted,
 };
 
 export function Navbar() {

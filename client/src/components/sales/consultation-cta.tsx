@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Phone, Calendar, MessageCircle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { BRAND } from "@shared/branding";
 
 export function ConsultationCTA() {
   return (
@@ -47,7 +48,7 @@ export function ConsultationCTA() {
             </Button>
           </Link>
 
-          <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+          <a href={`https://wa.me/${BRAND.contact.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer">
             <Button 
               size="lg" 
               variant="outline" 
@@ -59,7 +60,7 @@ export function ConsultationCTA() {
             </Button>
           </a>
 
-          <a href="tel:+919876543210">
+          <a href={`tel:${BRAND.contact.phones[0].replace(/\s+/g, '')}`}>
             <Button 
               size="lg" 
               variant="ghost" 

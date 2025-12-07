@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { BRAND } from "@shared/branding";
 
 interface SEOProps {
   title: string;
@@ -12,7 +13,7 @@ interface SEOProps {
 }
 
 const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
-const DEFAULT_OG_IMAGE = "/og-image.png";
+const DEFAULT_OG_IMAGE = BRAND.assets.ogImage;
 
 export function SEOHead({
   title,
@@ -68,7 +69,7 @@ export function SEOHead({
     updateMetaTag("og:type", ogType, true);
     updateMetaTag("og:image", ogImage.startsWith("http") ? ogImage : `${BASE_URL}${ogImage}`, true);
     updateMetaTag("og:url", canonicalUrl || window.location.href, true);
-    updateMetaTag("og:site_name", "DA Creation", true);
+    updateMetaTag("og:site_name", BRAND.company.name, true);
     updateMetaTag("og:locale", "en_IN", true);
 
     updateMetaTag("twitter:card", "summary_large_image");

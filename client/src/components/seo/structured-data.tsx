@@ -1,22 +1,23 @@
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { BRAND } from '@shared/branding';
 
 const localBusinessSchema = {
   "@context": "https://schema.org",
   "@type": "EventPlanner",
-  "@id": "https://dacreation.in/#organization",
-  "name": "DA Creation",
-  "alternateName": "DA Creation Event Management",
-  "description": "DA Creation is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings.",
-  "url": "https://dacreation.in",
-  "logo": "/favicon.webp",
-  "image": "/og-image.png",
-  "telephone": "+91 98765 43210",
-  "email": "hello@dacreation.in",
+  "@id": `${BRAND.domain.url}/#organization`,
+  "name": BRAND.company.name,
+  "alternateName": `${BRAND.company.name} Event Management`,
+  "description": BRAND.company.fullDescription,
+  "url": BRAND.domain.url,
+  "logo": BRAND.assets.favicon,
+  "image": BRAND.assets.ogImage,
+  "telephone": BRAND.contact.phones[0],
+  "email": BRAND.contact.email,
   "address": {
     "@type": "PostalAddress",
-    "addressLocality": "Pune",
-    "addressRegion": "Maharashtra",
+    "addressLocality": BRAND.addresses.primary.city,
+    "addressRegion": BRAND.addresses.primary.state,
     "addressCountry": "IN"
   },
   "geo": {
@@ -46,9 +47,9 @@ const localBusinessSchema = {
     "closes": "19:00"
   },
   "sameAs": [
-    "https://www.facebook.com/dacreation",
-    "https://www.instagram.com/dacreation",
-    "https://www.linkedin.com/company/dacreation"
+    BRAND.social.facebook,
+    BRAND.social.instagram,
+    BRAND.social.linkedin
   ],
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
@@ -93,17 +94,17 @@ const localBusinessSchema = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "DA Creation",
-  "url": "https://dacreation.in",
-  "description": "Best event management company in Pune specializing in weddings, corporate events, and destination celebrations.",
+  "name": BRAND.company.name,
+  "url": BRAND.domain.url,
+  "description": BRAND.seo.defaultDescription,
   "publisher": {
-    "@id": "https://dacreation.in/#organization"
+    "@id": `${BRAND.domain.url}/#organization`
   },
   "potentialAction": {
     "@type": "SearchAction",
     "target": {
       "@type": "EntryPoint",
-      "urlTemplate": "https://dacreation.in/search?q={search_term_string}"
+      "urlTemplate": `${BRAND.domain.url}/search?q={search_term_string}`
     },
     "query-input": "required name=search_term_string"
   }

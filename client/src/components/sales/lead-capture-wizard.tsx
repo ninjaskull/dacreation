@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { budgetRanges } from "@shared/schema";
+import { BRAND } from "@shared/branding";
 
 const step1Schema = z.object({
   eventType: z.enum(["wedding", "corporate", "social", "destination"], {
@@ -470,7 +471,7 @@ export function LeadCaptureWizard() {
                   <Button 
                     variant="default" 
                     className="flex items-center justify-center gap-2"
-                    onClick={() => window.open("https://wa.me/919876543210?text=Hi! I just submitted an inquiry for my " + getValues("eventType") + ". My name is " + getValues("name"), "_blank")}
+                    onClick={() => window.open(`https://wa.me/${BRAND.contact.whatsapp.replace(/[^0-9]/g, '')}?text=Hi! I just submitted an inquiry for my ${getValues("eventType")}. My name is ${getValues("name")}`, "_blank")}
                     data-testid="success-whatsapp-button"
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -479,7 +480,7 @@ export function LeadCaptureWizard() {
                   <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2"
-                    onClick={() => window.open("tel:+919876543210", "_blank")}
+                    onClick={() => window.open(`tel:${BRAND.contact.phones[0].replace(/\s+/g, '')}`, "_blank")}
                     data-testid="success-call-button"
                   >
                     <PhoneCall className="w-4 h-4" />

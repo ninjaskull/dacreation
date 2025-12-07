@@ -100,17 +100,19 @@ const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
   youtube: Youtube,
 };
 
+import { BRAND } from "@shared/branding";
+
 const DEFAULT_SETTINGS: WebsiteSettings = {
-  address: "123 Event Avenue, Bandra West, Mumbai, Maharashtra 400050, India",
-  phone: "+91 98765 43210",
-  email: "hello@dacreation.in",
-  whatsappNumber: "+91 98765 43210",
+  address: BRAND.addresses.primary.full,
+  phone: BRAND.contact.phones.join(", "),
+  email: BRAND.contact.email,
+  whatsappNumber: BRAND.contact.whatsapp,
   mapEmbedCode: null,
-  topBarAddress: "Mumbai, India",
+  topBarAddress: BRAND.addresses.topBar,
   secondaryAddress: null,
   socialMedia: [],
-  numberOfEventsHeld: 500,
-  ratings: 5,
+  numberOfEventsHeld: BRAND.stats.eventsCompleted,
+  ratings: BRAND.stats.rating,
 };
 
 export default function ContactPage() {
@@ -244,7 +246,7 @@ export default function ContactPage() {
       const waClean = currentSettings.whatsappNumber.replace(/\s+/g, '').replace(/[^+\d]/g, '').replace('+', '');
       return `https://wa.me/${waClean}`;
     }
-    return "https://wa.me/919876543210";
+    return `https://wa.me/${BRAND.contact.whatsapp.replace(/[^0-9]/g, '')}`;
   }, [currentSettings.whatsappNumber]);
 
   const phoneLink = useMemo(() => {
@@ -252,7 +254,7 @@ export default function ContactPage() {
       const phoneClean = currentSettings.phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
       return `tel:${phoneClean}`;
     }
-    return "tel:+919876543210";
+    return `tel:${BRAND.contact.phones[0].replace(/\s+/g, '')}`;
   }, [currentSettings.phone]);
 
   return (
@@ -362,7 +364,7 @@ export default function ContactPage() {
                       <h4 className="font-semibold text-foreground mb-1">Head Office</h4>
                       <p className="text-muted-foreground">{currentSettings.address || DEFAULT_SETTINGS.address}</p>
                       <a 
-                        href="https://maps.google.com/?q=Bandra+West+Mumbai" 
+                        href={`https://maps.google.com/?q=${encodeURIComponent(BRAND.addresses.primary.full)}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-primary text-sm font-medium mt-2 inline-flex items-center gap-1 hover:gap-2 transition-all"

@@ -51,12 +51,14 @@ const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
   youtube: Youtube,
 };
 
+import { BRAND } from "@shared/branding";
+
 const DEFAULT_SETTINGS = {
-  address: "123 Event Avenue,\nMumbai, MH 400001",
-  phone: "+91 98765 43210",
-  email: "hello@dacreation.in",
-  numberOfEventsHeld: 500,
-  ratings: 4.9,
+  address: BRAND.addresses.primary.full,
+  phone: BRAND.contact.phones.join(", "),
+  email: BRAND.contact.email,
+  numberOfEventsHeld: BRAND.stats.eventsCompleted,
+  ratings: BRAND.stats.rating,
 };
 
 export function Footer() {
@@ -91,11 +93,11 @@ export function Footer() {
   const socialLinks = useMemo(() => {
     if (!settings?.socialMedia || settings.socialMedia.length === 0) {
       return [
-        { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-        { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-        { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-        { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-        { icon: Youtube, href: "https://youtube.com", label: "YouTube" },
+        { icon: Instagram, href: BRAND.social.instagram, label: "Instagram" },
+        { icon: Facebook, href: BRAND.social.facebook, label: "Facebook" },
+        { icon: Twitter, href: `https://twitter.com/${BRAND.social.twitter.replace('@', '')}`, label: "Twitter" },
+        { icon: Linkedin, href: BRAND.social.linkedin, label: "LinkedIn" },
+        { icon: Youtube, href: BRAND.social.youtube, label: "YouTube" },
       ];
     }
     return settings.socialMedia.filter(link => link.url).map(link => ({
