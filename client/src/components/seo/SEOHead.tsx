@@ -1,32 +1,134 @@
 import { useEffect } from "react";
-import { BRAND } from "@shared/branding";
+import { useBranding, BrandingData } from "@/contexts/BrandingContext";
 
 interface SEOProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   keywords?: string;
   canonicalUrl?: string;
   ogImage?: string;
   ogType?: string;
   structuredData?: object | object[];
   noindex?: boolean;
+  pageType?: keyof typeof PAGE_SEO_TEMPLATES;
 }
 
 const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
-const DEFAULT_OG_IMAGE = BRAND.assets.ogImage;
+
+function generatePageSEO(branding: BrandingData, pageType: string) {
+  const companyName = branding.company.name;
+  const city = branding.addresses.primary.city;
+  const shortDesc = branding.company.shortDescription;
+  
+  const templates: Record<string, { title: string; description: string; keywords: string }> = {
+    home: {
+      title: `${companyName} | ${shortDesc} | Wedding & Corporate Event Planners`,
+      description: `${companyName} is ${shortDesc.toLowerCase()}, specializing in luxury weddings, corporate events, social celebrations & destination weddings. Transform your vision into unforgettable experiences with ${city}'s top event planners.`,
+      keywords: `best event management company in ${city}, event planners ${city}, wedding planners ${city}, corporate event management ${city}, luxury wedding planners, destination wedding planners, event organizers ${city}, ${companyName}`,
+    },
+    about: {
+      title: `About ${companyName} | Top Event Management Company in ${city} | Our Story`,
+      description: `Learn about ${companyName}, ${city}'s leading event management company. With years of experience in luxury weddings, corporate events & celebrations, we bring creativity and excellence to every occasion.`,
+      keywords: `about ${companyName}, event management company ${city}, professional event planners, wedding planning experts ${city}, corporate event specialists`,
+    },
+    team: {
+      title: `Our Team | Expert Event Planners at ${companyName} ${city}`,
+      description: `Meet the talented team behind ${companyName} - ${city}'s best event management professionals. Our experienced planners, designers & coordinators ensure flawless execution of every event.`,
+      keywords: `event planning team ${city}, wedding planners team, ${companyName} team, professional event coordinators, event management experts`,
+    },
+    portfolio: {
+      title: `Portfolio | Stunning Events by ${companyName} ${city} | Wedding & Corporate Gallery`,
+      description: `Explore our portfolio of magnificent weddings, corporate events & celebrations. See why ${companyName} is rated as the best event management company in ${city} through our stunning event gallery.`,
+      keywords: `event portfolio ${city}, wedding gallery, corporate event photos, destination wedding portfolio, ${companyName} events, luxury event showcase`,
+    },
+    testimonials: {
+      title: `Client Testimonials | ${companyName} Reviews | Best Event Planners ${city}`,
+      description: `Read what our clients say about ${companyName}. Discover why we're rated as the best event management company in ${city} through genuine reviews from happy couples and corporate clients.`,
+      keywords: `${companyName} reviews, event planner testimonials ${city}, wedding planner reviews, client feedback, best event company ratings`,
+    },
+    careers: {
+      title: `Careers at ${companyName} | Join ${city}'s Best Event Management Team`,
+      description: `Join ${companyName}, ${city}'s leading event management company. Explore exciting career opportunities in event planning, wedding coordination, design & more. Build your future with us.`,
+      keywords: `event management jobs ${city}, wedding planner careers, ${companyName} careers, event coordinator jobs, event planning opportunities`,
+    },
+    press: {
+      title: `Press & Media | ${companyName} in News | Top Event Company ${city}`,
+      description: `Read the latest news and media coverage about ${companyName}. Discover why leading publications feature us as one of the best event management companies in ${city}.`,
+      keywords: `${companyName} news, event management press, wedding planner media coverage, ${city} events in news, ${companyName} awards`,
+    },
+    contact: {
+      title: `Contact ${companyName} | Best Event Management Company in ${city} | Get Quote`,
+      description: `Contact ${companyName} for your wedding, corporate event or celebration. Get a free consultation from ${city}'s best event management company. Call us today for personalized event planning.`,
+      keywords: `contact ${companyName}, event planner contact ${city}, wedding planner consultation, get event quote, book event management`,
+    },
+    inquire: {
+      title: `Book Your Event | ${companyName} ${city} | Free Consultation`,
+      description: `Ready to plan your dream event? Book a free consultation with ${companyName}, the best event management company in ${city}. Let's create something extraordinary together.`,
+      keywords: `book event planner ${city}, wedding consultation, event inquiry, ${companyName} booking, schedule event planning`,
+    },
+    weddings: {
+      title: `Luxury Wedding Planners in ${city} | ${companyName} | Dream Wedding Planning`,
+      description: `Plan your dream wedding with ${companyName}, ${city}'s premier luxury wedding planners. From intimate ceremonies to grand celebrations, we create unforgettable wedding experiences across India.`,
+      keywords: `wedding planners ${city}, luxury wedding planning, best wedding organizers, Indian wedding planners, wedding decoration ${city}, bridal services, wedding coordination`,
+    },
+    corporate: {
+      title: `Corporate Event Management in ${city} | ${companyName} | Business Events`,
+      description: `Professional corporate event management by ${companyName}. We organize conferences, seminars, product launches, team building & corporate celebrations for businesses in ${city}.`,
+      keywords: `corporate event management ${city}, business event planners, conference organizers, corporate party planning, seminar management, product launch events, corporate celebrations ${city}`,
+    },
+    social: {
+      title: `Social Event Planners ${city} | Birthday, Anniversary & Celebration Parties`,
+      description: `Celebrate life's special moments with ${companyName}. Expert social event planning for birthdays, anniversaries, baby showers, engagement parties & more in ${city}.`,
+      keywords: `social event planners ${city}, birthday party organizers, anniversary celebration planning, baby shower events, engagement party planners, celebration events ${city}`,
+    },
+    destination: {
+      title: `Destination Wedding Planners | ${companyName} | Exotic Venues`,
+      description: `Plan your destination wedding with ${companyName}. We specialize in destination weddings across India - from Goa beaches to Rajasthan palaces. Create magical memories at exotic locations.`,
+      keywords: `destination wedding planners, destination wedding India, Goa wedding planners, Rajasthan wedding, beach wedding organizers, palace wedding planning, exotic wedding venues`,
+    },
+  };
+
+  return templates[pageType] || templates.home;
+}
+
+const PAGE_SEO_TEMPLATES = {
+  home: true,
+  about: true,
+  team: true,
+  portfolio: true,
+  testimonials: true,
+  careers: true,
+  press: true,
+  contact: true,
+  inquire: true,
+  weddings: true,
+  corporate: true,
+  social: true,
+  destination: true,
+};
 
 export function SEOHead({
   title,
   description,
   keywords,
   canonicalUrl,
-  ogImage = DEFAULT_OG_IMAGE,
+  ogImage,
   ogType = "website",
   structuredData,
   noindex = false,
+  pageType,
 }: SEOProps) {
+  const { branding } = useBranding();
+  
+  const pageSEO = pageType ? generatePageSEO(branding, pageType) : null;
+  
+  const finalTitle = title || pageSEO?.title || branding.seo.defaultTitle;
+  const finalDescription = description || pageSEO?.description || branding.seo.defaultDescription;
+  const finalKeywords = keywords || pageSEO?.keywords || branding.seo.keywords.join(", ");
+  const finalOgImage = ogImage || branding.assets.ogImage;
+
   useEffect(() => {
-    document.title = title;
+    document.title = finalTitle;
 
     const updateMetaTag = (name: string, content: string, isProperty = false) => {
       const selector = isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`;
@@ -53,9 +155,9 @@ export function SEOHead({
       link.setAttribute("href", href);
     };
 
-    updateMetaTag("description", description);
-    if (keywords) {
-      updateMetaTag("keywords", keywords);
+    updateMetaTag("description", finalDescription);
+    if (finalKeywords) {
+      updateMetaTag("keywords", finalKeywords);
     }
 
     if (noindex) {
@@ -64,18 +166,18 @@ export function SEOHead({
       updateMetaTag("robots", "index, follow");
     }
 
-    updateMetaTag("og:title", title, true);
-    updateMetaTag("og:description", description, true);
+    updateMetaTag("og:title", finalTitle, true);
+    updateMetaTag("og:description", finalDescription, true);
     updateMetaTag("og:type", ogType, true);
-    updateMetaTag("og:image", ogImage.startsWith("http") ? ogImage : `${BASE_URL}${ogImage}`, true);
+    updateMetaTag("og:image", finalOgImage.startsWith("http") ? finalOgImage : `${BASE_URL}${finalOgImage}`, true);
     updateMetaTag("og:url", canonicalUrl || window.location.href, true);
-    updateMetaTag("og:site_name", BRAND.company.name, true);
+    updateMetaTag("og:site_name", branding.company.name, true);
     updateMetaTag("og:locale", "en_IN", true);
 
     updateMetaTag("twitter:card", "summary_large_image");
-    updateMetaTag("twitter:title", title);
-    updateMetaTag("twitter:description", description);
-    updateMetaTag("twitter:image", ogImage.startsWith("http") ? ogImage : `${BASE_URL}${ogImage}`);
+    updateMetaTag("twitter:title", finalTitle);
+    updateMetaTag("twitter:description", finalDescription);
+    updateMetaTag("twitter:image", finalOgImage.startsWith("http") ? finalOgImage : `${BASE_URL}${finalOgImage}`);
 
     if (canonicalUrl) {
       updateLinkTag("canonical", canonicalUrl);
@@ -98,161 +200,92 @@ export function SEOHead({
         structuredScript.remove();
       }
     };
-  }, [title, description, keywords, canonicalUrl, ogImage, ogType, structuredData, noindex]);
+  }, [finalTitle, finalDescription, finalKeywords, canonicalUrl, finalOgImage, ogType, structuredData, noindex, branding]);
 
   return null;
 }
 
-export const SEO_DATA = {
-  home: {
-    title: "DA Creation | Best Event Management Company in Pune | Wedding & Corporate Event Planners",
-    description: "DA Creation is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings. Transform your vision into unforgettable experiences with Pune's top event planners.",
-    keywords: "best event management company in Pune, event planners Pune, wedding planners Pune, corporate event management Pune, luxury wedding planners, destination wedding planners Maharashtra, event organizers Pune, DA Creation",
-  },
-  about: {
-    title: "About DA Creation | Top Event Management Company in Pune | Our Story",
-    description: "Learn about DA Creation, Pune's leading event management company. With years of experience in luxury weddings, corporate events & celebrations, we bring creativity and excellence to every occasion.",
-    keywords: "about DA Creation, event management company Pune, professional event planners, wedding planning experts Pune, corporate event specialists",
-  },
-  team: {
-    title: "Our Team | Expert Event Planners at DA Creation Pune",
-    description: "Meet the talented team behind DA Creation - Pune's best event management professionals. Our experienced planners, designers & coordinators ensure flawless execution of every event.",
-    keywords: "event planning team Pune, wedding planners team, DA Creation team, professional event coordinators, event management experts",
-  },
-  portfolio: {
-    title: "Portfolio | Stunning Events by DA Creation Pune | Wedding & Corporate Gallery",
-    description: "Explore our portfolio of magnificent weddings, corporate events & celebrations. See why DA Creation is rated as the best event management company in Pune through our stunning event gallery.",
-    keywords: "event portfolio Pune, wedding gallery, corporate event photos, destination wedding portfolio, DA Creation events, luxury event showcase",
-  },
-  testimonials: {
-    title: "Client Testimonials | DA Creation Reviews | Best Event Planners Pune",
-    description: "Read what our clients say about DA Creation. Discover why we're rated as the best event management company in Pune through genuine reviews from happy couples and corporate clients.",
-    keywords: "DA Creation reviews, event planner testimonials Pune, wedding planner reviews, client feedback, best event company ratings",
-  },
-  careers: {
-    title: "Careers at DA Creation | Join Pune's Best Event Management Team",
-    description: "Join DA Creation, Pune's leading event management company. Explore exciting career opportunities in event planning, wedding coordination, design & more. Build your future with us.",
-    keywords: "event management jobs Pune, wedding planner careers, DA Creation careers, event coordinator jobs, event planning opportunities",
-  },
-  press: {
-    title: "Press & Media | DA Creation in News | Top Event Company Pune",
-    description: "Read the latest news and media coverage about DA Creation. Discover why leading publications feature us as one of the best event management companies in Pune.",
-    keywords: "DA Creation news, event management press, wedding planner media coverage, Pune events in news, DA Creation awards",
-  },
-  contact: {
-    title: "Contact DA Creation | Best Event Management Company in Pune | Get Quote",
-    description: "Contact DA Creation for your wedding, corporate event or celebration. Get a free consultation from Pune's best event management company. Call us today for personalized event planning.",
-    keywords: "contact DA Creation, event planner contact Pune, wedding planner consultation, get event quote, book event management",
-  },
-  inquire: {
-    title: "Book Your Event | DA Creation Pune | Free Consultation",
-    description: "Ready to plan your dream event? Book a free consultation with DA Creation, the best event management company in Pune. Let's create something extraordinary together.",
-    keywords: "book event planner Pune, wedding consultation, event inquiry, DA Creation booking, schedule event planning",
-  },
-  weddings: {
-    title: "Luxury Wedding Planners in Pune | DA Creation | Dream Wedding Planning",
-    description: "Plan your dream wedding with DA Creation, Pune's premier luxury wedding planners. From intimate ceremonies to grand celebrations, we create unforgettable wedding experiences across India.",
-    keywords: "wedding planners Pune, luxury wedding planning, best wedding organizers, Indian wedding planners, wedding decoration Pune, bridal services, wedding coordination",
-  },
-  corporate: {
-    title: "Corporate Event Management in Pune | DA Creation | Business Events",
-    description: "Professional corporate event management by DA Creation. We organize conferences, seminars, product launches, team building & corporate celebrations for businesses in Pune and Maharashtra.",
-    keywords: "corporate event management Pune, business event planners, conference organizers, corporate party planning, seminar management, product launch events, corporate celebrations Pune",
-  },
-  social: {
-    title: "Social Event Planners Pune | Birthday, Anniversary & Celebration Parties",
-    description: "Celebrate life's special moments with DA Creation. Expert social event planning for birthdays, anniversaries, baby showers, engagement parties & more in Pune.",
-    keywords: "social event planners Pune, birthday party organizers, anniversary celebration planning, baby shower events, engagement party planners, celebration events Pune",
-  },
-  destination: {
-    title: "Destination Wedding Planners Maharashtra | DA Creation | Exotic Venues",
-    description: "Plan your destination wedding with DA Creation. We specialize in destination weddings across India - from Goa beaches to Rajasthan palaces. Create magical memories at exotic locations.",
-    keywords: "destination wedding planners, destination wedding India, Goa wedding planners, Rajasthan wedding, beach wedding organizers, palace wedding planning, exotic wedding venues",
-  },
-};
-
-export function getOrganizationSchema() {
+export function useOrganizationSchema() {
+  const { branding } = useBranding();
+  
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "DA Creation",
-    "description": "Best event management company in Pune specializing in luxury weddings, corporate events, and social celebrations",
-    "url": BASE_URL || "https://dacreation.in",
-    "logo": `${BASE_URL}/logo.png`,
+    "name": branding.company.name,
+    "description": branding.company.shortDescription,
+    "url": branding.domain.url || BASE_URL,
+    "logo": `${BASE_URL}${branding.assets.logos.maroon}`,
     "contactPoint": {
       "@type": "ContactPoint",
+      "telephone": branding.contact.phones[0],
+      "email": branding.contact.email,
       "contactType": "Customer Service",
       "availableLanguage": ["English", "Hindi", "Marathi"]
     },
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Pune",
-      "addressRegion": "Maharashtra",
-      "addressCountry": "IN"
+      "addressLocality": branding.addresses.primary.city,
+      "addressRegion": branding.addresses.primary.state,
+      "addressCountry": branding.addresses.primary.country
     },
-    "sameAs": []
+    "sameAs": branding.social.map(s => s.url).filter(Boolean)
   };
 }
 
-export function getLocalBusinessSchema() {
+export function useLocalBusinessSchema() {
+  const { branding } = useBranding();
+  
   return {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `${BASE_URL}/#localbusiness`,
-    "name": "DA Creation - Event Management Company",
-    "description": "Best event management company in Pune offering luxury wedding planning, corporate events, social celebrations and destination weddings",
-    "url": BASE_URL || "https://dacreation.in",
+    "@id": `${branding.domain.url || BASE_URL}/#localbusiness`,
+    "name": `${branding.company.name} - Event Management Company`,
+    "description": branding.company.fullDescription,
+    "url": branding.domain.url || BASE_URL,
+    "telephone": branding.contact.phones[0],
+    "email": branding.contact.email,
     "priceRange": "$$$$",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Pune",
-      "addressRegion": "Maharashtra",
-      "addressCountry": "IN"
-    },
-    "geo": {
-      "@type": "GeoCoordinates",
-      "latitude": "18.5204",
-      "longitude": "73.8567"
-    },
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-      "opens": "09:00",
-      "closes": "19:00"
+      "streetAddress": branding.addresses.primary.full,
+      "addressLocality": branding.addresses.primary.city,
+      "addressRegion": branding.addresses.primary.state,
+      "postalCode": branding.addresses.primary.pincode,
+      "addressCountry": branding.addresses.primary.country
     },
     "aggregateRating": {
       "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "150"
+      "ratingValue": branding.stats.rating.toString(),
+      "reviewCount": branding.stats.happyClients.toString()
     }
   };
 }
 
-export function getServiceSchema(serviceName: string, serviceDescription: string, serviceUrl: string) {
+export function getServiceSchema(branding: BrandingData, serviceName: string, serviceDescription: string, serviceUrl: string) {
   return {
     "@context": "https://schema.org",
     "@type": "Service",
     "serviceType": serviceName,
     "provider": {
       "@type": "LocalBusiness",
-      "name": "DA Creation",
+      "name": branding.company.name,
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": "Pune",
-        "addressRegion": "Maharashtra",
-        "addressCountry": "IN"
+        "addressLocality": branding.addresses.primary.city,
+        "addressRegion": branding.addresses.primary.state,
+        "addressCountry": branding.addresses.primary.country
       }
     },
     "areaServed": {
       "@type": "Place",
-      "name": "Pune, Maharashtra, India"
+      "name": `${branding.addresses.primary.city}, ${branding.addresses.primary.state}, ${branding.addresses.primary.country}`
     },
     "description": serviceDescription,
     "url": serviceUrl
   };
 }
 
-export function getBreadcrumbSchema(items: { name: string; url: string }[]) {
+export function getBreadcrumbSchema(branding: BrandingData, items: { name: string; url: string }[]) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -265,7 +298,7 @@ export function getBreadcrumbSchema(items: { name: string; url: string }[]) {
   };
 }
 
-export function getWebPageSchema(title: string, description: string, url: string) {
+export function getWebPageSchema(branding: BrandingData, title: string, description: string, url: string) {
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -274,8 +307,10 @@ export function getWebPageSchema(title: string, description: string, url: string
     "url": url,
     "isPartOf": {
       "@type": "WebSite",
-      "name": "DA Creation",
-      "url": BASE_URL || "https://dacreation.in"
+      "name": branding.company.name,
+      "url": branding.domain.url || BASE_URL
     }
   };
 }
+
+export { generatePageSEO as getSEOForPage };
