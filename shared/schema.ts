@@ -970,6 +970,9 @@ export type CallbackRequest = typeof callbackRequests.$inferSelect;
 export const conversationStatuses = ["active", "waiting", "live_agent", "resolved", "closed"] as const;
 export type ConversationStatus = typeof conversationStatuses[number];
 
+export const conversationPriorities = ["low", "normal", "high", "urgent"] as const;
+export type ConversationPriority = typeof conversationPriorities[number];
+
 export const conversations = pgTable("conversations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   visitorId: text("visitor_id").notNull(),
@@ -981,11 +984,18 @@ export const conversations = pgTable("conversations", {
   eventLocation: text("event_location"),
   budgetRange: text("budget_range"),
   status: text("status").notNull().default("active"),
+  priority: text("priority").notNull().default("normal"),
   wantsLiveAgent: boolean("wants_live_agent").notNull().default(false),
   liveAgentRequestedAt: timestamp("live_agent_requested_at"),
   assignedTo: varchar("assigned_to").references(() => users.id),
   lastMessageAt: timestamp("last_message_at").notNull().defaultNow(),
   unreadCount: integer("unread_count").notNull().default(0),
+  firstResponseTime: integer("first_response_time"),
+  avgResponseTime: integer("avg_response_time"),
+  totalMessages: integer("total_messages").notNull().default(0),
+  visitorRating: integer("visitor_rating"),
+  visitorFeedback: text("visitor_feedback"),
+  tags: text("tags").array(),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -1000,6 +1010,8 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
   unreadCount: true,
   wantsLiveAgent: true,
   liveAgentRequestedAt: true,
+}).extend({
+  lastMessageAt: z.date().or(z.string()).optional(),
 });
 
 export const updateConversationSchema = z.object({
@@ -1011,11 +1023,18 @@ export const updateConversationSchema = z.object({
   eventLocation: z.string().optional(),
   budgetRange: z.string().optional(),
   status: z.enum(conversationStatuses).optional(),
+  priority: z.enum(conversationPriorities).optional(),
   wantsLiveAgent: z.boolean().optional(),
   liveAgentRequestedAt: z.date().or(z.string()).nullable().optional(),
   assignedTo: z.string().nullable().optional(),
   unreadCount: z.number().optional(),
   lastMessageAt: z.date().or(z.string()).optional(),
+  firstResponseTime: z.number().optional(),
+  avgResponseTime: z.number().optional(),
+  totalMessages: z.number().optional(),
+  visitorRating: z.number().min(1).max(5).optional(),
+  visitorFeedback: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   metadata: z.any().optional(),
 });
 
