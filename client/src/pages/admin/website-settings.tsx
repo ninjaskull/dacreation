@@ -44,7 +44,8 @@ import {
   Instagram,
   GripVertical,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ToggleLeft
 } from "lucide-react";
 import type { TeamMember, InsertTeamMember } from "@shared/schema";
 
@@ -395,7 +396,7 @@ export default function WebsiteSettingsPage() {
   return (
     <AdminLayout title="Website Settings" description="Manage your website content and team">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="general" className="flex items-center gap-2" data-testid="tab-general">
             <Settings className="w-4 h-4" />
             General
@@ -403,6 +404,10 @@ export default function WebsiteSettingsPage() {
           <TabsTrigger value="teams" className="flex items-center gap-2" data-testid="tab-teams">
             <Users className="w-4 h-4" />
             Teams
+          </TabsTrigger>
+          <TabsTrigger value="other" className="flex items-center gap-2" data-testid="tab-other">
+            <ToggleLeft className="w-4 h-4" />
+            Other
           </TabsTrigger>
         </TabsList>
 
@@ -863,6 +868,66 @@ export default function WebsiteSettingsPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="other" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Section Visibility</CardTitle>
+              <CardDescription>Control which sections are displayed on the website</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label htmlFor="showPreferredBy" className="text-base font-medium">Trusted Partners</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show the "Trusted Partners" / "Preferred by Leading Organizations" section on pages
+                  </p>
+                </div>
+                <Switch
+                  id="showPreferredBy"
+                  checked={formData.showPreferredBy}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showPreferredBy: checked }))}
+                  data-testid="switch-show-preferred-by"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label htmlFor="showTrustedBy" className="text-base font-medium">Trusted By</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Show the "Trusted by" compact client logos section on pages
+                  </p>
+                </div>
+                <Switch
+                  id="showTrustedBy"
+                  checked={formData.showTrustedBy}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showTrustedBy: checked }))}
+                  data-testid="switch-show-trusted-by"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+              data-testid="button-save-other-settings"
+            >
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Settings
+                </>
+              )}
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
 

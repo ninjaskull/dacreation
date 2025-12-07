@@ -1319,6 +1319,8 @@ export async function registerRoutes(
           destinationsCount: 0,
           happyGuestsCount: 0,
           clientSatisfaction: 0,
+          showPreferredBy: true,
+          showTrustedBy: true,
         });
       }
       res.json({
@@ -1339,6 +1341,8 @@ export async function registerRoutes(
         destinationsCount: settings.destinationsCount || 0,
         happyGuestsCount: settings.happyGuestsCount || 0,
         clientSatisfaction: settings.clientSatisfaction || 0,
+        showPreferredBy: settings.showPreferredBy ?? true,
+        showTrustedBy: settings.showTrustedBy ?? true,
       });
     } catch (error) {
       console.error("Get website settings error:", error);

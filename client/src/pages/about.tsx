@@ -75,6 +75,15 @@ export default function AboutPage() {
     queryKey: ["/api/cms/pages/about"],
   });
 
+  const { data: websiteSettings } = useQuery({
+    queryKey: ["/api/settings/website"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/website");
+      if (!res.ok) return { showPreferredBy: true, showTrustedBy: true };
+      return res.json();
+    },
+  });
+
   const { data: teamMembers = [] } = useQuery<TeamMember[]>({
     queryKey: ["/api/cms/team", { active: true }],
     queryFn: async () => {
@@ -382,7 +391,7 @@ export default function AboutPage() {
       </section>
 
       {/* Trusted Clients */}
-      <TrustedClients variant="light" />
+      {websiteSettings?.showPreferredBy !== false && <TrustedClients variant="light" />}
 
       {/* Team Preview */}
       {teamMembers.length > 0 && (

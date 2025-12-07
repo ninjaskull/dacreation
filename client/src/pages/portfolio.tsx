@@ -32,6 +32,8 @@ interface WebsiteSettings {
   destinationsCount: number;
   happyGuestsCount: number;
   clientSatisfaction: number;
+  showPreferredBy: boolean;
+  showTrustedBy: boolean;
 }
 
 const categories = [
@@ -155,7 +157,9 @@ export default function PortfolioPage() {
         numberOfEventsHeld: 0,
         destinationsCount: 0,
         happyGuestsCount: 0,
-        clientSatisfaction: 0
+        clientSatisfaction: 0,
+        showPreferredBy: true,
+        showTrustedBy: true
       };
       return res.json();
     },
@@ -474,7 +478,7 @@ export default function PortfolioPage() {
             </Link>
           </motion.div>
           
-          <TrustedClientsCompact variant="dark" className="mt-16" />
+          {websiteSettings?.showTrustedBy !== false && <TrustedClientsCompact variant="dark" className="mt-16" />}
         </div>
       </section>
 
