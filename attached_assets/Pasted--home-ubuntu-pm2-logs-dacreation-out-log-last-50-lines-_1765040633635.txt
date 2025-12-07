@@ -1,0 +1,104 @@
+
+/home/ubuntu/.pm2/logs/dacreation-out.log last 50 lines:
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+1|dacreati |
+1|dacreati | > rest-express@1.0.0 start
+1|dacreati | > NODE_ENV=production node dist/index.cjs
+1|dacreati |
+
+/home/ubuntu/.pm2/logs/dacreation-error.log last 50 lines:
+1|dacreati |     at Module._load (node:internal/modules/cjs/loader:1038:27)
+1|dacreati |     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+1|dacreati |     at node:internal/main/run_main_module:28:49 {
+1|dacreati |   code: 'MODULE_NOT_FOUND',
+1|dacreati |   requireStack: []
+1|dacreati | }
+1|dacreati |
+1|dacreati | Node.js v20.19.6
+1|dacreati | node:internal/modules/cjs/loader:1210
+1|dacreati |   throw err;
+1|dacreati |   ^
+1|dacreati |
+1|dacreati | Error: Cannot find module '/var/www/dacreation/dist/index.cjs'
+1|dacreati |     at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+1|dacreati |     at Module._load (node:internal/modules/cjs/loader:1038:27)
+1|dacreati |     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+1|dacreati |     at node:internal/main/run_main_module:28:49 {
+1|dacreati |   code: 'MODULE_NOT_FOUND',
+1|dacreati |   requireStack: []
+1|dacreati | }
+1|dacreati |
+1|dacreati | Node.js v20.19.6
+1|dacreati | node:internal/modules/cjs/loader:1210
+1|dacreati |   throw err;
+1|dacreati |   ^
+1|dacreati |
+1|dacreati | Error: Cannot find module '/var/www/dacreation/dist/index.cjs'
+1|dacreati |     at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+1|dacreati |     at Module._load (node:internal/modules/cjs/loader:1038:27)
+1|dacreati |     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+1|dacreati |     at node:internal/main/run_main_module:28:49 {
+1|dacreati |   code: 'MODULE_NOT_FOUND',
+1|dacreati |   requireStack: []
+1|dacreati | }
+1|dacreati |
+1|dacreati | Node.js v20.19.6
+1|dacreati | node:internal/modules/cjs/loader:1210
+1|dacreati |   throw err;
+1|dacreati |   ^
+1|dacreati |
+1|dacreati | Error: Cannot find module '/var/www/dacreation/dist/index.cjs'
+1|dacreati |     at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+1|dacreati |     at Module._load (node:internal/modules/cjs/loader:1038:27)
+1|dacreati |     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+1|dacreati |     at node:internal/main/run_main_module:28:49 {
+1|dacreati |   code: 'MODULE_NOT_FOUND',
+1|dacreati |   requireStack: []
+1|dacreati | }
+1|dacreati |
+1|dacreati | Node.js v20.19.6
