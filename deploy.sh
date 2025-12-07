@@ -36,7 +36,8 @@ echo "Installing dependencies..."
 npm install
 
 echo "Building application..."
-npm run build
+export NODE_OPTIONS="--max-old-space-size=2048"
+bash script/build-production.sh
 
 echo "Pushing database schema..."
 npm run db:push

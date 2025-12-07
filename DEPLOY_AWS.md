@@ -45,7 +45,14 @@ openssl rand -hex 16  # For SMTP_ENCRYPTION_KEY
 
 ### 4. Deploy Application
 ```bash
+chmod +x deploy.sh script/build-production.sh
 ./deploy.sh
+```
+
+**If the build hangs**, try building manually:
+```bash
+export NODE_OPTIONS="--max-old-space-size=2048"
+bash script/build-production.sh
 ```
 
 ## PM2 Process Manager
