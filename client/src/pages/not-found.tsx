@@ -103,7 +103,8 @@ export default function NotFound() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-gray-600 mb-8"
+              className="text-gray-600 mb-8 no-underline"
+              style={{ textDecoration: 'none' }}
               data-testid="text-catchy-line"
             >
               {randomCatchy}
