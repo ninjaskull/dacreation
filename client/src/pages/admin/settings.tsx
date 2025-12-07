@@ -15,53 +15,44 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
 interface UserSettings {
-  notifications: {
-    newLeads: boolean;
-    eventReminders: boolean;
-    weeklyReports: boolean;
-    paymentNotifications: boolean;
-    taskAssignments: boolean;
-    systemUpdates: boolean;
-  };
-  preferences: {
-    theme: string;
-    language: string;
-    timezone: string;
-    dateFormat: string;
-  };
+  id?: string;
+  userId?: string;
+  notifyNewLeads: boolean;
+  notifyAppointments: boolean;
+  notifyWeeklyReports: boolean;
+  notifyPayments: boolean;
+  emailNotifications: boolean;
+  theme: string;
 }
 
 interface CompanySettings {
+  id?: string;
   name: string;
   email: string;
   phone: string;
   website: string;
   address: string;
   city: string;
-  state: string;
   country: string;
-  postalCode: string;
   taxId: string;
-  gstNumber: string;
-  logoUrl: string;
-  description: string;
+  logo?: string | null;
+  logoWhite?: string | null;
+  currency: string;
+  timezone: string;
+  fiscalYearStart: string;
+  whatsappNumber?: string;
+  mapEmbedCode?: string;
+  topBarAddress?: string;
+  secondaryAddress?: string;
 }
 
 const defaultUserSettings: UserSettings = {
-  notifications: {
-    newLeads: true,
-    eventReminders: true,
-    weeklyReports: false,
-    paymentNotifications: true,
-    taskAssignments: true,
-    systemUpdates: false,
-  },
-  preferences: {
-    theme: 'system',
-    language: 'en',
-    timezone: 'Asia/Kolkata',
-    dateFormat: 'DD/MM/YYYY',
-  },
+  notifyNewLeads: true,
+  notifyAppointments: true,
+  notifyWeeklyReports: false,
+  notifyPayments: true,
+  emailNotifications: true,
+  theme: 'system',
 };
 
 const defaultCompanySettings: CompanySettings = {
@@ -71,13 +62,11 @@ const defaultCompanySettings: CompanySettings = {
   website: '',
   address: '',
   city: '',
-  state: '',
   country: 'India',
-  postalCode: '',
   taxId: '',
-  gstNumber: '',
-  logoUrl: '',
-  description: '',
+  currency: 'INR',
+  timezone: 'Asia/Kolkata',
+  fiscalYearStart: '04',
 };
 
 export default function SettingsPage() {
@@ -85,15 +74,12 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [notifications, setNotifications] = useState(defaultUserSettings.notifications);
-
   const { data: userSettings, isLoading: loadingUserSettings } = useQuery<UserSettings>({
     queryKey: ["/api/settings/user"],
     queryFn: async () => {
       const response = await fetch("/api/settings/user");
       if (!response.ok) return defaultUserSettings;
       const data = await response.json();
-      if (data.notifications) setNotifications(data.notifications);
       return data || defaultUserSettings;
     },
   });
@@ -225,31 +211,25 @@ export default function SettingsPage() {
     (e.target as HTMLFormElement).reset();
   };
 
-  const handleNotificationToggle = (key: keyof typeof notifications) => {
-    const newNotifications = { ...notifications, [key]: !notifications[key] };
-    setNotifications(newNotifications);
-    updateUserSettingsMutation.mutate({ notifications: newNotifications });
+  const handleNotificationToggle = (key: keyof Pick<UserSettings, 'notifyNewLeads' | 'notifyAppointments' | 'notifyWeeklyReports' | 'notifyPayments' | 'emailNotifications'>) => {
+    const currentValue = userSettings?.[key] ?? defaultUserSettings[key];
+    updateUserSettingsMutation.mutate({ [key]: !currentValue });
   };
 
   const handleCompanySubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data: CompanySettings = {
+    const data: Partial<CompanySettings> = {
       name: formData.get("companyName") as string,
       email: formData.get("companyEmail") as string,
       phone: formData.get("companyPhone") as string,
       website: formData.get("website") as string,
       address: formData.get("address") as string,
       city: formData.get("city") as string,
-      state: formData.get("state") as string,
       country: formData.get("country") as string,
-      postalCode: formData.get("postalCode") as string,
       taxId: formData.get("taxId") as string,
-      gstNumber: formData.get("gstNumber") as string,
-      logoUrl: companySettings?.logoUrl || '',
-      description: formData.get("description") as string,
     };
-    updateCompanySettingsMutation.mutate(data);
+    updateCompanySettingsMutation.mutate(data as CompanySettings);
   };
 
   const getInitials = () => {
@@ -344,21 +324,21 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Get notified when a new lead comes in</p>
                   </div>
                   <Switch 
-                    checked={notifications.newLeads} 
-                    onCheckedChange={() => handleNotificationToggle('newLeads')}
+                    checked={userSettings?.notifyNewLeads ?? defaultUserSettings.notifyNewLeads} 
+                    onCheckedChange={() => handleNotificationToggle('notifyNewLeads')}
                     data-testid="switch-new-leads" 
                   />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Event Reminders</p>
-                    <p className="text-sm text-muted-foreground">Receive reminders before upcoming events</p>
+                    <p className="font-medium">Appointment Reminders</p>
+                    <p className="text-sm text-muted-foreground">Receive reminders before upcoming appointments</p>
                   </div>
                   <Switch 
-                    checked={notifications.eventReminders}
-                    onCheckedChange={() => handleNotificationToggle('eventReminders')}
-                    data-testid="switch-event-reminders" 
+                    checked={userSettings?.notifyAppointments ?? defaultUserSettings.notifyAppointments}
+                    onCheckedChange={() => handleNotificationToggle('notifyAppointments')}
+                    data-testid="switch-appointments" 
                   />
                 </div>
                 <Separator />
@@ -368,8 +348,8 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Get a weekly summary of your business</p>
                   </div>
                   <Switch 
-                    checked={notifications.weeklyReports}
-                    onCheckedChange={() => handleNotificationToggle('weeklyReports')}
+                    checked={userSettings?.notifyWeeklyReports ?? defaultUserSettings.notifyWeeklyReports}
+                    onCheckedChange={() => handleNotificationToggle('notifyWeeklyReports')}
                     data-testid="switch-weekly-reports" 
                   />
                 </div>
@@ -380,33 +360,21 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Receive alerts for payments and invoices</p>
                   </div>
                   <Switch 
-                    checked={notifications.paymentNotifications}
-                    onCheckedChange={() => handleNotificationToggle('paymentNotifications')}
+                    checked={userSettings?.notifyPayments ?? defaultUserSettings.notifyPayments}
+                    onCheckedChange={() => handleNotificationToggle('notifyPayments')}
                     data-testid="switch-payment-notifications" 
                   />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Task Assignments</p>
-                    <p className="text-sm text-muted-foreground">Get notified when tasks are assigned to you</p>
+                    <p className="font-medium">Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">Receive email notifications for important updates</p>
                   </div>
                   <Switch 
-                    checked={notifications.taskAssignments}
-                    onCheckedChange={() => handleNotificationToggle('taskAssignments')}
-                    data-testid="switch-task-assignments" 
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">System Updates</p>
-                    <p className="text-sm text-muted-foreground">Receive system maintenance notifications</p>
-                  </div>
-                  <Switch 
-                    checked={notifications.systemUpdates}
-                    onCheckedChange={() => handleNotificationToggle('systemUpdates')}
-                    data-testid="switch-system-updates" 
+                    checked={userSettings?.emailNotifications ?? defaultUserSettings.emailNotifications}
+                    onCheckedChange={() => handleNotificationToggle('emailNotifications')}
+                    data-testid="switch-email-notifications" 
                   />
                 </div>
               </div>
@@ -483,8 +451,8 @@ export default function SettingsPage() {
                       <Input id="website" name="website" defaultValue={companySettings?.website || ""} data-testid="input-website" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="gstNumber">GST Number</Label>
-                      <Input id="gstNumber" name="gstNumber" defaultValue={companySettings?.gstNumber || ""} data-testid="input-gst" />
+                      <Label htmlFor="taxId">Tax ID / GST</Label>
+                      <Input id="taxId" name="taxId" defaultValue={companySettings?.taxId || ""} data-testid="input-tax-id" />
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="address">Address</Label>
@@ -495,24 +463,8 @@ export default function SettingsPage() {
                       <Input id="city" name="city" defaultValue={companySettings?.city || ""} data-testid="input-city" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">State</Label>
-                      <Input id="state" name="state" defaultValue={companySettings?.state || ""} data-testid="input-state" />
-                    </div>
-                    <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
                       <Input id="country" name="country" defaultValue={companySettings?.country || "India"} data-testid="input-country" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="postalCode">Postal Code</Label>
-                      <Input id="postalCode" name="postalCode" defaultValue={companySettings?.postalCode || ""} data-testid="input-postal-code" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="taxId">Tax ID / PAN</Label>
-                      <Input id="taxId" name="taxId" defaultValue={companySettings?.taxId || ""} data-testid="input-tax-id" />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="description">About the Company</Label>
-                      <Textarea id="description" name="description" defaultValue={companySettings?.description || ""} rows={3} data-testid="textarea-description" />
                     </div>
                   </div>
 
