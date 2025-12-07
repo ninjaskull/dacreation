@@ -2588,5 +2588,55 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== SEO: Sitemap ====================
+
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const { getPublicPages } = await import('../shared/seo-config');
+      const pages = getPublicPages();
+      const baseUrl = req.protocol + '://' + req.get('host');
+      const lastMod = new Date().toISOString().split('T')[0];
+
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+      
+      for (const page of pages) {
+        xml += '  <url>\n';
+        xml += `    <loc>${baseUrl}${page.path}</loc>\n`;
+        xml += `    <lastmod>${lastMod}</lastmod>\n`;
+        xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+        xml += `    <priority>${page.priority}</priority>\n`;
+        xml += '  </url>\n';
+      }
+      
+      xml += '</urlset>';
+
+      res.set('Content-Type', 'application/xml');
+      res.send(xml);
+    } catch (error) {
+      console.error("Sitemap generation error:", error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  // ==================== SEO: API for page SEO data ====================
+
+  app.get("/api/seo/:path(*)", async (req, res) => {
+    try {
+      const { getPageSEO } = await import('../shared/seo-config');
+      const path = '/' + (req.params.path || '');
+      const seo = getPageSEO(path === '/' ? '/' : path);
+      
+      if (seo) {
+        res.json(seo);
+      } else {
+        res.status(404).json({ message: "SEO config not found for this path" });
+      }
+    } catch (error) {
+      console.error("Get SEO config error:", error);
+      res.status(500).json({ message: "Failed to fetch SEO config" });
+    }
+  });
+
   return httpServer;
 }
