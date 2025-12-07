@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Phone, Calendar, MessageCircle, ArrowRight } from "lucide-react";
+import { Phone, Calendar, MessageCircle, ArrowRight, Building2, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBranding } from "@/contexts/BrandingContext";
 
@@ -29,7 +29,7 @@ export function ConsultationCTA() {
               Book Your Free Consultation
             </h2>
             <p className="text-white/80 max-w-2xl mx-auto text-lg">
-              Speak with our expert event planners and get a personalized quote for your celebration. No obligation, just expert guidance.
+              Whether you're planning a dream wedding or a high-impact corporate event, speak with our expert planners and get a personalized quote. No obligation, just expert guidance.
             </p>
           </motion.div>
         </div>
@@ -90,12 +90,12 @@ export function ConsultationCTA() {
             Response within 2 hours
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            No commitment required
+            <Heart className="w-4 h-4 text-secondary" />
+            Weddings & Celebrations
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            Expert planners available
+            <Building2 className="w-4 h-4 text-secondary" />
+            Corporate & Business Events
           </div>
         </motion.div>
       </div>

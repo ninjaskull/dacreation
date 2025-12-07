@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import mandala from "@assets/generated_images/subtle_mandala_texture_background.png";
 import { useBranding } from "@/contexts/BrandingContext";
+import { Building2, Heart, Briefcase, Users } from "lucide-react";
 
 export function About() {
   const { branding } = useBranding();
@@ -39,21 +40,43 @@ export function About() {
             
             <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed mb-10">
               <p>
-                {branding.company.name} is a full-service event management company known for combining meticulous planning with world-class design. What began as a wedding planning brand has evolved into a complete event management studio trusted by families, multinational corporations, and individuals looking for excellence.
+                {branding.company.name} is a full-service event management company trusted by families, multinational corporations, and individuals looking for excellence. From a wedding planning brand, we've evolved into a complete event solutions studio serving both personal celebrations and business objectives.
               </p>
               <p>
-                Our philosophy is simple: whether you’re planning a multi-day wedding, a product launch, a milestone birthday, or a corporate retreat, we bring creativity, cultural understanding, and flawless execution to every detail.
+                Our philosophy is simple: whether you're planning a multi-day wedding, a product launch, an annual corporate conference, or a milestone birthday—we bring creativity, strategic thinking, and flawless execution to every detail.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            {/* Dual Expertise Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <div className="p-5 bg-gradient-to-br from-primary/5 to-transparent border border-primary/10 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <Heart className="w-6 h-6 text-primary" />
+                  <h3 className="font-serif text-lg text-foreground">Wedding Excellence</h3>
+                </div>
+                <p className="text-sm text-muted-foreground font-light">
+                  Traditional ceremonies, modern celebrations, and destination weddings crafted with cultural understanding and contemporary design.
+                </p>
+              </div>
+              <div className="p-5 bg-gradient-to-br from-secondary/10 to-transparent border border-secondary/20 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <Building2 className="w-6 h-6 text-secondary" />
+                  <h3 className="font-serif text-lg text-foreground">Corporate Expertise</h3>
+                </div>
+                <p className="text-sm text-muted-foreground font-light">
+                  Conferences, product launches, brand activations, and corporate retreats that achieve business objectives with impact.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h3 className="font-serif text-xl text-foreground mb-2">Our Vision</h3>
-                <p className="text-sm text-muted-foreground font-light">To create culturally rich, aesthetically modern, and emotionally meaningful events that feel effortless for our clients and extraordinary for their guests.</p>
+                <p className="text-sm text-muted-foreground font-light">To create culturally rich, aesthetically modern, and strategically impactful events that feel effortless for our clients and extraordinary for their guests.</p>
               </div>
               <div>
                 <h3 className="font-serif text-xl text-foreground mb-2">Our Team</h3>
-                <p className="text-sm text-muted-foreground font-light">A diverse team of planners, designers, production experts, and logistics managers working together to deliver seamless experiences.</p>
+                <p className="text-sm text-muted-foreground font-light">A diverse team of planners, designers, production experts, and corporate event specialists working together to deliver seamless experiences.</p>
               </div>
             </div>
           </div>

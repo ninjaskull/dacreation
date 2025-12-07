@@ -4,13 +4,26 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
-// Updated images
 import weddingImg from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
 import corporateImg from "@assets/generated_images/corporate_conference_stage.png";
 import socialImg from "@assets/generated_images/luxury_private_dinner.png";
 import destImg from "@assets/generated_images/destination_event_beach.png";
 
 const serviceData = {
+  corporate: {
+    title: "Corporate Events",
+    description: "Professional, polished, and impact-driven events—from conferences to award shows. We understand business objectives and deliver measurable results.",
+    image: corporateImg,
+    link: "/services/corporate",
+    features: [
+      "Conferences, Seminars & Summits",
+      "Product Launches & Brand Activations",
+      "Annual Events, Award Nights & Galas",
+      "Corporate Retreats & Team Building",
+      "Executive Meetings & Board Events",
+      "Trade Shows & Exhibition Management"
+    ]
+  },
   weddings: {
     title: "Weddings & Cultural Celebrations",
     description: "Modern design meets rich Indian tradition. We plan every ritual, ceremony, and moment effortlessly.",
@@ -21,18 +34,6 @@ const serviceData = {
       "Design & Décor Styling (Stage, Mandap, Sangeet)",
       "Ritual & Ceremony Management (Hindu, Sikh, Muslim, Christian)",
       "Vendor Management & Logistics"
-    ]
-  },
-  corporate: {
-    title: "Corporate Events",
-    description: "Professional, polished, and impact-driven events—from conferences to award shows.",
-    image: corporateImg,
-    link: "/services/corporate",
-    features: [
-      "Conferences & Seminars",
-      "Product Launches & Brand Activations",
-      "Annual Events & Award Nights",
-      "Corporate Retreats & Offsites"
     ]
   },
   social: {
@@ -69,11 +70,11 @@ export function Services() {
           <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">What We Do</span>
           <h2 className="font-serif text-4xl md:text-5xl text-primary mb-6">Our Services</h2>
           <p className="text-muted-foreground text-lg font-light">
-            We blend creative design, structured planning, and professional execution to transform visions into beautifully orchestrated events.
+            From corporate excellence to wedding dreams—we blend creative design, structured planning, and professional execution to transform visions into beautifully orchestrated events.
           </p>
         </div>
 
-        <Tabs defaultValue="weddings" className="w-full">
+        <Tabs defaultValue="corporate" className="w-full">
           <div className="flex justify-start md:justify-center mb-12 overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 no-scrollbar">
             <TabsList className="bg-transparent h-auto gap-4 md:gap-8 flex-nowrap w-max md:w-auto">
               {Object.keys(serviceData).map((key) => (

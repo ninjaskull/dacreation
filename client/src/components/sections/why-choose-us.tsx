@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Lightbulb, Heart, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Lightbulb, Heart, ShieldCheck, Building2, Target, Clock, Award } from "lucide-react";
 
 const reasons = [
   {
     title: "Holistic Event Expertise",
-    description: "From intimate gatherings to large-scale productions, we deliver events with precision and creativity.",
+    description: "From intimate gatherings to large-scale corporate productions, we deliver events with precision and creativity.",
     icon: <ShieldCheck className="w-8 h-8 text-secondary" />
   },
   {
@@ -24,6 +24,29 @@ const reasons = [
   }
 ];
 
+const corporateAdvantages = [
+  {
+    title: "ROI-Focused Planning",
+    description: "Every corporate event is designed to achieve measurable business objectives and lasting impact.",
+    icon: <Target className="w-6 h-6 text-secondary" />
+  },
+  {
+    title: "On-Time Delivery",
+    description: "Strict adherence to timelines and deadlines that corporate clients expect and deserve.",
+    icon: <Clock className="w-6 h-6 text-secondary" />
+  },
+  {
+    title: "Brand Alignment",
+    description: "Events that seamlessly integrate your brand identity, messaging, and corporate values.",
+    icon: <Building2 className="w-6 h-6 text-secondary" />
+  },
+  {
+    title: "Professional Standards",
+    description: "Enterprise-grade execution with NDAs, proper documentation, and corporate protocols.",
+    icon: <Award className="w-6 h-6 text-secondary" />
+  }
+];
+
 import { useBranding } from "@/contexts/BrandingContext";
 
 export function WhyChooseUs() {
@@ -37,7 +60,7 @@ export function WhyChooseUs() {
           <h2 className="font-serif text-3xl md:text-4xl">The {branding.company.name} Standard</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {reasons.map((reason, index) => (
             <motion.div
               key={index}
@@ -57,6 +80,59 @@ export function WhyChooseUs() {
             </motion.div>
           ))}
         </div>
+
+        {/* Corporate Excellence Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-8 md:p-12"
+        >
+          <div className="text-center mb-10">
+            <Building2 className="w-10 h-10 text-secondary mx-auto mb-4" />
+            <h3 className="font-serif text-2xl md:text-3xl mb-3">Corporate Event Excellence</h3>
+            <p className="text-white/70 max-w-2xl mx-auto">
+              Trusted by leading companies for conferences, product launches, brand activations, and executive retreats.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {corporateAdvantages.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+                className="flex flex-col items-center text-center p-4"
+              >
+                <div className="mb-3 bg-secondary/20 w-12 h-12 rounded-full flex items-center justify-center">
+                  {item.icon}
+                </div>
+                <h4 className="font-medium text-white mb-2">{item.title}</h4>
+                <p className="text-white/60 text-sm font-light">{item.description}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-8 text-center">
+            <div>
+              <span className="text-3xl md:text-4xl font-bold text-secondary">{branding.stats.corporateCount}+</span>
+              <p className="text-white/60 text-sm mt-1">Corporate Events</p>
+            </div>
+            <div className="w-px h-12 bg-white/20 hidden md:block"></div>
+            <div>
+              <span className="text-3xl md:text-4xl font-bold text-secondary">{branding.stats.happyClients}+</span>
+              <p className="text-white/60 text-sm mt-1">Business Clients</p>
+            </div>
+            <div className="w-px h-12 bg-white/20 hidden md:block"></div>
+            <div>
+              <span className="text-3xl md:text-4xl font-bold text-secondary">{branding.stats.clientSatisfaction}%</span>
+              <p className="text-white/60 text-sm mt-1">Client Satisfaction</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
