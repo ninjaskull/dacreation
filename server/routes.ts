@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import passport from "passport";
-import { broadcastNewMessage, broadcastConversationUpdate } from "./websocket";
+import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange } from "./websocket";
 import { 
   insertLeadSchema, insertUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
@@ -2285,6 +2285,62 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get unread count error:", error);
       res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  // ==================== Agent Status ====================
+
+  app.get("/api/agent-status", isAuthenticated, async (req, res) => {
+    try {
+      const statuses = await storage.getAllAgentStatuses();
+      res.json(statuses);
+    } catch (error) {
+      console.error("Get agent statuses error:", error);
+      res.status(500).json({ message: "Failed to fetch agent statuses" });
+    }
+  });
+
+  app.get("/api/agent-status/online", async (req, res) => {
+    try {
+      const onlineAgents = await storage.getOnlineAgents();
+      res.json(onlineAgents);
+    } catch (error) {
+      console.error("Get online agents error:", error);
+      res.status(500).json({ message: "Failed to fetch online agents" });
+    }
+  });
+
+  app.get("/api/agent-status/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const status = await storage.getAgentStatus(req.params.userId);
+      res.json(status || { status: "offline", userId: req.params.userId });
+    } catch (error) {
+      console.error("Get agent status error:", error);
+      res.status(500).json({ message: "Failed to fetch agent status" });
+    }
+  });
+
+  app.put("/api/agent-status", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { status, statusMessage, maxConversations } = req.body;
+      
+      if (status && !["online", "away", "offline"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be online, away, or offline" });
+      }
+
+      const updatedStatus = await storage.upsertAgentStatus(user.id, {
+        status: status || "online",
+        statusMessage,
+        maxConversations,
+      });
+
+      broadcastAgentStatusChange(user.id, user.name || user.username, updatedStatus.status, updatedStatus.statusMessage || undefined);
+      
+      res.json(updatedStatus);
+    } catch (error) {
+      console.error("Update agent status error:", error);
+      res.status(500).json({ message: "Failed to update agent status" });
     }
   });
 

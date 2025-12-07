@@ -11,7 +11,7 @@ interface ChatClient {
 }
 
 interface ChatMessage {
-  type: "message" | "typing" | "read" | "join" | "leave" | "status" | "subscribe";
+  type: "message" | "typing" | "read" | "join" | "leave" | "status" | "subscribe" | "agent_status" | "typing_stop";
   conversationId?: string;
   messageId?: string;
   content?: string;
@@ -20,6 +20,8 @@ interface ChatMessage {
   senderName?: string;
   visitorId?: string;
   timestamp?: string;
+  agentStatus?: "online" | "away" | "offline";
+  statusMessage?: string;
 }
 
 const clients: Map<string, ChatClient> = new Map();
@@ -132,6 +134,30 @@ function handleMessage(clientId: string, message: ChatMessage & { clientType?: s
         }, clientId);
       }
       break;
+
+    case "typing_stop":
+      if (message.conversationId) {
+        broadcastToConversation(message.conversationId, {
+          type: "typing_stop",
+          conversationId: message.conversationId,
+          senderId: message.senderId,
+          senderType: message.senderType,
+        }, clientId);
+      }
+      break;
+
+    case "agent_status":
+      if (client.isAdmin && message.agentStatus) {
+        broadcastAgentStatusToAll({
+          type: "agent_status",
+          senderId: message.senderId,
+          senderName: message.senderName,
+          agentStatus: message.agentStatus,
+          statusMessage: message.statusMessage,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      break;
   }
 }
 
@@ -175,6 +201,32 @@ function notifyAdminsForConversation(conversationId: string, message: ChatMessag
   subscribers.forEach((subscriberId) => {
     const client = clients.get(subscriberId);
     if (client && client.isAdmin && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(payload);
+    }
+  });
+}
+
+function broadcastAgentStatusToAll(message: ChatMessage) {
+  const payload = JSON.stringify(message);
+  clients.forEach((client) => {
+    if (client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(payload);
+    }
+  });
+}
+
+export function broadcastAgentStatusChange(userId: string, userName: string, status: string, statusMessage?: string) {
+  const payload = JSON.stringify({
+    type: "agent_status",
+    senderId: userId,
+    senderName: userName,
+    agentStatus: status,
+    statusMessage: statusMessage,
+    timestamp: new Date().toISOString(),
+  });
+  
+  clients.forEach((client) => {
+    if (client.ws.readyState === WebSocket.OPEN) {
       client.ws.send(payload);
     }
   });

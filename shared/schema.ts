@@ -966,6 +966,38 @@ export type InsertCallbackRequest = z.infer<typeof insertCallbackRequestSchema>;
 export type UpdateCallbackRequest = z.infer<typeof updateCallbackRequestSchema>;
 export type CallbackRequest = typeof callbackRequests.$inferSelect;
 
+// Agent Status Schema
+export const agentStatusTypes = ["online", "away", "offline"] as const;
+export type AgentStatusType = typeof agentStatusTypes[number];
+
+export const agentStatus = pgTable("agent_status", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  status: text("status").notNull().default("offline"),
+  statusMessage: text("status_message"),
+  lastActiveAt: timestamp("last_active_at").notNull().defaultNow(),
+  activeConversations: integer("active_conversations").notNull().default(0),
+  maxConversations: integer("max_conversations").notNull().default(5),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertAgentStatusSchema = createInsertSchema(agentStatus).omit({
+  id: true,
+  updatedAt: true,
+  lastActiveAt: true,
+  activeConversations: true,
+});
+
+export const updateAgentStatusSchema = z.object({
+  status: z.enum(agentStatusTypes).optional(),
+  statusMessage: z.string().nullable().optional(),
+  maxConversations: z.number().min(1).max(20).optional(),
+});
+
+export type InsertAgentStatus = z.infer<typeof insertAgentStatusSchema>;
+export type UpdateAgentStatus = z.infer<typeof updateAgentStatusSchema>;
+export type AgentStatus = typeof agentStatus.$inferSelect;
+
 // Chat Conversations Schema
 export const conversationStatuses = ["active", "waiting", "live_agent", "resolved", "closed"] as const;
 export type ConversationStatus = typeof conversationStatuses[number];

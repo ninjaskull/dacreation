@@ -21,6 +21,7 @@ import {
   type CallbackRequest, type InsertCallbackRequest, type UpdateCallbackRequest,
   type Conversation, type InsertConversation, type UpdateConversation,
   type ChatMessage, type InsertChatMessage,
+  type AgentStatus, type InsertAgentStatus, type UpdateAgentStatus,
   type SmtpSettings, type InsertSmtpSettings, type UpdateSmtpSettings,
   type EmailTypeSettings, type InsertEmailTypeSettings, type UpdateEmailTypeSettings,
   type EmailTemplate, type InsertEmailTemplate, type UpdateEmailTemplate,
@@ -29,7 +30,7 @@ import {
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
   invoiceTemplates, invoices, invoiceItems, invoicePayments,
-  callbackRequests, conversations, chatMessages,
+  callbackRequests, conversations, chatMessages, agentStatus,
   smtpSettings, emailTypeSettings, emailTemplates, emailLogs
 } from "@shared/schema";
 import { db } from "./db";
@@ -369,6 +370,12 @@ export interface IStorage {
   createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
   updateEmailLogStatus(id: string, status: string, errorMessage?: string): Promise<EmailLog | undefined>;
   getEmailLogs(limit?: number): Promise<EmailLog[]>;
+  
+  getAgentStatus(userId: string): Promise<AgentStatus | undefined>;
+  getAllAgentStatuses(): Promise<(AgentStatus & { user: { id: string; name: string | null; username: string } })[]>;
+  upsertAgentStatus(userId: string, data: InsertAgentStatus | UpdateAgentStatus): Promise<AgentStatus>;
+  updateAgentActiveConversations(userId: string, increment: number): Promise<AgentStatus | undefined>;
+  getOnlineAgents(): Promise<(AgentStatus & { user: { id: string; name: string | null; username: string } })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2321,6 +2328,87 @@ export class DatabaseStorage implements IStorage {
       .from(emailLogs)
       .orderBy(desc(emailLogs.createdAt))
       .limit(limit);
+  }
+
+  async getAgentStatus(userId: string): Promise<AgentStatus | undefined> {
+    const [status] = await db
+      .select()
+      .from(agentStatus)
+      .where(eq(agentStatus.userId, userId));
+    return status;
+  }
+
+  async getAllAgentStatuses(): Promise<(AgentStatus & { user: { id: string; name: string | null; username: string } })[]> {
+    const result = await db
+      .select({
+        agentStatus: agentStatus,
+        user: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(agentStatus)
+      .innerJoin(users, eq(agentStatus.userId, users.id))
+      .orderBy(desc(agentStatus.lastActiveAt));
+
+    return result.map(r => ({
+      ...r.agentStatus,
+      user: r.user,
+    }));
+  }
+
+  async upsertAgentStatus(userId: string, data: InsertAgentStatus | UpdateAgentStatus): Promise<AgentStatus> {
+    const existing = await this.getAgentStatus(userId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(agentStatus)
+        .set({ ...data, updatedAt: new Date(), lastActiveAt: new Date() })
+        .where(eq(agentStatus.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(agentStatus)
+        .values({ userId, ...data } as any)
+        .returning();
+      return created;
+    }
+  }
+
+  async updateAgentActiveConversations(userId: string, increment: number): Promise<AgentStatus | undefined> {
+    const existing = await this.getAgentStatus(userId);
+    if (!existing) return undefined;
+
+    const newCount = Math.max(0, existing.activeConversations + increment);
+    const [updated] = await db
+      .update(agentStatus)
+      .set({ activeConversations: newCount, updatedAt: new Date(), lastActiveAt: new Date() })
+      .where(eq(agentStatus.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async getOnlineAgents(): Promise<(AgentStatus & { user: { id: string; name: string | null; username: string } })[]> {
+    const result = await db
+      .select({
+        agentStatus: agentStatus,
+        user: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+        },
+      })
+      .from(agentStatus)
+      .innerJoin(users, eq(agentStatus.userId, users.id))
+      .where(eq(agentStatus.status, "online"))
+      .orderBy(asc(agentStatus.activeConversations));
+
+    return result.map(r => ({
+      ...r.agentStatus,
+      user: r.user,
+    }));
   }
 }
 
