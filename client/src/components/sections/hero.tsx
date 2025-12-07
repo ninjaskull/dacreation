@@ -23,7 +23,7 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-6 text-center text-white pt-24 lg:pt-32">
+      <div className="relative z-10 container mx-auto px-6 text-center text-white pt-24 lg:pt-32 pb-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
