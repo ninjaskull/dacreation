@@ -18,6 +18,7 @@ import TestimonialsPage from "@/pages/testimonials";
 import CareersPage from "@/pages/careers";
 import PressPage from "@/pages/press";
 import ContactPage from "@/pages/contact";
+import SitemapPage from "@/pages/sitemap";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import LeadsPage from "@/pages/admin/leads";
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/services/social" component={SocialPage} />
       <Route path="/services/destination" component={DestinationPage} />
       <Route path="/inquire" component={InquirePage} />
+      <Route path="/sitemap" component={SitemapPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/leads" component={LeadsPage} />
