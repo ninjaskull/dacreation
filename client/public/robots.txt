@@ -1,0 +1,29 @@
+# Robots.txt for DA Creation - Event Management Company
+# https://dacreation.in
+
+User-agent: *
+Allow: /
+
+# Public pages - Allow crawling
+Allow: /about
+Allow: /team
+Allow: /portfolio
+Allow: /testimonials
+Allow: /careers
+Allow: /press
+Allow: /contact
+Allow: /inquire
+Allow: /services/
+
+# Block admin pages from search engines
+Disallow: /admin/
+Disallow: /admin/*
+
+# Block API endpoints
+Disallow: /api/
+
+# Sitemap location
+Sitemap: /sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
