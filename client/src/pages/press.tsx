@@ -27,17 +27,6 @@ interface WebsiteSettings {
   awardsCount: number;
 }
 
-const mediaLogos = [
-  "Times of India",
-  "Economic Times",
-  "NDTV",
-  "India Today",
-  "Vogue India",
-  "Harper's Bazaar",
-  "Wedding Sutra",
-  "WeddingWire"
-];
-
 function getDefaultArticles(companyName: string) {
   return [
     {
@@ -207,34 +196,6 @@ export default function PressPage() {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Media Logos */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-8"
-          >
-            <p className="text-gray-500 font-medium uppercase tracking-wider text-sm">As Featured In</p>
-          </motion.div>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-            {mediaLogos.map((logo, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                className="text-gray-400 font-semibold text-lg hover:text-[#601a29] transition-colors"
-              >
-                {logo}
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
