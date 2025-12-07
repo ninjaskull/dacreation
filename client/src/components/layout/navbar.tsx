@@ -169,7 +169,10 @@ export function Navbar() {
           <div className="hidden lg:flex justify-between items-center h-10 text-xs">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5" />
+                <Phone className={cn(
+                  "w-3.5 h-3.5",
+                  showTransparent ? "text-white/80" : "text-primary-foreground/80"
+                )} />
                 <div className="flex items-center gap-1">
                   {phoneNumbers.map((phone, index) => (
                     <span key={index} className="flex items-center">
