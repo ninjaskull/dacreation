@@ -79,6 +79,7 @@ export interface BrandingData {
   };
   showPreferredBy: boolean;
   showTrustedBy: boolean;
+  mapEmbedCode: string | null;
 }
 
 interface BrandingContextValue {
@@ -168,6 +169,7 @@ function getDefaultBranding(): BrandingData {
     },
     showPreferredBy: true,
     showTrustedBy: true,
+    mapEmbedCode: null,
   };
 }
 
@@ -252,6 +254,7 @@ function mergeWithDefaults(apiData: any): BrandingData {
     },
     showPreferredBy: apiData.showPreferredBy ?? defaults.showPreferredBy,
     showTrustedBy: apiData.showTrustedBy ?? defaults.showTrustedBy,
+    mapEmbedCode: apiData.mapEmbedCode || null,
   };
 }
 

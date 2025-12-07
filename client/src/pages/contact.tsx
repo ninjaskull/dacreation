@@ -114,7 +114,7 @@ export default function ContactPage() {
     phone: branding.contact.phones.join(", "),
     email: branding.contact.email,
     whatsappNumber: branding.contact.whatsapp,
-    mapEmbedCode: null,
+    mapEmbedCode: branding.mapEmbedCode,
     topBarAddress: branding.addresses.topBar,
     secondaryAddress: branding.addresses.secondary || null,
     socialMedia: branding.social,
