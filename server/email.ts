@@ -241,12 +241,42 @@ export function renderTemplate(
   };
   
   if (companySettings) {
-    allVariables['company_name'] = companySettings.name || '';
+    let websiteUrl = companySettings.website || '';
+    
+    if (!websiteUrl) {
+      const replitDomains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN;
+      if (replitDomains) {
+        const primaryDomain = replitDomains.split(',')[0];
+        websiteUrl = `https://${primaryDomain}`;
+      } else if (process.env.APP_ORIGIN) {
+        websiteUrl = process.env.APP_ORIGIN;
+      }
+    }
+    
+    const baseUrl = websiteUrl.replace(/\/$/, '');
+    
+    const makeAbsoluteUrl = (path: string): string => {
+      if (!path) return '';
+      if (path.startsWith('http')) return path;
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      return baseUrl ? `${baseUrl}${normalizedPath}` : normalizedPath;
+    };
+    
+    const logoWhitePath = companySettings.logoWhite || '/images/logo-white.webp';
+    const logoWhiteFullUrl = makeAbsoluteUrl(logoWhitePath);
+    const logoFullUrl = makeAbsoluteUrl(companySettings.logo || '');
+    
+    const hasAbsoluteLogoUrl = logoWhiteFullUrl && logoWhiteFullUrl.startsWith('http');
+    allVariables['company_name'] = hasAbsoluteLogoUrl
+      ? `<img src="${logoWhiteFullUrl}" alt="${companySettings.name || 'Company Logo'}" style="max-height: 60px; width: auto;" />`
+      : (companySettings.name || '');
+    allVariables['company_name_text'] = companySettings.name || '';
     allVariables['company_email'] = companySettings.email || '';
     allVariables['company_phone'] = companySettings.phone || '';
     allVariables['company_address'] = companySettings.address || '';
     allVariables['company_website'] = companySettings.website || '';
-    allVariables['company_logo'] = companySettings.logo || '';
+    allVariables['company_logo'] = logoFullUrl || companySettings.logo || '';
+    allVariables['company_logo_white'] = logoWhiteFullUrl || logoWhitePath;
   }
   
   allVariables['current_year'] = new Date().getFullYear().toString();

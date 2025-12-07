@@ -573,6 +573,7 @@ export const companySettings = pgTable("company_settings", {
   website: text("website"),
   taxId: text("tax_id"),
   logo: text("logo"),
+  logoWhite: text("logo_white"),
   currency: text("currency").notNull().default("INR"),
   timezone: text("timezone").notNull().default("Asia/Kolkata"),
   fiscalYearStart: text("fiscal_year_start").notNull().default("04"),

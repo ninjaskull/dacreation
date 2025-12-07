@@ -904,12 +904,15 @@ function TemplateForm({ template, onSubmit, isPending }: TemplateFormProps) {
       <div className="bg-muted p-3 rounded-lg">
         <p className="text-sm font-medium mb-2">Available Variables</p>
         <div className="flex flex-wrap gap-2">
-          {["recipient_name", "recipient_email", "company_name", "company_email", "company_phone", "company_address", "company_website", "event_name", "event_date", "event_location", "amount", "invoice_number", "due_date", "current_year", "current_date"].map((variable) => (
+          {["recipient_name", "recipient_email", "company_name", "company_name_text", "company_email", "company_phone", "company_address", "company_website", "company_logo", "company_logo_white", "event_name", "event_date", "event_location", "amount", "invoice_number", "due_date", "current_year", "current_date"].map((variable) => (
             <Badge key={variable} variant="outline" className="font-mono text-xs">
               {`{{${variable}}}`}
             </Badge>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Note: <code className="bg-background px-1 rounded">{`{{company_name}}`}</code> displays the white logo image. Use <code className="bg-background px-1 rounded">{`{{company_name_text}}`}</code> for text only.
+        </p>
       </div>
 
       <DialogFooter>
