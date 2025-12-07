@@ -18,6 +18,14 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Password validation: minimum 8 chars, at least one uppercase, lowercase, number, and special char
+const passwordSchema = z.string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -25,6 +33,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   phone: true,
   role: true,
+}).extend({
+  username: z.string().min(3, "Username must be at least 3 characters").max(50, "Username must be at most 50 characters"),
+  password: passwordSchema,
+  email: z.string().email("Invalid email format").optional().nullable(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

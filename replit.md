@@ -77,6 +77,19 @@ Preferred communication style: Simple, everyday language.
 - Request logging middleware with timestamp formatting
 - CORS and rate limiting ready for production deployment
 
+**Security Hardening (Updated December 2025)**
+- Helmet middleware for security headers (CSP, XSS protection, HSTS, etc.)
+- Rate limiting on API endpoints:
+  - General API: 100 requests per 15 minutes per IP
+  - Auth endpoints: 10 requests per 15 minutes per IP
+  - Lead/callback submission: 20 requests per hour per IP
+- SQL injection prevention: sanitizeLikePattern() function escapes %, _, \ in LIKE queries across leads, clients, vendors, invoices, callbacks, conversations
+- WebSocket session authentication: validates Express session cookie during WebSocket handshake, admin privileges only granted to session-validated users with admin/staff roles
+- Password strength requirements: minimum 8 chars, uppercase, lowercase, number, special character
+- SMTP encryption uses unique random salts per encryption with scryptSync key derivation
+- User registration requires existing admin authentication (no open registration)
+- Session management: PostgreSQL-backed sessions in production, memory store in development
+
 ### Data Storage
 
 **Database**

@@ -1,12 +1,15 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { Server } from "http";
 import type { IncomingMessage } from "http";
+import { getUserFromSessionId, parseSessionIdFromCookies } from "./auth";
 
 interface ChatClient {
   ws: WebSocket;
   visitorId?: string;
   isAdmin?: boolean;
   userId?: string;
+  userName?: string;
+  sessionValidated?: boolean;
   activeConversationId?: string;
 }
 
@@ -34,10 +37,23 @@ export function setupWebSocket(server: Server) {
     path: "/ws/chat"
   });
 
-  wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
+  wss.on("connection", async (ws: WebSocket, req: IncomingMessage) => {
     const clientId = generateClientId();
-    const client: ChatClient = { ws };
+    const client: ChatClient = { ws, sessionValidated: false };
     clients.set(clientId, client);
+
+    // Attempt to validate session from cookies during connection
+    const sessionId = parseSessionIdFromCookies(req.headers.cookie);
+    if (sessionId) {
+      const user = await getUserFromSessionId(sessionId);
+      if (user && (user.role === 'admin' || user.role === 'staff')) {
+        client.isAdmin = true;
+        client.userId = user.id;
+        client.userName = user.name || user.username;
+        client.sessionValidated = true;
+        console.log(`[WebSocket] Admin session validated for: ${user.username} (${clientId})`);
+      }
+    }
 
     console.log(`[WebSocket] Client connected: ${clientId}`);
 
@@ -73,19 +89,31 @@ export function setupWebSocket(server: Server) {
   return wss;
 }
 
-function handleMessage(clientId: string, message: ChatMessage & { clientType?: string }) {
+function handleMessage(clientId: string, message: ChatMessage & { clientType?: string; adminToken?: string }) {
   const client = clients.get(clientId);
   if (!client) return;
 
   switch (message.type) {
     case "join":
       if (message.clientType === "admin") {
-        client.isAdmin = true;
-        client.userId = message.senderId;
+        // Admin status is determined by session validation during connection
+        // Do not trust client-provided senderId for admin privileges
+        if (client.sessionValidated && client.isAdmin) {
+          console.log(`[WebSocket] Admin client ${clientId} joined (session validated, userId: ${client.userId})`);
+        } else {
+          console.warn(`[WebSocket] Client ${clientId} attempted admin join without valid session - denied`);
+          client.isAdmin = false;
+          client.userId = undefined;
+          client.ws.send(JSON.stringify({ 
+            type: "error", 
+            message: "Admin authentication required. Please log in and try again." 
+          }));
+        }
       } else {
         client.visitorId = message.visitorId;
+        client.isAdmin = false;
+        console.log(`[WebSocket] Visitor client ${clientId} joined`);
       }
-      console.log(`[WebSocket] Client ${clientId} joined as ${message.clientType || "visitor"}`);
       break;
 
     case "subscribe":
@@ -147,15 +175,18 @@ function handleMessage(clientId: string, message: ChatMessage & { clientType?: s
       break;
 
     case "agent_status":
-      if (client.isAdmin && message.agentStatus) {
+      // Only allow session-validated admin users to broadcast status
+      if (client.sessionValidated && client.isAdmin && client.userId && message.agentStatus) {
         broadcastAgentStatusToAll({
           type: "agent_status",
-          senderId: message.senderId,
-          senderName: message.senderName,
+          senderId: client.userId, // Use session-verified userId
+          senderName: client.userName || message.senderName, // Prefer session-verified name
           agentStatus: message.agentStatus,
           statusMessage: message.statusMessage,
           timestamp: new Date().toISOString(),
         });
+      } else if (!client.sessionValidated) {
+        console.warn(`[WebSocket] Client ${clientId} attempted agent_status without valid session`);
       }
       break;
   }

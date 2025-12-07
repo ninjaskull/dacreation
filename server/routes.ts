@@ -60,10 +60,13 @@ function canAccessLead(req: Request, res: Response, next: NextFunction) {
   }
   
   const user = req.user as Express.User;
+  // Admin can access all leads
   if (user.role === 'admin') {
     return next();
   }
   
+  // Staff can only access leads assigned to them - enforced in the route handlers
+  // via query filter modification (see /api/leads route)
   next();
 }
 
@@ -109,7 +112,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/register", async (req, res) => {
+  // Registration endpoint - requires admin authentication to create new users
+  // This prevents unauthorized account creation
+  app.post("/api/auth/register", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {

@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { type Express } from "express";
+import { type Express, type RequestHandler } from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPgSimple from "connect-pg-simple";
@@ -9,8 +9,14 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import type { User } from "@shared/schema";
+import cookie from "cookie";
 
 const scryptAsync = promisify(scrypt);
+
+// Export session store and middleware for WebSocket authentication
+let sessionStore: session.Store;
+let sessionMiddleware: RequestHandler;
+let sessionSecret: string;
 const crypto = {
   hash: async (password: string) => {
     const salt = randomBytes(16).toString("hex");
@@ -59,8 +65,6 @@ export function setupAuth(app: Express) {
   
   const developmentOnlyFallback = `dev-${Date.now()}-${Math.random().toString(36)}`;
   
-  let sessionStore;
-  
   if (isProduction) {
     try {
       sessionStore = new PgSession({
@@ -107,7 +111,8 @@ export function setupAuth(app: Express) {
     };
   }
 
-  app.use(session(sessionSettings));
+  sessionMiddleware = session(sessionSettings);
+  app.use(sessionMiddleware);
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -142,4 +147,60 @@ export function setupAuth(app: Express) {
   });
 }
 
-export { crypto };
+// Get user from session ID for WebSocket authentication
+export async function getUserFromSessionId(sessionId: string): Promise<Express.User | null> {
+  return new Promise((resolve) => {
+    if (!sessionStore) {
+      resolve(null);
+      return;
+    }
+    
+    sessionStore.get(sessionId, async (err, session) => {
+      if (err || !session) {
+        resolve(null);
+        return;
+      }
+      
+      const passportSession = (session as any).passport;
+      if (!passportSession?.user) {
+        resolve(null);
+        return;
+      }
+      
+      try {
+        const user = await storage.getUser(passportSession.user);
+        if (!user) {
+          resolve(null);
+          return;
+        }
+        resolve({
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+        });
+      } catch {
+        resolve(null);
+      }
+    });
+  });
+}
+
+// Parse session ID from cookie header
+export function parseSessionIdFromCookies(cookieHeader: string | undefined): string | null {
+  if (!cookieHeader) return null;
+  
+  const cookies = cookie.parse(cookieHeader);
+  const signedSessionId = cookies['connect.sid'];
+  
+  if (!signedSessionId) return null;
+  
+  // Session IDs are signed with the format: s:<sessionId>.<signature>
+  // We need to extract just the session ID part
+  const match = signedSessionId.match(/^s:([^.]+)\./);
+  return match ? match[1] : null;
+}
+
+export { crypto, sessionStore, sessionMiddleware };

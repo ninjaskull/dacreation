@@ -3,34 +3,66 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypt
 import { storage } from './storage';
 import type { SmtpSettings, EmailTemplate, CompanySettings } from '@shared/schema';
 
-const ENCRYPTION_KEY = process.env.SMTP_ENCRYPTION_KEY || 'default-key-change-in-production-32c';
 const ALGORITHM = 'aes-256-cbc';
 
-function getKey(): Buffer {
-  return scryptSync(ENCRYPTION_KEY, 'salt', 32);
+function getEncryptionKey(): string {
+  const key = process.env.SMTP_ENCRYPTION_KEY;
+  if (!key) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SMTP_ENCRYPTION_KEY environment variable is required in production');
+    }
+    console.warn('[email] Warning: SMTP_ENCRYPTION_KEY not set. Using development fallback. Set SMTP_ENCRYPTION_KEY for production.');
+    return 'dev-only-encryption-key-not-secure';
+  }
+  return key;
+}
+
+function deriveKey(salt: Buffer): Buffer {
+  return scryptSync(getEncryptionKey(), salt, 32);
 }
 
 export function encryptPassword(password: string): string {
   const iv = randomBytes(16);
-  const key = getKey();
+  const salt = randomBytes(16);
+  const key = deriveKey(salt);
   const cipher = createCipheriv(ALGORITHM, key, iv);
   let encrypted = cipher.update(password, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+  // Format: iv:salt:ciphertext
+  return iv.toString('hex') + ':' + salt.toString('hex') + ':' + encrypted;
 }
 
 export function decryptPassword(encryptedPassword: string): string {
   try {
-    const [ivHex, encrypted] = encryptedPassword.split(':');
-    if (!ivHex || !encrypted) {
-      return encryptedPassword;
+    const parts = encryptedPassword.split(':');
+    
+    // Handle new format: iv:salt:ciphertext
+    if (parts.length === 3) {
+      const [ivHex, saltHex, encrypted] = parts;
+      const iv = Buffer.from(ivHex, 'hex');
+      const salt = Buffer.from(saltHex, 'hex');
+      const key = deriveKey(salt);
+      const decipher = createDecipheriv(ALGORITHM, key, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
     }
-    const iv = Buffer.from(ivHex, 'hex');
-    const key = getKey();
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    
+    // Handle legacy format: iv:ciphertext (for backward compatibility)
+    if (parts.length === 2) {
+      const [ivHex, encrypted] = parts;
+      const iv = Buffer.from(ivHex, 'hex');
+      // Use a fixed legacy salt for old encrypted passwords
+      const legacySalt = Buffer.from('salt');
+      const key = scryptSync(getEncryptionKey(), legacySalt, 32);
+      const decipher = createDecipheriv(ALGORITHM, key, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+    
+    // Not encrypted, return as-is
+    return encryptedPassword;
   } catch {
     return encryptedPassword;
   }
@@ -38,8 +70,15 @@ export function decryptPassword(encryptedPassword: string): string {
 
 export function isPasswordEncrypted(password: string): boolean {
   const parts = password.split(':');
-  if (parts.length !== 2) return false;
-  return parts[0].length === 32 && /^[a-f0-9]+$/.test(parts[0]);
+  // New format: iv:salt:ciphertext (3 parts)
+  if (parts.length === 3) {
+    return parts[0].length === 32 && parts[1].length === 32 && /^[a-f0-9]+$/.test(parts[0]) && /^[a-f0-9]+$/.test(parts[1]);
+  }
+  // Legacy format: iv:ciphertext (2 parts)
+  if (parts.length === 2) {
+    return parts[0].length === 32 && /^[a-f0-9]+$/.test(parts[0]);
+  }
+  return false;
 }
 
 interface EmailTransporter {

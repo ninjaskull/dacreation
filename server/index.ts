@@ -4,9 +4,61 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./websocket";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 const httpServer = createServer(app);
+
+// Security headers with helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "wss:", "ws:"],
+      frameSrc: ["'self'", "https://www.google.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Rate limiting for API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: { message: "Too many requests, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !req.path.startsWith('/api'),
+});
+
+// Stricter rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login attempts per window
+  message: { message: "Too many authentication attempts, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter rate limiting for lead creation (public endpoint)
+const leadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // Limit each IP to 20 lead submissions per hour
+  message: { message: "Too many submissions, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/leads', leadLimiter);
+app.use('/api/callback-requests', leadLimiter);
 
 setupAuth(app);
 setupWebSocket(httpServer);

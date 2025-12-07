@@ -36,6 +36,15 @@ import {
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
 
+// Sanitize user input for LIKE queries to prevent SQL injection
+// Escapes special characters: %, _, \
+function sanitizeLikePattern(input: string): string {
+  return input
+    .replace(/\\/g, '\\\\')  // Escape backslash first
+    .replace(/%/g, '\\%')     // Escape percent
+    .replace(/_/g, '\\_');    // Escape underscore
+}
+
 export interface LeadWithAssignee extends Lead {
   assignee?: { id: string; name: string | null; username: string } | null;
 }
@@ -441,7 +450,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(leads.eventType, filters.eventType));
     }
     if (filters?.location) {
-      conditions.push(like(leads.location, `%${filters.location}%`));
+      conditions.push(like(leads.location, `%${sanitizeLikePattern(filters.location)}%`));
     }
     if (filters?.budgetRange && filters.budgetRange !== 'all') {
       conditions.push(eq(leads.budgetRange, filters.budgetRange));
@@ -459,7 +468,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(lte(leads.createdAt, filters.dateTo));
     }
     if (filters?.search) {
-      const searchTerm = `%${filters.search}%`;
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
       conditions.push(
         or(
           like(leads.name, searchTerm),
@@ -1053,13 +1062,13 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(clients.status, filters.status));
     }
     if (filters?.city) {
-      conditions.push(like(clients.city, `%${filters.city}%`));
+      conditions.push(like(clients.city, `%${sanitizeLikePattern(filters.city)}%`));
     }
     if (filters?.source && filters.source !== 'all') {
       conditions.push(eq(clients.source, filters.source));
     }
     if (filters?.search) {
-      const searchTerm = `%${filters.search}%`;
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
       conditions.push(
         or(
           like(clients.name, searchTerm),
@@ -1311,13 +1320,13 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(vendors.status, filters.status));
     }
     if (filters?.city) {
-      conditions.push(like(vendors.city, `%${filters.city}%`));
+      conditions.push(like(vendors.city, `%${sanitizeLikePattern(filters.city)}%`));
     }
     if (filters?.minRating) {
       conditions.push(gte(vendors.rating, filters.minRating));
     }
     if (filters?.search) {
-      const searchTerm = `%${filters.search}%`;
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
       conditions.push(
         or(
           like(vendors.name, searchTerm),
@@ -1593,11 +1602,12 @@ export class DatabaseStorage implements IStorage {
     if (filters?.dateFrom) conditions.push(gte(invoices.issueDate, filters.dateFrom));
     if (filters?.dateTo) conditions.push(lte(invoices.issueDate, filters.dateTo));
     if (filters?.search) {
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
       conditions.push(
         or(
-          like(invoices.invoiceNumber, `%${filters.search}%`),
-          like(invoices.title, `%${filters.search}%`),
-          like(invoices.clientName, `%${filters.search}%`)
+          like(invoices.invoiceNumber, searchTerm),
+          like(invoices.title, searchTerm),
+          like(invoices.clientName, searchTerm)
         )
       );
     }
@@ -1905,11 +1915,12 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(callbackRequests.assignedTo, filters.assignedTo));
     }
     if (filters?.search) {
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
       conditions.push(
         or(
-          like(callbackRequests.name, `%${filters.search}%`),
-          like(callbackRequests.phone, `%${filters.search}%`),
-          like(callbackRequests.email, `%${filters.search}%`)
+          like(callbackRequests.name, searchTerm),
+          like(callbackRequests.phone, searchTerm),
+          like(callbackRequests.email, searchTerm)
         )
       );
     }
@@ -2007,7 +2018,11 @@ export class DatabaseStorage implements IStorage {
 
   // Conversations
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
-    const [created] = await db.insert(conversations).values(conversation).returning();
+    const conversationData = {
+      ...conversation,
+      lastMessageAt: conversation.lastMessageAt ? new Date(conversation.lastMessageAt) : new Date(),
+    };
+    const [created] = await db.insert(conversations).values(conversationData as any).returning();
     return created;
   }
 
@@ -2037,11 +2052,12 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(conversations.assignedTo, filters.assignedTo));
     }
     if (filters?.search) {
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
       conditions.push(
         or(
-          like(conversations.visitorName, `%${filters.search}%`),
-          like(conversations.visitorPhone, `%${filters.search}%`),
-          like(conversations.visitorEmail, `%${filters.search}%`)
+          like(conversations.visitorName, searchTerm),
+          like(conversations.visitorPhone, searchTerm),
+          like(conversations.visitorEmail, searchTerm)
         )
       );
     }
@@ -2111,9 +2127,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateConversation(id: string, data: UpdateConversation): Promise<Conversation | undefined> {
+    // Convert date strings to Date objects for proper DB handling
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.liveAgentRequestedAt && typeof data.liveAgentRequestedAt === 'string') {
+      updateData.liveAgentRequestedAt = new Date(data.liveAgentRequestedAt);
+    }
+    if (data.lastMessageAt && typeof data.lastMessageAt === 'string') {
+      updateData.lastMessageAt = new Date(data.lastMessageAt);
+    }
+    
     const [updated] = await db
       .update(conversations)
-      .set({ ...data, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(conversations.id, id))
       .returning();
     return updated;
