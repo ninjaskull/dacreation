@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -23,18 +24,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title, description }: AdminLayoutProps) {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const response = await fetch("/api/auth/me");
-      if (!response.ok) {
-        throw new Error("Not authenticated");
-      }
-      return response.json();
-    },
-    retry: false,
-  });
+  const { user, isLoading: userLoading, isAuthenticated, isAdmin } = useAuth();
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -48,10 +38,10 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
   });
 
   useEffect(() => {
-    if (!userLoading && !user) {
+    if (!userLoading && !isAuthenticated) {
       setLocation("/admin/login");
     }
-  }, [user, userLoading, setLocation]);
+  }, [isAuthenticated, userLoading, setLocation]);
 
   if (userLoading) {
     return (
@@ -64,7 +54,7 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return null;
   }
 
@@ -110,14 +100,14 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
                 <Button variant="ghost" className="flex items-center gap-2 h-8 px-2 hover:bg-slate-100" data-testid="button-user-menu">
                   <Avatar className="h-7 w-7">
                     <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white text-xs font-medium">
-                      {user.user.username.charAt(0).toUpperCase()}
+                      {user.username.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col items-start">
                     <span className="text-xs font-medium text-slate-900 leading-tight">
-                      {user.user.username}
+                      {user.name || user.username}
                     </span>
-                    <span className="text-[10px] text-slate-500 leading-tight">Admin</span>
+                    <span className="text-[10px] text-slate-500 leading-tight capitalize">{user.role}</span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -128,10 +118,12 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
                   <User className="mr-2 h-3.5 w-3.5" />
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-sm">
-                  <Settings className="mr-2 h-3.5 w-3.5" />
-                  Settings
-                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem className="text-sm" onClick={() => setLocation('/admin/settings')}>
+                    <Settings className="mr-2 h-3.5 w-3.5" />
+                    Settings
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => logoutMutation.mutate()}

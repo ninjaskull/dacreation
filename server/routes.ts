@@ -57,6 +57,13 @@ function isAdmin(req: Request, res: Response, next: NextFunction) {
   res.status(403).json({ message: "Forbidden - Admin access required" });
 }
 
+function isStaffOrAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'staff')) {
+    return next();
+  }
+  res.status(403).json({ message: "Forbidden - Staff access required" });
+}
+
 function canAccessLead(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -355,7 +362,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/leads/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/leads/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateLeadSchema.safeParse(req.body);
       if (!result.success) {
@@ -402,7 +409,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/leads/:id/notes", isAuthenticated, async (req, res) => {
+  app.post("/api/leads/:id/notes", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertLeadNoteSchema.safeParse({
         ...req.body,
@@ -430,7 +437,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/notes/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/notes/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const { content, isPinned } = req.body;
       const note = await storage.updateLeadNote(req.params.id, content, isPinned);
@@ -444,7 +451,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/notes/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/notes/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.deleteLeadNote(req.params.id);
       res.json({ message: "Note deleted successfully" });
@@ -464,7 +471,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/leads/:id/activity", isAuthenticated, async (req, res) => {
+  app.post("/api/leads/:id/activity", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertActivityLogSchema.safeParse({
         ...req.body,
@@ -527,7 +534,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/appointments", isAuthenticated, async (req, res) => {
+  app.post("/api/appointments", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertAppointmentSchema.safeParse(req.body);
       if (!result.success) {
@@ -563,7 +570,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/appointments/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/appointments/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateAppointmentSchema.safeParse(req.body);
       if (!result.success) {
@@ -591,7 +598,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/appointments/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/appointments/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.deleteAppointment(req.params.id);
       res.json({ message: "Appointment deleted successfully" });
@@ -1019,7 +1026,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/clients", isAuthenticated, async (req, res) => {
+  app.post("/api/clients", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertClientSchema.safeParse(req.body);
       if (!result.success) {
@@ -1033,7 +1040,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/clients/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/clients/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateClientSchema.safeParse(req.body);
       if (!result.success) {
@@ -1139,7 +1146,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/events", isAuthenticated, async (req, res) => {
+  app.post("/api/events", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertEventSchema.safeParse(req.body);
       if (!result.success) {
@@ -1153,7 +1160,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/events/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/events/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateEventSchema.safeParse(req.body);
       if (!result.success) {
@@ -1257,7 +1264,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/vendors", isAuthenticated, async (req, res) => {
+  app.post("/api/vendors", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertVendorSchema.safeParse(req.body);
       if (!result.success) {
@@ -1271,7 +1278,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/vendors/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/vendors/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateVendorSchema.safeParse(req.body);
       if (!result.success) {
@@ -1399,7 +1406,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/settings/user", isAuthenticated, async (req, res) => {
+  app.patch("/api/settings/user", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const result = updateUserSettingsSchema.safeParse(req.body);
       if (!result.success) {
@@ -1414,7 +1421,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/settings/profile", isAuthenticated, async (req, res) => {
+  app.patch("/api/settings/profile", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const user = req.user as Express.User;
       const { name, email, phone, currentPassword, newPassword } = req.body;
@@ -1810,7 +1817,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/invoices", isAuthenticated, async (req, res) => {
+  app.post("/api/invoices", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertInvoiceSchema.safeParse(req.body);
       if (!result.success) {
@@ -1830,7 +1837,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/invoices/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/invoices/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateInvoiceSchema.safeParse(req.body);
       if (!result.success) {
@@ -1847,7 +1854,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/invoices/:id/send", isAuthenticated, async (req, res) => {
+  app.post("/api/invoices/:id/send", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const invoice = await storage.updateInvoice(req.params.id, { 
         status: 'sent',
@@ -1882,7 +1889,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/invoices/:id/items", isAuthenticated, async (req, res) => {
+  app.post("/api/invoices/:id/items", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertInvoiceItemSchema.safeParse({
         ...req.body,
@@ -1899,7 +1906,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/invoice-items/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/invoice-items/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateInvoiceItemSchema.safeParse(req.body);
       if (!result.success) {
@@ -1916,7 +1923,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/invoice-items/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/invoice-items/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.deleteInvoiceItem(req.params.id);
       res.json({ message: "Item deleted successfully" });
@@ -1936,7 +1943,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/invoices/:id/payments", isAuthenticated, async (req, res) => {
+  app.post("/api/invoices/:id/payments", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = insertInvoicePaymentSchema.safeParse({
         ...req.body,
@@ -1954,7 +1961,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/invoice-payments/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/invoice-payments/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.deleteInvoicePayment(req.params.id);
       res.json({ message: "Payment deleted successfully" });
@@ -2031,7 +2038,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/callback-requests/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/callback-requests/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateCallbackRequestSchema.safeParse(req.body);
       if (!result.success) {
@@ -2048,7 +2055,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/callback-requests/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/callback-requests/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.deleteCallbackRequest(req.params.id);
       res.json({ message: "Callback request deleted successfully" });
@@ -2131,7 +2138,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/conversations/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/conversations/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const result = updateConversationSchema.safeParse(req.body);
       if (!result.success) {
@@ -2148,7 +2155,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/conversations/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/conversations/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.deleteConversation(req.params.id);
       res.json({ message: "Conversation deleted successfully" });
@@ -2199,7 +2206,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/conversations/:conversationId/mark-read", isAuthenticated, async (req, res) => {
+  app.post("/api/conversations/:conversationId/mark-read", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       await storage.markMessagesAsRead(req.params.conversationId, 'visitor');
       res.json({ message: "Messages marked as read" });
@@ -2331,7 +2338,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/agent-status", isAuthenticated, async (req, res) => {
+  app.put("/api/agent-status", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const user = req.user as User;
       const { status, statusMessage, maxConversations } = req.body;
@@ -2578,7 +2585,7 @@ export async function registerRoutes(
 
   // ==================== Send Email ====================
 
-  app.post("/api/send-email", isAuthenticated, async (req, res) => {
+  app.post("/api/send-email", isAuthenticated, isStaffOrAdmin, async (req, res) => {
     try {
       const { to, toName, subject, html, text, type } = req.body;
       

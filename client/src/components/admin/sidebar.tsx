@@ -41,12 +41,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SidebarItem {
   name: string;
   href: string;
   icon: React.ElementType;
   badge?: number;
+  adminOnly?: boolean;
+  staffAndAbove?: boolean;
 }
 
 interface SidebarSection {
@@ -66,28 +69,28 @@ const sidebarSections: SidebarSection[] = [
     title: "CRM",
     items: [
       { name: "Leads", href: "/admin/leads", icon: Users },
-      { name: "Clients", href: "/admin/clients", icon: UserCheck },
-      { name: "Chat", href: "/admin/chat", icon: MessagesSquare },
-      { name: "Callbacks", href: "/admin/callbacks", icon: Phone },
+      { name: "Clients", href: "/admin/clients", icon: UserCheck, staffAndAbove: true },
+      { name: "Chat", href: "/admin/chat", icon: MessagesSquare, staffAndAbove: true },
+      { name: "Callbacks", href: "/admin/callbacks", icon: Phone, staffAndAbove: true },
     ],
   },
   {
     title: "Event Management",
     items: [
-      { name: "Events", href: "/admin/events", icon: Sparkles },
+      { name: "Events", href: "/admin/events", icon: Sparkles, staffAndAbove: true },
       { name: "Calendar", href: "/admin/calendar", icon: CalendarDays },
-      { name: "Bookings", href: "/admin/bookings", icon: ClipboardList },
-      { name: "Venues", href: "/admin/venues", icon: MapPin },
+      { name: "Bookings", href: "/admin/bookings", icon: ClipboardList, staffAndAbove: true },
+      { name: "Venues", href: "/admin/venues", icon: MapPin, staffAndAbove: true },
     ],
   },
   {
     title: "Operations",
     items: [
-      { name: "Vendors", href: "/admin/vendors", icon: Truck },
+      { name: "Vendors", href: "/admin/vendors", icon: Truck, staffAndAbove: true },
       { name: "Team", href: "/admin/team", icon: Building2 },
-      { name: "Portfolio", href: "/admin/portfolio", icon: Image },
-      { name: "Careers", href: "/admin/careers", icon: Briefcase },
-      { name: "Tasks", href: "/admin/tasks", icon: FileText },
+      { name: "Portfolio", href: "/admin/portfolio", icon: Image, staffAndAbove: true },
+      { name: "Careers", href: "/admin/careers", icon: Briefcase, staffAndAbove: true },
+      { name: "Tasks", href: "/admin/tasks", icon: FileText, staffAndAbove: true },
     ],
   },
   {
@@ -99,9 +102,9 @@ const sidebarSections: SidebarSection[] = [
 ];
 
 const bottomItems: SidebarItem[] = [
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-  { name: "Website Settings", href: "/admin/website-settings", icon: Sparkles },
-  { name: "Email Settings", href: "/admin/email-settings", icon: Mail },
+  { name: "Settings", href: "/admin/settings", icon: Settings, adminOnly: true },
+  { name: "Website Settings", href: "/admin/website-settings", icon: Sparkles, adminOnly: true },
+  { name: "Email Settings", href: "/admin/email-settings", icon: Mail, adminOnly: true },
   { name: "Help & Support", href: "/admin/help", icon: HelpCircle },
 ];
 
@@ -109,6 +112,7 @@ export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [location, setLocation] = useLocation();
+  const { role, isAdmin, isViewer } = useAuth();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -127,6 +131,26 @@ export function AdminSidebar() {
     setLocation(href);
     setSearchOpen(false);
   };
+
+  const canAccessItem = (item: SidebarItem) => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.staffAndAbove && isViewer) return false;
+    return true;
+  };
+
+  const getFilteredSections = () => {
+    return sidebarSections.map(section => ({
+      ...section,
+      items: section.items.filter(canAccessItem),
+    })).filter(section => section.items.length > 0);
+  };
+
+  const getFilteredBottomItems = () => {
+    return bottomItems.filter(canAccessItem);
+  };
+
+  const filteredSections = getFilteredSections();
+  const filteredBottomItems = getFilteredBottomItems();
 
   const NavItem = ({ item }: { item: SidebarItem }) => {
     const content = (
@@ -254,7 +278,7 @@ export function AdminSidebar() {
 
         <ScrollArea className="flex-1 py-2">
           <div className="space-y-4 px-2">
-            {sidebarSections.map((section) => (
+            {filteredSections.map((section) => (
               <div key={section.title}>
                 {!collapsed && (
                   <h3 className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -272,7 +296,7 @@ export function AdminSidebar() {
         </ScrollArea>
 
         <div className="border-t border-slate-200 p-2 space-y-0.5">
-          {bottomItems.map((item) => (
+          {filteredBottomItems.map((item) => (
             <NavItem key={item.href} item={item} />
           ))}
         </div>
@@ -282,7 +306,7 @@ export function AdminSidebar() {
         <CommandInput placeholder="Search pages..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          {sidebarSections.map((section) => (
+          {filteredSections.map((section) => (
             <CommandGroup key={section.title} heading={section.title}>
               {section.items.map((item) => (
                 <CommandItem
@@ -296,18 +320,20 @@ export function AdminSidebar() {
               ))}
             </CommandGroup>
           ))}
-          <CommandGroup heading="Settings">
-            {bottomItems.map((item) => (
-              <CommandItem
-                key={item.href}
-                onSelect={() => handleNavigation(item.href)}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                <item.icon className="h-4 w-4 text-slate-500" />
-                <span>{item.name}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          {filteredBottomItems.length > 0 && (
+            <CommandGroup heading="Settings">
+              {filteredBottomItems.map((item) => (
+                <CommandItem
+                  key={item.href}
+                  onSelect={() => handleNavigation(item.href)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <item.icon className="h-4 w-4 text-slate-500" />
+                  <span>{item.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>
