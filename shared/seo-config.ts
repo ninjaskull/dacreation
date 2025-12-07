@@ -3,11 +3,29 @@ export interface PageSEO {
   title: string;
   description: string;
   keywords: string[];
-  priority: number;
+  priority: number;  // 1.0 = highest, 0.1 = lowest
   changefreq: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
-  isPublic: boolean;
+  isPublic: boolean;  // Set to true to include in sitemap.xml
 }
 
+/**
+ * SEO Configuration for all pages
+ * 
+ * HOW TO ADD A NEW PAGE TO SITEMAP:
+ * 1. Create your new page component in client/src/pages/
+ * 2. Add the route in client/src/App.tsx
+ * 3. Add an entry to this array below with isPublic: true
+ * 
+ * The sitemap.xml automatically regenerates on every request,
+ * so changes here are immediately reflected in the sitemap.
+ * 
+ * PRIORITY GUIDE:
+ * - 1.0: Homepage
+ * - 0.95: Main service pages
+ * - 0.9: Important pages (portfolio, contact, about)
+ * - 0.7-0.8: Secondary pages
+ * - 0.5-0.6: Tertiary pages
+ */
 export const seoConfig: PageSEO[] = [
   {
     path: '/',

@@ -317,3 +317,45 @@ All forms capture `leadSource` field to track where leads originate:
   createdAt: timestamp (auto-generated)
 }
 ```
+
+## SEO & Search Engine Indexing
+
+### Sitemap System
+The website has an automatic sitemap generation system for search engine indexing.
+
+**Available SEO Files:**
+- `/sitemap.xml` - Dynamic XML sitemap for Google Search Console
+- `/robots.txt` - Search engine crawler instructions
+- `/sitemap` - Visual HTML sitemap page for users
+
+### How to Add New Pages to Sitemap
+
+1. **Create your page component** in `client/src/pages/`
+2. **Add the route** in `client/src/App.tsx`
+3. **Add SEO entry** to `shared/seo-config.ts`:
+
+```typescript
+{
+  path: '/your-new-page',
+  title: 'Page Title | DA Creation',
+  description: 'Page description for search results',
+  keywords: ['keyword1', 'keyword2'],
+  priority: 0.8,        // 1.0 = highest, 0.1 = lowest
+  changefreq: 'monthly', // how often content changes
+  isPublic: true        // must be true to appear in sitemap
+}
+```
+
+### Priority Guide
+- **1.0**: Homepage
+- **0.95**: Main service pages (weddings, corporate, etc.)
+- **0.9**: Important pages (portfolio, contact, about)
+- **0.7-0.8**: Secondary pages (team, testimonials)
+- **0.5-0.6**: Tertiary pages (careers, press)
+
+### Google Search Console Setup
+1. Publish the website to get a live URL
+2. Go to [Google Search Console](https://search.google.com/search-console)
+3. Add your property (website URL)
+4. Submit sitemap: `https://yourdomain.com/sitemap.xml`
+5. The sitemap auto-updates when pages are added to seo-config.ts
