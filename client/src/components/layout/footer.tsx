@@ -77,9 +77,15 @@ export function Footer() {
   const currentEventsCount = settings?.numberOfEventsHeld || DEFAULT_SETTINGS.numberOfEventsHeld;
   const currentRating = settings?.ratings || DEFAULT_SETTINGS.ratings;
 
-  const phoneLink = useMemo(() => {
-    const phoneClean = currentPhone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
-    return `tel:${phoneClean}`;
+  const phoneNumbers = useMemo(() => {
+    return currentPhone.split(',').map(phone => {
+      const trimmed = phone.trim();
+      const cleaned = trimmed.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+      return {
+        display: trimmed,
+        link: `tel:${cleaned}`
+      };
+    }).filter(p => p.display);
   }, [currentPhone]);
 
   const socialLinks = useMemo(() => {
@@ -299,15 +305,20 @@ export function Footer() {
                         {currentAddress}
                       </span>
                     </li>
-                    <li className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 text-secondary shrink-0" />
-                      <a 
-                        href={phoneLink}
-                        className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
-                        data-testid="footer-phone"
-                      >
-                        {currentPhone}
-                      </a>
+                    <li className="flex items-start gap-3">
+                      <Phone className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
+                      <div className="flex flex-col gap-1">
+                        {phoneNumbers.map((phone, index) => (
+                          <a 
+                            key={index}
+                            href={phone.link}
+                            className="text-primary-foreground/70 hover:text-white transition-colors text-sm"
+                            data-testid={`footer-phone-${index}`}
+                          >
+                            {phone.display}
+                          </a>
+                        ))}
+                      </div>
                     </li>
                     <li className="flex items-center gap-3">
                       <Mail className="h-5 w-5 text-secondary shrink-0" />

@@ -105,9 +105,15 @@ export function Navbar() {
   const currentAddress = settings?.topBarAddress || DEFAULT_SETTINGS.topBarAddress;
   const currentEventsCount = settings?.numberOfEventsHeld || DEFAULT_SETTINGS.numberOfEventsHeld;
 
-  const phoneLink = useMemo(() => {
-    const phoneClean = currentPhone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
-    return `tel:${phoneClean}`;
+  const phoneNumbers = useMemo(() => {
+    return currentPhone.split(',').map(phone => {
+      const trimmed = phone.trim();
+      const cleaned = trimmed.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+      return {
+        display: trimmed,
+        link: `tel:${cleaned}`
+      };
+    }).filter(p => p.display);
   }, [currentPhone]);
 
   useEffect(() => {
@@ -162,19 +168,31 @@ export function Navbar() {
         <div className="container mx-auto px-6">
           <div className="hidden lg:flex justify-between items-center h-10 text-xs">
             <div className="flex items-center gap-6">
-              <a 
-                href={phoneLink}
-                className={cn(
-                  "flex items-center gap-2 transition-colors",
-                  showTransparent 
-                    ? "text-white/80 hover:text-white" 
-                    : "text-primary-foreground/80 hover:text-primary-foreground"
-                )}
-                data-testid="link-phone"
-              >
+              <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5" />
-                <span>{currentPhone}</span>
-              </a>
+                <div className="flex items-center gap-1">
+                  {phoneNumbers.map((phone, index) => (
+                    <span key={index} className="flex items-center">
+                      {index > 0 && <span className={cn(
+                        "mx-1",
+                        showTransparent ? "text-white/50" : "text-primary-foreground/50"
+                      )}>/</span>}
+                      <a 
+                        href={phone.link}
+                        className={cn(
+                          "transition-colors",
+                          showTransparent 
+                            ? "text-white/80 hover:text-white" 
+                            : "text-primary-foreground/80 hover:text-primary-foreground"
+                        )}
+                        data-testid={`link-phone-${index}`}
+                      >
+                        {phone.display}
+                      </a>
+                    </span>
+                  ))}
+                </div>
+              </div>
               <a 
                 href={`mailto:${currentEmail}`}
                 className={cn(
@@ -453,7 +471,7 @@ export function Navbar() {
                     Get a Quote
                   </Button>
                 </Link>
-                <a href={phoneLink}>
+                <a href={phoneNumbers[0]?.link || '#'}>
                   <Button 
                     variant="ghost"
                     size="sm"
@@ -622,10 +640,10 @@ export function Navbar() {
                     Get a Free Quote
                   </Button>
                 </Link>
-                <a href={phoneLink} className="block">
+                <a href={phoneNumbers[0]?.link || '#'} className="block">
                   <Button variant="outline" className="w-full rounded-full py-3 text-sm gap-2" data-testid="button-mobile-call">
                     <Phone className="w-4 h-4" />
-                    Call {currentPhone}
+                    Call {phoneNumbers[0]?.display || currentPhone}
                   </Button>
                 </a>
               </div>
