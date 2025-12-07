@@ -124,9 +124,11 @@ sudo ufw --force enable
 cd /var/www/dacreation
 git pull
 npm install
-npm run build
+bash script/build-production.sh
 pm2 restart dacreation
 ```
+
+> **Note:** Always use `bash script/build-production.sh` instead of `npm run build` when building outside Replit to avoid the build hanging.
 
 ## Troubleshooting
 
