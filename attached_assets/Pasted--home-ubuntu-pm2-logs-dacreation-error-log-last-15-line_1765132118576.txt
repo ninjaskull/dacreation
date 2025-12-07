@@ -1,0 +1,32 @@
+
+/home/ubuntu/.pm2/logs/dacreation-error.log last 15 lines:
+0|dacreati |     at va.handle_error (/var/www/dacreation/dacreation/dist/index.cjs:38:3052)
+0|dacreati |     at w (/var/www/dacreation/dacreation/dist/index.cjs:38:8326)
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:38:7944
+0|dacreati |     at cs.process_params (/var/www/dacreation/dacreation/dist/index.cjs:38:8466)
+0|dacreati | Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+0|dacreati |     at ServerResponse.setHeader (node:_http_outgoing:655:11)
+0|dacreati |     at ot.set.ot.header (/var/www/dacreation/dacreation/dist/index.cjs:53:25033)
+0|dacreati |     at ot.send (/var/www/dacreation/dacreation/dist/index.cjs:53:20572)
+0|dacreati |     at ot.json (/var/www/dacreation/dacreation/dist/index.cjs:53:21702)
+0|dacreati |     at e.json (/var/www/dacreation/dacreation/dist/index.cjs:317:1308)
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:317:1626
+0|dacreati |     at va.handle_error (/var/www/dacreation/dacreation/dist/index.cjs:38:3052)
+0|dacreati |     at w (/var/www/dacreation/dacreation/dist/index.cjs:38:8326)
+0|dacreati |     at /var/www/dacreation/dacreation/dist/index.cjs:38:7944
+0|dacreati |     at cs.process_params (/var/www/dacreation/dacreation/dist/index.cjs:38:8466)
+
+0|dacreation  | [WebSocket] Server initialized on /ws/chat
+0|dacreation  | 6:28:09 PM [express] serving on port 5000
+0|dacreation  | 6:28:24 PM [express] POST /api/auth/login 500 in 248ms :: {"message":"Login failed"}
+0|dacreation  | Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+0|dacreation  |     at ServerResponse.setHeader (node:_http_outgoing:655:11)
+0|dacreation  |     at ot.set.ot.header (/var/www/dacreation/dacreation/dist/index.cjs:53:25033)
+0|dacreation  |     at ot.send (/var/www/dacreation/dacreation/dist/index.cjs:53:20572)
+0|dacreation  |     at ot.json (/var/www/dacreation/dacreation/dist/index.cjs:53:21702)
+0|dacreation  |     at e.json (/var/www/dacreation/dacreation/dist/index.cjs:317:1308)
+0|dacreation  |     at /var/www/dacreation/dacreation/dist/index.cjs:317:1626
+0|dacreation  |     at va.handle_error (/var/www/dacreation/dacreation/dist/index.cjs:38:3052)
+0|dacreation  |     at w (/var/www/dacreation/dacreation/dist/index.cjs:38:8326)
+0|dacreation  |     at /var/www/dacreation/dacreation/dist/index.cjs:38:7944
+0|dacreation  |     at cs.process_params (/var/www/dacreation/dacreation/dist/index.cjs:38:8466)
