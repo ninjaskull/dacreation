@@ -24,7 +24,7 @@ import {
   Mail,
   Search,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -32,6 +32,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { useBranding } from "@/contexts/BrandingContext";
 
 interface SidebarItem {
@@ -99,9 +107,26 @@ const bottomItems: SidebarItem[] = [
 
 export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const [location] = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   const isActive = (href: string) => location === href;
+
+  const handleNavigation = (href: string) => {
+    setLocation(href);
+    setSearchOpen(false);
+  };
 
   const NavItem = ({ item }: { item: SidebarItem }) => {
     const content = (
@@ -156,77 +181,135 @@ export function AdminSidebar() {
   const { branding } = useBranding();
   
   return (
-    <div
-      className={cn(
-        "relative flex flex-col bg-white border-r border-slate-200 h-screen transition-all duration-200 shadow-sm",
-        collapsed ? "w-[60px]" : "w-[240px]"
-      )}
-    >
-      <div className={cn(
-        "flex items-center h-14 border-b border-slate-200 px-3",
-        collapsed ? "justify-center" : "justify-between"
-      )}>
-        {!collapsed && (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center flex-shrink-0">
+    <>
+      <div
+        className={cn(
+          "relative flex flex-col bg-white border-r border-slate-200 h-screen transition-all duration-200 shadow-sm",
+          collapsed ? "w-[60px]" : "w-[240px]"
+        )}
+      >
+        <div className={cn(
+          "flex items-center h-14 border-b border-slate-200 px-3",
+          collapsed ? "justify-center" : "justify-between"
+        )}>
+          {!collapsed && (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center flex-shrink-0">
+                <img src={branding.assets.logos.iconMaroon} alt={branding.company.name} className="h-5 w-5 object-contain brightness-0 invert" />
+              </div>
+              <span className="font-semibold text-sm text-slate-900 truncate">{branding.company.name}</span>
+            </div>
+          )}
+          {collapsed && (
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
               <img src={branding.assets.logos.iconMaroon} alt={branding.company.name} className="h-5 w-5 object-contain brightness-0 invert" />
             </div>
-            <span className="font-semibold text-sm text-slate-900 truncate">{branding.company.name}</span>
-          </div>
-        )}
-        {collapsed && (
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-            <img src={branding.assets.logos.iconMaroon} alt={branding.company.name} className="h-5 w-5 object-contain brightness-0 invert" />
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100",
-            collapsed && "absolute -right-3.5 bg-white border border-slate-200 shadow-sm rounded-full z-10"
           )}
-          onClick={() => setCollapsed(!collapsed)}
-          data-testid="button-toggle-sidebar"
-        >
-          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-        </Button>
-      </div>
-
-      {!collapsed && (
-        <div className="px-3 py-2 border-b border-slate-100">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 rounded-md text-slate-400">
-            <Search className="h-3.5 w-3.5" />
-            <span className="text-xs">Search...</span>
-            <kbd className="ml-auto text-[10px] bg-white border border-slate-200 px-1 py-0.5 rounded text-slate-400">⌘K</kbd>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-100",
+              collapsed && "absolute -right-3.5 bg-white border border-slate-200 shadow-sm rounded-full z-10"
+            )}
+            onClick={() => setCollapsed(!collapsed)}
+            data-testid="button-toggle-sidebar"
+          >
+            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+          </Button>
         </div>
-      )}
 
-      <ScrollArea className="flex-1 py-2">
-        <div className="space-y-4 px-2">
-          {sidebarSections.map((section) => (
-            <div key={section.title}>
-              {!collapsed && (
-                <h3 className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  {section.title}
-                </h3>
-              )}
-              <div className="space-y-0.5">
-                {section.items.map((item) => (
-                  <NavItem key={item.href} item={item} />
-                ))}
+        {!collapsed && (
+          <div className="px-3 py-2 border-b border-slate-100">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-400 transition-colors"
+              data-testid="button-search-sidebar"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span className="text-xs">Search...</span>
+              <kbd className="ml-auto text-[10px] bg-white border border-slate-200 px-1 py-0.5 rounded text-slate-400">⌘K</kbd>
+            </button>
+          </div>
+        )}
+
+        {collapsed && (
+          <div className="px-2 py-2 border-b border-slate-100">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="w-full flex items-center justify-center p-2 bg-slate-50 hover:bg-slate-100 rounded-md text-slate-400 transition-colors"
+                  data-testid="button-search-sidebar-collapsed"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs">
+                Search (⌘K)
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+
+        <ScrollArea className="flex-1 py-2">
+          <div className="space-y-4 px-2">
+            {sidebarSections.map((section) => (
+              <div key={section.title}>
+                {!collapsed && (
+                  <h3 className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {section.title}
+                  </h3>
+                )}
+                <div className="space-y-0.5">
+                  {section.items.map((item) => (
+                    <NavItem key={item.href} item={item} />
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        <div className="border-t border-slate-200 p-2 space-y-0.5">
+          {bottomItems.map((item) => (
+            <NavItem key={item.href} item={item} />
           ))}
         </div>
-      </ScrollArea>
-
-      <div className="border-t border-slate-200 p-2 space-y-0.5">
-        {bottomItems.map((item) => (
-          <NavItem key={item.href} item={item} />
-        ))}
       </div>
-    </div>
+
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput placeholder="Search pages..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          {sidebarSections.map((section) => (
+            <CommandGroup key={section.title} heading={section.title}>
+              {section.items.map((item) => (
+                <CommandItem
+                  key={item.href}
+                  onSelect={() => handleNavigation(item.href)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <item.icon className="h-4 w-4 text-slate-500" />
+                  <span>{item.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+          <CommandGroup heading="Settings">
+            {bottomItems.map((item) => (
+              <CommandItem
+                key={item.href}
+                onSelect={() => handleNavigation(item.href)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <item.icon className="h-4 w-4 text-slate-500" />
+                <span>{item.name}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
+    </>
   );
 }
