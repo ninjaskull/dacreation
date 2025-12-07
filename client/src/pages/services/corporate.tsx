@@ -32,6 +32,7 @@ interface WebsiteSettings {
   corporateCount: number;
   socialCount: number;
   awardsCount: number;
+  showTrustedBy: boolean;
 }
 
 const services = [
@@ -91,7 +92,7 @@ export default function CorporatePage() {
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
       const res = await fetch("/api/settings/website");
-      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0 };
+      if (!res.ok) return { weddingsCount: 0, corporateCount: 0, socialCount: 0, awardsCount: 0, showTrustedBy: false };
       return res.json();
     },
   });
@@ -109,7 +110,7 @@ export default function CorporatePage() {
         pageType="corporate"
         canonicalUrl={`${branding.domain.url}/services/corporate`}
         structuredData={{
-          ...getServiceSchema(branding, "Corporate Event Management", `${branding.domain.url}/services/corporate`),
+          ...getServiceSchema(branding, "Corporate Event Management", "Professional corporate event management services including conferences, product launches, award ceremonies, and team building events.", `${branding.domain.url}/services/corporate`),
           ...getBreadcrumbSchema(branding, [
             { name: "Home", url: branding.domain.url },
             { name: "Services", url: `${branding.domain.url}/services` },
@@ -259,8 +260,8 @@ export default function CorporatePage() {
         </div>
       </section>
 
-      {/* Trusted Clients */}
-      <TrustedClients variant="dark" />
+      {/* Trusted Clients - Only show when admin toggle is enabled */}
+      {websiteSettings?.showTrustedBy && <TrustedClients variant="light" />}
 
       {/* Industries */}
       <section className="py-20 bg-white">
