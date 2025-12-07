@@ -23,12 +23,14 @@ import { Button } from "@/components/ui/button";
 import { SEOHead, useOrganizationSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 
-const stats = [
-  { icon: Calendar, value: "5+", label: "Years of Experience", description: "Crafting memorable events since 2020" },
-  { icon: Heart, value: "1000+", label: "Events Managed", description: "From intimate gatherings to grand celebrations" },
-  { icon: Users, value: "50+", label: "Team Members", description: "Passionate professionals at your service" },
-  { icon: Star, value: "98%", label: "Client Satisfaction", description: "Exceeding expectations every time" },
-];
+function getStats(branding: any) {
+  return [
+    { icon: Calendar, value: `${branding.stats.yearsExperience}+`, label: "Years of Experience", description: `Crafting memorable events since ${branding.company.foundedYear}` },
+    { icon: Heart, value: `${branding.stats.eventsCompleted}+`, label: "Events Managed", description: "From intimate gatherings to grand celebrations" },
+    { icon: Users, value: `${branding.stats.teamMembers}+`, label: "Team Members", description: "Passionate professionals at your service" },
+    { icon: Star, value: `${branding.stats.clientSatisfaction}%`, label: "Client Satisfaction", description: "Exceeding expectations every time" },
+  ];
+}
 
 const values = [
   { 
@@ -137,7 +139,7 @@ export default function AboutPage() {
               About {branding.company.name}
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              {pageContent?.subtitle || "Crafting Unforgettable Moments Since 2020"}
+              {pageContent?.subtitle || `Crafting Unforgettable Moments Since ${branding.company.foundedYear}`}
             </p>
           </motion.div>
         </div>
@@ -148,7 +150,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
+              {getStats(branding).map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
