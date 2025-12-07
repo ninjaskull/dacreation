@@ -3,6 +3,8 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { type Express } from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
@@ -40,6 +42,7 @@ declare global {
 
 export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
+  const PgSession = connectPgSimple(session);
   
   const isProduction = app.get("env") === "production";
   const sessionSecret = process.env.SESSION_SECRET || process.env.REPL_ID;
@@ -54,6 +57,16 @@ export function setupAuth(app: Express) {
   
   const developmentOnlyFallback = `dev-${Date.now()}-${Math.random().toString(36)}`;
   
+  const sessionStore = isProduction 
+    ? new PgSession({
+        pool: pool as any,
+        tableName: 'session',
+        createTableIfMissing: true,
+      })
+    : new MemoryStore({
+        checkPeriod: 86400000,
+      });
+  
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret || developmentOnlyFallback,
     resave: false,
@@ -63,12 +76,10 @@ export function setupAuth(app: Express) {
       httpOnly: true,
       sameSite: 'lax',
     },
-    store: new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
-    }),
+    store: sessionStore,
   };
 
-  if (app.get("env") === "production") {
+  if (isProduction) {
     app.set("trust proxy", 1);
     sessionSettings.cookie = {
       secure: true,
