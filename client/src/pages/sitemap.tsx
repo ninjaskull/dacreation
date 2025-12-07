@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 import { 
   Home, 
   Heart, 
@@ -18,47 +19,51 @@ import {
   MapPin
 } from "lucide-react";
 
-const sitemapData = [
-  {
-    category: "Main Pages",
-    icon: Home,
-    links: [
-      { name: "Home", href: "/", description: "Welcome to DA Creation" },
-      { name: "About Us", href: "/about", description: "Learn about our story and mission" },
-      { name: "Contact", href: "/contact", description: "Get in touch with us" },
-      { name: "Get a Quote", href: "/inquire", description: "Request a free consultation" },
-    ]
-  },
-  {
-    category: "Our Services",
-    icon: Calendar,
-    links: [
-      { name: "Wedding Planning", href: "/services/weddings", description: "Luxury wedding experiences" },
-      { name: "Corporate Events", href: "/services/corporate", description: "Professional business events" },
-      { name: "Social Celebrations", href: "/services/social", description: "Memorable social gatherings" },
-      { name: "Destination Events", href: "/services/destination", description: "Events at exotic locations" },
-    ]
-  },
-  {
-    category: "Company",
-    icon: Building2,
-    links: [
-      { name: "Our Team", href: "/team", description: "Meet our expert planners" },
-      { name: "Portfolio", href: "/portfolio", description: "View our past events" },
-      { name: "Testimonials", href: "/testimonials", description: "What our clients say" },
-      { name: "Careers", href: "/careers", description: "Join our team" },
-      { name: "Press & Media", href: "/press", description: "News and media coverage" },
-    ]
-  },
-];
+function getSitemapData(companyName: string) {
+  return [
+    {
+      category: "Main Pages",
+      icon: Home,
+      links: [
+        { name: "Home", href: "/", description: `Welcome to ${companyName}` },
+        { name: "About Us", href: "/about", description: "Learn about our story and mission" },
+        { name: "Contact", href: "/contact", description: "Get in touch with us" },
+        { name: "Get a Quote", href: "/inquire", description: "Request a free consultation" },
+      ]
+    },
+    {
+      category: "Our Services",
+      icon: Calendar,
+      links: [
+        { name: "Wedding Planning", href: "/services/weddings", description: "Luxury wedding experiences" },
+        { name: "Corporate Events", href: "/services/corporate", description: "Professional business events" },
+        { name: "Social Celebrations", href: "/services/social", description: "Memorable social gatherings" },
+        { name: "Destination Events", href: "/services/destination", description: "Events at exotic locations" },
+      ]
+    },
+    {
+      category: "Company",
+      icon: Building2,
+      links: [
+        { name: "Our Team", href: "/team", description: "Meet our expert planners" },
+        { name: "Portfolio", href: "/portfolio", description: "View our past events" },
+        { name: "Testimonials", href: "/testimonials", description: "What our clients say" },
+        { name: "Careers", href: "/careers", description: "Join our team" },
+        { name: "Press & Media", href: "/press", description: "News and media coverage" },
+      ]
+    },
+  ];
+}
 
 export default function SitemapPage() {
+  const { branding } = useBranding();
+  const sitemapData = getSitemapData(branding.company.name);
   return (
     <div className="min-h-screen bg-background" data-testid="sitemap-page">
       <SEOHead
-        title="Sitemap | DA Creation - Best Event Management Company in Pune"
-        description="Navigate through all pages of DA Creation website. Find information about our wedding planning, corporate events, social celebrations, and destination event services."
-        canonicalUrl="https://dacreation.in/sitemap"
+        title={`Sitemap | ${branding.company.name} - Best Event Management Company in Pune`}
+        description={`Navigate through all pages of ${branding.company.name} website. Find information about our wedding planning, corporate events, social celebrations, and destination event services.`}
+        canonicalUrl={`${branding.domain.url}/sitemap`}
       />
       <Navbar />
       

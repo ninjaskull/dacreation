@@ -378,7 +378,7 @@ export default function AboutPage() {
             >
               <Quote className="w-12 h-12 text-[#d4af37] mb-6" />
               <blockquote className="text-xl text-white/90 leading-relaxed mb-6">
-                "DA Creation transformed our wedding into a fairy tale. Every detail was perfect, and they handled everything with such grace and professionalism. We couldn't have asked for a better team."
+                "{branding.company.name} transformed our wedding into a fairy tale. Every detail was perfect, and they handled everything with such grace and professionalism. We couldn't have asked for a better team."
               </blockquote>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-[#d4af37] flex items-center justify-center text-[#601a29] font-bold text-xl">

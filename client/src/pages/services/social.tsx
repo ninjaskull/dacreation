@@ -187,7 +187,7 @@ export default function SocialPage() {
               <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Personal Touch</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">Intimate Gatherings, Grand Memories</h2>
               <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                Whether it's a milestone birthday or a cozy family gathering, DA Creation adds a touch of magic to your personal celebrations. We handle the details so you can be a guest at your own party.
+                Whether it's a milestone birthday or a cozy family gathering, {branding.company.name} adds a touch of magic to your personal celebrations. We handle the details so you can be a guest at your own party.
               </p>
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
                 From conceptualization to execution, we create bespoke experiences that reflect your personality and exceed expectations.
@@ -352,7 +352,7 @@ export default function SocialPage() {
               ))}
             </div>
             <p className="text-gray-600 text-lg leading-relaxed">
-              "The team at DA Creation made my parents' 50th anniversary a magical evening. The vintage theme was executed beautifully, and every guest complimented the arrangements. Thank you for making it so special!"
+              "The team at {branding.company.name} made my parents' 50th anniversary a magical evening. The vintage theme was executed beautifully, and every guest complimented the arrangements. Thank you for making it so special!"
             </p>
           </motion.div>
         </div>

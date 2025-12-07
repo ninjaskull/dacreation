@@ -184,10 +184,10 @@ export default function WeddingsPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">The DA Creation Way</span>
+              <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">The {branding.company.name} Way</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">The Wedding Experience</h2>
               <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                We understand that an Indian wedding is not just an event, but a union of families and a celebration of heritage. At DA Creation, we respect the sanctity of traditions while infusing them with a contemporary aesthetic.
+                We understand that an Indian wedding is not just an event, but a union of families and a celebration of heritage. At {branding.company.name}, we respect the sanctity of traditions while infusing them with a contemporary aesthetic.
               </p>
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
                 From the mehendi ceremony to the bidaai, we ensure every moment is crafted with love, precision, and cultural sensitivity.
@@ -348,7 +348,7 @@ export default function WeddingsPage() {
               ))}
             </div>
             <p className="text-gray-600 text-lg leading-relaxed">
-              "DA Creation transformed our wedding into a fairy tale. Every detail was perfect, from the mandap decoration to the reception setup. They handled everything with such grace and professionalism. We couldn't have asked for a better team to make our special day unforgettable."
+              "{branding.company.name} transformed our wedding into a fairy tale. Every detail was perfect, from the mandap decoration to the reception setup. They handled everything with such grace and professionalism. We couldn't have asked for a better team to make our special day unforgettable."
             </p>
           </motion.div>
         </div>

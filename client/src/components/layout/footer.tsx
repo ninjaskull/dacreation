@@ -135,7 +135,7 @@ export function Footer() {
                 <Link href="/">
                   <img 
                     src="/images/logo-white.webp" 
-                    alt="DA Creation" 
+                    alt={branding.company.name} 
                     className="h-14 md:h-16 w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
                     data-testid="footer-logo"
                   />
@@ -345,7 +345,7 @@ export function Footer() {
         <div className="py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-1 text-sm text-primary-foreground/50">
-              <span>&copy; {currentYear} DA Creation. All rights reserved.</span>
+              <span>&copy; {currentYear} {branding.company.name}. All rights reserved.</span>
               <span className="hidden md:inline mx-2">|</span>
               <span className="hidden md:flex items-center gap-1">
                 Made with <Heart className="h-3 w-3 text-red-400 fill-red-400" /> in India

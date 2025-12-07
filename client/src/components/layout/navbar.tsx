@@ -75,14 +75,7 @@ const companyLinks = [
   { name: "Press", href: "/press" }
 ];
 
-import { BRAND } from "@shared/branding";
-
-const DEFAULT_SETTINGS = {
-  phone: BRAND.contact.phones.join(", "),
-  email: BRAND.contact.email,
-  topBarAddress: BRAND.addresses.topBar,
-  numberOfEventsHeld: BRAND.stats.eventsCompleted,
-};
+import { useBranding } from "@/contexts/BrandingContext";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -92,30 +85,22 @@ export function Navbar() {
   const [location] = useLocation();
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const { branding } = useBranding();
 
-  const { data: settings } = useQuery<WebsiteSettings>({
-    queryKey: ["/api/settings/website"],
-    queryFn: async () => {
-      const response = await fetch("/api/settings/website");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      return response.json();
-    },
-  });
-
-  const currentPhone = settings?.phone || DEFAULT_SETTINGS.phone;
-  const currentEmail = settings?.email || DEFAULT_SETTINGS.email;
-  const currentAddress = settings?.topBarAddress || DEFAULT_SETTINGS.topBarAddress;
-  const currentEventsCount = settings?.numberOfEventsHeld || DEFAULT_SETTINGS.numberOfEventsHeld;
+  const currentPhone = branding.contact.phones.join(", ");
+  const currentEmail = branding.contact.email;
+  const currentAddress = branding.addresses.topBar;
+  const currentEventsCount = branding.stats.eventsCompleted;
 
   const phoneNumbers = useMemo(() => {
-    return currentPhone.split(',').map(phone => {
+    return currentPhone.split(',').map((phone: string) => {
       const trimmed = phone.trim();
       const cleaned = trimmed.replace(/\s+/g, '').replace(/[^+\d]/g, '');
       return {
         display: trimmed,
         link: `tel:${cleaned}`
       };
-    }).filter(p => p.display);
+    }).filter((p: { display: string; link: string }) => p.display);
   }, [currentPhone]);
 
   useEffect(() => {
@@ -278,7 +263,7 @@ export function Navbar() {
             >
               <img 
                 src={showTransparent ? "/images/logo-white.webp" : "/images/logo-maroon.webp"} 
-                alt="DA Creation" 
+                alt={branding.company.name} 
                 className="h-10 lg:h-14 w-auto object-contain transition-all duration-300"
               />
             </Link>

@@ -204,7 +204,7 @@ export default function CorporatePage() {
               <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Why Choose Us</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">Elevating Corporate Experiences</h2>
               <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                DA Creation brings strategic thinking and flawless execution to corporate events. We ensure your brand message is delivered effectively through immersive experiences and professional management.
+                {branding.company.name} brings strategic thinking and flawless execution to corporate events. We ensure your brand message is delivered effectively through immersive experiences and professional management.
               </p>
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
                 From Fortune 500 companies to emerging startups, we partner with organizations to create events that inspire, engage, and deliver measurable results.
@@ -355,7 +355,7 @@ export default function CorporatePage() {
               ))}
             </div>
             <p className="text-gray-600 text-lg leading-relaxed">
-              "We've worked with DA Creation for three consecutive annual conferences, and each one has been better than the last. Their attention to detail and ability to manage complex events is remarkable. Highly recommended for any corporate event."
+              "We've worked with {branding.company.name} for three consecutive annual conferences, and each one has been better than the last. Their attention to detail and ability to manage complex events is remarkable. Highly recommended for any corporate event."
             </p>
           </motion.div>
         </div>

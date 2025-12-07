@@ -66,7 +66,7 @@ export default function InquirePage() {
               <div className="bg-primary text-white p-6 rounded-lg relative overflow-hidden">
                 <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full" />
                 <p className="font-serif italic text-lg relative z-10">
-                  "DA Creation handled everything flawlessly. The best decision we made for our wedding!"
+                  "{branding.company.name} handled everything flawlessly. The best decision we made for our wedding!"
                 </p>
                 <p className="text-sm mt-4 opacity-80 relative z-10">— Priya & Rahul, 2024</p>
               </div>

@@ -19,80 +19,82 @@ interface WebsiteSettings {
   ratings: number;
 }
 
-const defaultTestimonials = [
-  {
-    id: 1,
-    clientName: "Priya & Rahul Sharma",
-    clientRole: "Wedding Couple",
-    eventType: "Wedding",
-    content: "DA Creation transformed our wedding into a fairy tale. Every detail was perfect, from the mandap decoration to the reception setup. They handled everything with such grace and professionalism. We couldn't have asked for a better team to make our special day unforgettable.",
-    rating: 5,
-    image: null,
-    videoUrl: null,
-    isFeatured: true,
-    isActive: true,
-  },
-  {
-    id: 2,
-    clientName: "Vikram Mehta",
-    clientRole: "CEO, TechCorp India",
-    eventType: "Corporate Event",
-    content: "We've worked with DA Creation for three consecutive annual conferences, and each one has been better than the last. Their attention to detail and ability to manage complex events is remarkable. Highly recommended for any corporate event.",
-    rating: 5,
-    image: null,
-    videoUrl: null,
-    isFeatured: true,
-    isActive: true,
-  },
-  {
-    id: 3,
-    clientName: "Anjali Kapoor",
-    clientRole: "Event Host",
-    eventType: "Anniversary Celebration",
-    content: "The team at DA Creation made my parents' 50th anniversary a magical evening. The vintage theme was executed beautifully, and every guest complimented the arrangements. Thank you for making it so special!",
-    rating: 5,
-    image: null,
-    videoUrl: null,
-    isFeatured: false,
-    isActive: true,
-  },
-  {
-    id: 4,
-    clientName: "Deepak & Neha Gupta",
-    clientRole: "Wedding Couple",
-    eventType: "Destination Wedding",
-    content: "Our Thailand wedding was a dream come true thanks to DA Creation. Managing a destination wedding with 150 guests seemed daunting, but they made it look effortless. Every moment was perfect.",
-    rating: 5,
-    image: null,
-    videoUrl: null,
-    isFeatured: false,
-    isActive: true,
-  },
-  {
-    id: 5,
-    clientName: "Ritu Agarwal",
-    clientRole: "HR Director",
-    eventType: "Corporate Gala",
-    content: "The awards night organized by DA Creation was spectacular. Professional setup, flawless coordination, and an atmosphere that left everyone impressed. They truly understand corporate events.",
-    rating: 5,
-    image: null,
-    videoUrl: null,
-    isFeatured: false,
-    isActive: true,
-  },
-  {
-    id: 6,
-    clientName: "Sanjay & Meera Patel",
-    clientRole: "Wedding Couple",
-    eventType: "Wedding",
-    content: "From the engagement to the reception, DA Creation handled everything with perfection. Their creative ideas for the Sangeet were amazing, and the wedding decor exceeded our expectations.",
-    rating: 5,
-    image: null,
-    videoUrl: null,
-    isFeatured: false,
-    isActive: true,
-  },
-];
+function getDefaultTestimonials(companyName: string) {
+  return [
+    {
+      id: 1,
+      clientName: "Priya & Rahul Sharma",
+      clientRole: "Wedding Couple",
+      eventType: "Wedding",
+      content: `${companyName} transformed our wedding into a fairy tale. Every detail was perfect, from the mandap decoration to the reception setup. They handled everything with such grace and professionalism. We couldn't have asked for a better team to make our special day unforgettable.`,
+      rating: 5,
+      image: null,
+      videoUrl: null,
+      isFeatured: true,
+      isActive: true,
+    },
+    {
+      id: 2,
+      clientName: "Vikram Mehta",
+      clientRole: "CEO, TechCorp India",
+      eventType: "Corporate Event",
+      content: `We've worked with ${companyName} for three consecutive annual conferences, and each one has been better than the last. Their attention to detail and ability to manage complex events is remarkable. Highly recommended for any corporate event.`,
+      rating: 5,
+      image: null,
+      videoUrl: null,
+      isFeatured: true,
+      isActive: true,
+    },
+    {
+      id: 3,
+      clientName: "Anjali Kapoor",
+      clientRole: "Event Host",
+      eventType: "Anniversary Celebration",
+      content: `The team at ${companyName} made my parents' 50th anniversary a magical evening. The vintage theme was executed beautifully, and every guest complimented the arrangements. Thank you for making it so special!`,
+      rating: 5,
+      image: null,
+      videoUrl: null,
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      id: 4,
+      clientName: "Deepak & Neha Gupta",
+      clientRole: "Wedding Couple",
+      eventType: "Destination Wedding",
+      content: `Our Thailand wedding was a dream come true thanks to ${companyName}. Managing a destination wedding with 150 guests seemed daunting, but they made it look effortless. Every moment was perfect.`,
+      rating: 5,
+      image: null,
+      videoUrl: null,
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      id: 5,
+      clientName: "Ritu Agarwal",
+      clientRole: "HR Director",
+      eventType: "Corporate Gala",
+      content: `The awards night organized by ${companyName} was spectacular. Professional setup, flawless coordination, and an atmosphere that left everyone impressed. They truly understand corporate events.`,
+      rating: 5,
+      image: null,
+      videoUrl: null,
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      id: 6,
+      clientName: "Sanjay & Meera Patel",
+      clientRole: "Wedding Couple",
+      eventType: "Wedding",
+      content: `From the engagement to the reception, ${companyName} handled everything with perfection. Their creative ideas for the Sangeet were amazing, and the wedding decor exceeded our expectations.`,
+      rating: 5,
+      image: null,
+      videoUrl: null,
+      isFeatured: false,
+      isActive: true,
+    },
+  ];
+}
 
 export default function TestimonialsPage() {
   const { branding } = useBranding();
@@ -124,9 +126,10 @@ export default function TestimonialsPage() {
     },
   });
 
-  const displayTestimonials = testimonials.length > 0 ? testimonials : defaultTestimonials;
-  const featuredTestimonials = displayTestimonials.filter(t => t.isFeatured);
-  const regularTestimonials = displayTestimonials.filter(t => !t.isFeatured);
+  const defaultData = getDefaultTestimonials(branding.company.name);
+  const displayTestimonials = testimonials.length > 0 ? testimonials : defaultData;
+  const featuredTestimonials = displayTestimonials.filter((t: typeof defaultData[0] | Testimonial) => t.isFeatured);
+  const regularTestimonials = displayTestimonials.filter((t: typeof defaultData[0] | Testimonial) => !t.isFeatured);
 
   return (
     <div className="min-h-screen bg-white">
@@ -163,7 +166,7 @@ export default function TestimonialsPage() {
               Client Testimonials
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Hear what our valued clients have to say about their experiences with DA Creation
+              Hear what our valued clients have to say about their experiences with {branding.company.name}
             </p>
           </motion.div>
         </div>
@@ -378,7 +381,7 @@ export default function TestimonialsPage() {
             <Sparkles className="w-12 h-12 text-[#d4af37] mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Happy Clients</h2>
             <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-              Experience the DA Creation difference and become part of our success stories.
+              Experience the {branding.company.name} difference and become part of our success stories.
             </p>
             <Link href="/inquire">
               <Button size="lg" className="rounded-full gap-2 bg-[#d4af37] hover:bg-[#c5a030] text-white" data-testid="button-cta-inquire">

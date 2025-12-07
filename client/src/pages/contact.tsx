@@ -432,7 +432,7 @@ export default function ContactPage() {
                       allowFullScreen
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
-                      title="DA Creation Office Location"
+                      title={`${branding.company.name} Office Location`}
                       data-testid="contact-map"
                     />
                   )}

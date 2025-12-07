@@ -38,74 +38,76 @@ const mediaLogos = [
   "WeddingWire"
 ];
 
-const defaultArticles = [
-  {
-    id: 1,
-    title: "DA Creation Named Best Event Management Company 2024",
-    publication: "Wedding Industry Awards",
-    publishedDate: "November 2024",
-    excerpt: "DA Creation has been recognized as the Best Event Management Company at the prestigious Wedding Industry Awards 2024, celebrating excellence in creating memorable celebrations.",
-    image: null,
-    externalUrl: "#",
-    isFeatured: true,
-    isActive: true,
-  },
-  {
-    id: 2,
-    title: "The Rise of Destination Weddings: An Interview with DA Creation's Founder",
-    publication: "Vogue India",
-    publishedDate: "October 2024",
-    excerpt: "An exclusive interview discussing the growing trend of destination weddings and how DA Creation is leading the charge in creating unforgettable experiences.",
-    image: null,
-    externalUrl: "#",
-    isFeatured: true,
-    isActive: true,
-  },
-  {
-    id: 3,
-    title: "Top 10 Event Planners Transforming Indian Weddings",
-    publication: "Harper's Bazaar",
-    publishedDate: "September 2024",
-    excerpt: "DA Creation featured among the top event planners who are revolutionizing the Indian wedding industry with innovative concepts and flawless execution.",
-    image: null,
-    externalUrl: "#",
-    isFeatured: false,
-    isActive: true,
-  },
-  {
-    id: 4,
-    title: "Corporate Events: How DA Creation Delivers Excellence",
-    publication: "Economic Times",
-    publishedDate: "August 2024",
-    excerpt: "A feature on how DA Creation has become the preferred partner for Fortune 500 companies for their corporate events and conferences.",
-    image: null,
-    externalUrl: "#",
-    isFeatured: false,
-    isActive: true,
-  },
-  {
-    id: 5,
-    title: "Sustainability in Event Planning: DA Creation's Green Initiative",
-    publication: "India Today",
-    publishedDate: "July 2024",
-    excerpt: "Exploring DA Creation's commitment to sustainable event practices and eco-friendly alternatives without compromising on luxury.",
-    image: null,
-    externalUrl: "#",
-    isFeatured: false,
-    isActive: true,
-  },
-  {
-    id: 6,
-    title: "Behind the Scenes: Planning a Royal Palace Wedding",
-    publication: "Wedding Sutra",
-    publishedDate: "June 2024",
-    excerpt: "An exclusive behind-the-scenes look at how DA Creation orchestrated a magnificent three-day celebration at a Rajasthani palace.",
-    image: null,
-    externalUrl: "#",
-    isFeatured: false,
-    isActive: true,
-  },
-];
+function getDefaultArticles(companyName: string) {
+  return [
+    {
+      id: 1,
+      title: `${companyName} Named Best Event Management Company 2024`,
+      publication: "Wedding Industry Awards",
+      publishedDate: "November 2024",
+      excerpt: `${companyName} has been recognized as the Best Event Management Company at the prestigious Wedding Industry Awards 2024, celebrating excellence in creating memorable celebrations.`,
+      image: null,
+      externalUrl: "#",
+      isFeatured: true,
+      isActive: true,
+    },
+    {
+      id: 2,
+      title: `The Rise of Destination Weddings: An Interview with ${companyName}'s Founder`,
+      publication: "Vogue India",
+      publishedDate: "October 2024",
+      excerpt: `An exclusive interview discussing the growing trend of destination weddings and how ${companyName} is leading the charge in creating unforgettable experiences.`,
+      image: null,
+      externalUrl: "#",
+      isFeatured: true,
+      isActive: true,
+    },
+    {
+      id: 3,
+      title: "Top 10 Event Planners Transforming Indian Weddings",
+      publication: "Harper's Bazaar",
+      publishedDate: "September 2024",
+      excerpt: `${companyName} featured among the top event planners who are revolutionizing the Indian wedding industry with innovative concepts and flawless execution.`,
+      image: null,
+      externalUrl: "#",
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      id: 4,
+      title: `Corporate Events: How ${companyName} Delivers Excellence`,
+      publication: "Economic Times",
+      publishedDate: "August 2024",
+      excerpt: `A feature on how ${companyName} has become the preferred partner for Fortune 500 companies for their corporate events and conferences.`,
+      image: null,
+      externalUrl: "#",
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      id: 5,
+      title: `Sustainability in Event Planning: ${companyName}'s Green Initiative`,
+      publication: "India Today",
+      publishedDate: "July 2024",
+      excerpt: `Exploring ${companyName}'s commitment to sustainable event practices and eco-friendly alternatives without compromising on luxury.`,
+      image: null,
+      externalUrl: "#",
+      isFeatured: false,
+      isActive: true,
+    },
+    {
+      id: 6,
+      title: "Behind the Scenes: Planning a Royal Palace Wedding",
+      publication: "Wedding Sutra",
+      publishedDate: "June 2024",
+      excerpt: `An exclusive behind-the-scenes look at how ${companyName} orchestrated a magnificent three-day celebration at a Rajasthani palace.`,
+      image: null,
+      externalUrl: "#",
+      isFeatured: false,
+      isActive: true,
+    },
+  ];
+}
 
 export default function PressPage() {
   const { branding } = useBranding();
@@ -135,6 +137,7 @@ export default function PressPage() {
     },
   });
 
+  const defaultArticles = getDefaultArticles(branding.company.name);
   const displayArticles = articles.length > 0 ? articles : defaultArticles;
   const featuredArticles = displayArticles.filter(a => a.isFeatured);
   const regularArticles = displayArticles.filter(a => !a.isFeatured);
@@ -174,7 +177,7 @@ export default function PressPage() {
               Press & Media
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              DA Creation in the news - explore our media features, press coverage, and industry recognition
+              {branding.company.name} in the news - explore our media features, press coverage, and industry recognition
             </p>
           </motion.div>
         </div>
@@ -466,7 +469,7 @@ export default function PressPage() {
             <Sparkles className="w-12 h-12 text-[#d4af37] mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Be Part of Our Story?</h2>
             <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-              Join the many clients who have trusted DA Creation with their most important celebrations.
+              Join the many clients who have trusted {branding.company.name} with their most important celebrations.
             </p>
             <Link href="/inquire">
               <Button size="lg" className="rounded-full gap-2 bg-[#d4af37] hover:bg-[#c5a030] text-white" data-testid="button-start-planning">

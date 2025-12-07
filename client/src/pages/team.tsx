@@ -135,7 +135,7 @@ export default function TeamPage() {
               <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Who We Are</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">A Team United by Passion</h2>
               <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                At DA Creation, our team is our greatest asset. Each member brings unique skills, creativity, and dedication to ensure every event we create is nothing short of exceptional.
+                At {branding.company.name}, our team is our greatest asset. Each member brings unique skills, creativity, and dedication to ensure every event we create is nothing short of exceptional.
               </p>
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
                 From seasoned planners to creative designers, logistics experts to hospitality specialists, we work together seamlessly to bring your vision to life.

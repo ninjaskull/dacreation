@@ -132,7 +132,7 @@ export default function CareersPage() {
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6"
               data-testid="text-page-title"
             >
-              Careers at DA Creation
+              Careers at {branding.company.name}
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
               Build your career with India's leading event management company and be part of creating unforgettable moments
@@ -179,7 +179,7 @@ export default function CareersPage() {
             <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Why Join Us</span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">Benefits & Perks</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              We believe in taking care of our team. Here's what you can expect when you join DA Creation.
+              We believe in taking care of our team. Here's what you can expect when you join {branding.company.name}.
             </p>
           </motion.div>
 

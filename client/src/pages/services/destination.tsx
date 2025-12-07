@@ -197,7 +197,7 @@ export default function DestinationPage() {
               <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Expert Logistics</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">Celebrations Without Borders</h2>
               <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                Dreaming of a beach wedding in Goa or a palace wedding in Udaipur? DA Creation specializes in logistical mastery for destination events, ensuring a seamless experience for you and your traveling guests.
+                Dreaming of a beach wedding in Goa or a palace wedding in Udaipur? {branding.company.name} specializes in logistical mastery for destination events, ensuring a seamless experience for you and your traveling guests.
               </p>
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
                 We handle everything from venue sourcing to guest management, leaving you free to enjoy your celebration in your dream location.
@@ -375,7 +375,7 @@ export default function DestinationPage() {
               ))}
             </div>
             <p className="text-gray-600 text-lg leading-relaxed">
-              "Our Thailand wedding was a dream come true thanks to DA Creation. Managing a destination wedding with 150 guests seemed daunting, but they made it look effortless. Every moment was perfect, and our guests still talk about the experience!"
+              "Our Thailand wedding was a dream come true thanks to {branding.company.name}. Managing a destination wedding with 150 guests seemed daunting, but they made it look effortless. Every moment was perfect, and our guests still talk about the experience!"
             </p>
           </motion.div>
         </div>
