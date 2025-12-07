@@ -212,7 +212,7 @@ function mergeWithDefaults(apiData: any): BrandingData {
     social: socialMedia,
     stats: {
       eventsCompleted: apiData.numberOfEventsHeld || defaults.stats.eventsCompleted,
-      rating: (apiData.ratings || defaults.stats.rating * 10) / 10,
+      rating: parseFloat(apiData.ratings) || defaults.stats.rating,
       yearsExperience: currentYear - (apiData.foundedYear || defaults.company.foundedYear),
       teamMembers: apiData.teamMembersCount || defaults.stats.teamMembers,
       happyClients: apiData.happyGuestsCount || defaults.stats.happyClients,

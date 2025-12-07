@@ -135,7 +135,7 @@ export default function AboutPage() {
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6"
               data-testid="text-page-title"
             >
-              {pageContent?.title || `About ${branding.company.name}`}
+              About {branding.company.name}
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
               {pageContent?.subtitle || "Crafting Unforgettable Moments Since 2009"}

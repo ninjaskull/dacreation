@@ -220,7 +220,7 @@ export default function WebsiteSettingsPage() {
         secondaryAddress: settings.secondaryAddress || "",
         socialMedia: Array.isArray(settings.socialMedia) ? settings.socialMedia : [],
         numberOfEventsHeld: settings.numberOfEventsHeld || 0,
-        ratings: settings.ratings || 0,
+        ratings: parseFloat(settings.ratings) || 0,
         weddingsCount: settings.weddingsCount || 0,
         corporateCount: settings.corporateCount || 0,
         socialCount: settings.socialCount || 0,
@@ -330,10 +330,11 @@ export default function WebsiteSettingsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    const numericFields = ["numberOfEventsHeld", "ratings", "weddingsCount", "corporateCount", "socialCount", "awardsCount", "destinationsCount", "happyGuestsCount", "clientSatisfaction", "teamMembersCount", "foundedYear"];
+    const integerFields = ["numberOfEventsHeld", "weddingsCount", "corporateCount", "socialCount", "awardsCount", "destinationsCount", "happyGuestsCount", "clientSatisfaction", "teamMembersCount", "foundedYear"];
+    const floatFields = ["ratings"];
     setFormData(prev => ({
       ...prev,
-      [name]: numericFields.includes(name) ? parseInt(value) || 0 : value,
+      [name]: integerFields.includes(name) ? parseInt(value) || 0 : floatFields.includes(name) ? parseFloat(value) || 0 : value,
     }));
   };
 
