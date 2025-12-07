@@ -72,6 +72,8 @@ interface WebsiteSettings {
   destinationsCount: number;
   happyGuestsCount: number;
   clientSatisfaction: number;
+  showPreferredBy: boolean;
+  showTrustedBy: boolean;
 }
 
 const SOCIAL_PLATFORMS = [
@@ -120,6 +122,8 @@ export default function WebsiteSettingsPage() {
     destinationsCount: 0,
     happyGuestsCount: 0,
     clientSatisfaction: 0,
+    showPreferredBy: true,
+    showTrustedBy: true,
   });
   const [newSocial, setNewSocial] = useState({ platform: "", url: "" });
 
@@ -168,6 +172,8 @@ export default function WebsiteSettingsPage() {
         destinationsCount: settings.destinationsCount || 0,
         happyGuestsCount: settings.happyGuestsCount || 0,
         clientSatisfaction: settings.clientSatisfaction || 0,
+        showPreferredBy: settings.showPreferredBy ?? true,
+        showTrustedBy: settings.showTrustedBy ?? true,
       });
     }
   }, [settings]);
