@@ -1,18 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import heroImage from "@assets/generated_images/luxury_indian_wedding_reception_venue.png";
+import heroImage from "@assets/generated_images/luxury_indian_wedding_reception_venue.webp";
 
 import { Link } from "wouter";
 
 export function Hero() {
   return (
-    <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
+    <section className="relative h-screen w-full overflow-hidden flex items-center justify-center bg-[#1a1a1a]">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
-          alt="Luxury Event" 
+          alt="Luxury Indian Wedding Venue - DA Creation Event Management" 
           className="w-full h-full object-cover transition-transform duration-[20s] ease-in-out transform scale-100 hover:scale-105"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-black/40 bg-gradient-to-b from-black/70 via-transparent to-black/70" />
       </div>
