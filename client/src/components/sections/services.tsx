@@ -10,6 +10,18 @@ import socialImg from "@assets/generated_images/luxury_private_dinner.webp";
 import destImg from "@assets/generated_images/destination_event_beach.webp";
 
 const serviceData = {
+  weddings: {
+    title: "Weddings & Cultural Celebrations",
+    description: "Modern design meets rich Indian tradition. We plan every ritual, ceremony, and moment effortlessly.",
+    image: weddingImg,
+    link: "/services/weddings",
+    features: [
+      "Full Wedding Planning & Coordination",
+      "Design & Décor Styling (Stage, Mandap, Sangeet)",
+      "Ritual & Ceremony Management (Hindu, Sikh, Muslim, Christian)",
+      "Vendor Management & Logistics"
+    ]
+  },
   corporate: {
     title: "Corporate Events",
     description: "Professional, polished, and impact-driven events—from conferences to award shows. We understand business objectives and deliver measurable results.",
@@ -22,18 +34,6 @@ const serviceData = {
       "Corporate Retreats & Team Building",
       "Executive Meetings & Board Events",
       "Trade Shows & Exhibition Management"
-    ]
-  },
-  weddings: {
-    title: "Weddings & Cultural Celebrations",
-    description: "Modern design meets rich Indian tradition. We plan every ritual, ceremony, and moment effortlessly.",
-    image: weddingImg,
-    link: "/services/weddings",
-    features: [
-      "Full Wedding Planning & Coordination",
-      "Design & Décor Styling (Stage, Mandap, Sangeet)",
-      "Ritual & Ceremony Management (Hindu, Sikh, Muslim, Christian)",
-      "Vendor Management & Logistics"
     ]
   },
   social: {
@@ -74,7 +74,7 @@ export function Services() {
           </p>
         </div>
 
-        <Tabs defaultValue="corporate" className="w-full">
+        <Tabs defaultValue="weddings" className="w-full">
           <div className="flex justify-start md:justify-center mb-12 overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 no-scrollbar">
             <TabsList className="bg-transparent h-auto gap-4 md:gap-8 flex-nowrap w-max md:w-auto">
               {Object.keys(serviceData).map((key) => (
