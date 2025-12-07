@@ -2195,6 +2195,86 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/conversations/:conversationId/request-live-agent", async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const conversation = await storage.getConversationById(conversationId);
+      
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+
+      const now = new Date();
+      const updatedConversation = await storage.updateConversation(conversationId, {
+        wantsLiveAgent: true,
+        liveAgentRequestedAt: now.toISOString(),
+        status: 'live_agent',
+      });
+
+      await storage.createChatMessage({
+        conversationId,
+        senderId: 'system',
+        senderType: 'system',
+        senderName: 'System',
+        content: '🔔 Visitor has requested to speak with a live agent. An agent will join shortly.',
+        messageType: 'system',
+      });
+
+      broadcastNewMessage(conversationId, {
+        type: 'status',
+        conversationId,
+        status: 'live_agent',
+      });
+
+      const companySettings = await storage.getCompanySettings();
+      const adminEmail = companySettings?.email;
+      
+      if (adminEmail) {
+        const replitDomains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN;
+        let baseUrl = companySettings?.website || '';
+        if (!baseUrl && replitDomains) {
+          const primaryDomain = replitDomains.split(',')[0];
+          baseUrl = `https://${primaryDomain}`;
+        }
+        
+        const chatUrl = `${baseUrl}/admin/chat`;
+        
+        sendTemplatedEmail(
+          'live_agent_request',
+          adminEmail,
+          companySettings?.name || 'Admin',
+          {
+            visitor_name: conversation.visitorName || 'Visitor',
+            visitor_phone: conversation.visitorPhone || 'Not provided',
+            event_type: conversation.eventType || 'Not specified',
+            event_date: (conversation as any).eventDate || 'Not specified',
+            event_location: (conversation as any).eventLocation || 'Not specified',
+            requested_at: now.toLocaleString('en-IN', { 
+              timeZone: 'Asia/Kolkata',
+              dateStyle: 'medium',
+              timeStyle: 'short'
+            }),
+            chat_url: chatUrl,
+          }
+        ).then(result => {
+          if (!result.success) {
+            console.error("Failed to send live agent email:", result.error);
+          }
+        }).catch(err => {
+          console.error("Error sending live agent email:", err);
+        });
+      }
+
+      res.json({ 
+        message: "Live agent requested successfully",
+        conversation: updatedConversation 
+      });
+    } catch (error) {
+      console.error("Request live agent error:", error);
+      res.status(500).json({ message: "Failed to request live agent" });
+    }
+  });
+
   app.get("/api/messages/unread-count", isAuthenticated, async (req, res) => {
     try {
       const count = await storage.getUnreadMessageCount();

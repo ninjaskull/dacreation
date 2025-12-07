@@ -28,6 +28,11 @@ import {
   Clock,
   ChevronDown,
   X,
+  Headphones,
+  MapPin,
+  IndianRupee,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -52,10 +57,15 @@ type Conversation = {
   visitorEmail: string | null;
   visitorPhone: string | null;
   eventType: string | null;
+  eventDate: string | null;
+  eventLocation: string | null;
+  budgetRange: string | null;
   status: string;
   assignedTo: string | null;
   lastMessageAt: string | null;
   createdAt: string;
+  wantsLiveAgent: boolean;
+  liveAgentRequestedAt: string | null;
   unreadCount?: number;
 };
 
@@ -75,12 +85,14 @@ type ConversationStats = {
   total: number;
   active: number;
   waiting: number;
+  live_agent: number;
   resolved: number;
   archived: number;
   unreadMessages: number;
 };
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; dotColor: string }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; dotColor: string; urgent?: boolean }> = {
+  live_agent: { label: "Live Agent", color: "text-red-600", bgColor: "bg-red-50", dotColor: "bg-red-500", urgent: true },
   active: { label: "Active", color: "text-emerald-600", bgColor: "bg-emerald-50", dotColor: "bg-emerald-500" },
   waiting: { label: "Waiting", color: "text-amber-600", bgColor: "bg-amber-50", dotColor: "bg-amber-500" },
   resolved: { label: "Resolved", color: "text-blue-600", bgColor: "bg-blue-50", dotColor: "bg-blue-500" },
@@ -133,6 +145,21 @@ function groupMessagesByDate(messages: ChatMessage[]): Map<string, ChatMessage[]
     groups.get(dateKey)!.push(message);
   });
   return groups;
+}
+
+const BUDGET_LABELS: Record<string, string> = {
+  "under-5l": "Under ₹5L",
+  "5l-10l": "₹5-10L",
+  "10l-25l": "₹10-25L",
+  "25l-50l": "₹25-50L",
+  "50l-1cr": "₹50L-1Cr",
+  "above-1cr": "Above ₹1Cr",
+  "flexible": "Flexible",
+};
+
+function formatBudget(budget: string | null): string {
+  if (!budget) return "Not specified";
+  return BUDGET_LABELS[budget] || budget;
 }
 
 export default function ChatPage() {
@@ -350,6 +377,7 @@ export default function ChatPage() {
               <div className="flex gap-1 mt-3 overflow-x-auto pb-1">
                 {[
                   { key: "all", label: "All", count: stats?.total },
+                  { key: "live_agent", label: "🔴 Live Agent", count: stats?.live_agent, urgent: true },
                   { key: "active", label: "Active", count: stats?.active },
                   { key: "waiting", label: "Waiting", count: stats?.waiting },
                 ].map((filter) => (
@@ -425,6 +453,15 @@ export default function ChatPage() {
                               )}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
+                              {conversation.status === 'live_agent' && (
+                                <Badge 
+                                  variant="destructive" 
+                                  className="text-[10px] px-1.5 py-0 h-4 font-medium animate-pulse"
+                                >
+                                  <Headphones className="w-3 h-3 mr-0.5" />
+                                  Live
+                                </Badge>
+                              )}
                               {conversation.eventType && (
                                 <Badge 
                                   variant="secondary" 
@@ -465,12 +502,22 @@ export default function ChatPage() {
                         <h3 className="font-semibold">
                           {selectedConversation.visitorName || `Visitor ${selectedConversation.visitorId.slice(-6)}`}
                         </h3>
-                        <Badge 
-                          variant="outline" 
-                          className={cn("text-[10px] h-5", STATUS_CONFIG[selectedConversation.status]?.color)}
-                        >
-                          {STATUS_CONFIG[selectedConversation.status]?.label}
-                        </Badge>
+                        {selectedConversation.status === 'live_agent' ? (
+                          <Badge 
+                            variant="destructive" 
+                            className="text-[10px] h-5 animate-pulse"
+                          >
+                            <Headphones className="w-3 h-3 mr-1" />
+                            Live Agent
+                          </Badge>
+                        ) : (
+                          <Badge 
+                            variant="outline" 
+                            className={cn("text-[10px] h-5", STATUS_CONFIG[selectedConversation.status]?.color)}
+                          >
+                            {STATUS_CONFIG[selectedConversation.status]?.label}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground flex items-center gap-3">
                         {selectedConversation.eventType && (
@@ -690,6 +737,20 @@ export default function ChatPage() {
               
               <ScrollArea className="flex-1">
                 <div className="p-4 space-y-6">
+                  {selectedConversation.status === 'live_agent' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                      <div className="flex items-center justify-center gap-2 text-red-600 font-medium">
+                        <Headphones className="w-4 h-4 animate-pulse" />
+                        <span>Live Agent Requested</span>
+                      </div>
+                      {selectedConversation.liveAgentRequestedAt && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {formatDistanceToNow(new Date(selectedConversation.liveAgentRequestedAt), { addSuffix: true })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex flex-col items-center text-center">
                     <Avatar className="w-16 h-16 border-2">
                       <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xl font-medium">
@@ -710,6 +771,8 @@ export default function ChatPage() {
                   <Separator />
 
                   <div className="space-y-4">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact Info</p>
+                    
                     {selectedConversation.visitorPhone && (
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -733,6 +796,12 @@ export default function ChatPage() {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Event Details</p>
                     
                     {selectedConversation.eventType && (
                       <div className="flex items-center gap-3">
@@ -745,13 +814,49 @@ export default function ChatPage() {
                         </div>
                       </div>
                     )}
+
+                    {selectedConversation.eventDate && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Preferred Date</p>
+                          <p className="text-sm font-medium">{selectedConversation.eventDate}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedConversation.eventLocation && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Location</p>
+                          <p className="text-sm font-medium">{selectedConversation.eventLocation}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedConversation.budgetRange && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                          <IndianRupee className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Budget Range</p>
+                          <p className="text-sm font-medium">{formatBudget(selectedConversation.budgetRange)}</p>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
                         <Clock className="w-4 h-4 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Started</p>
+                        <p className="text-xs text-muted-foreground">Chat Started</p>
                         <p className="text-sm font-medium">
                           {format(new Date(selectedConversation.createdAt), "MMM d, yyyy 'at' h:mm a")}
                         </p>
@@ -765,15 +870,26 @@ export default function ChatPage() {
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quick Actions</p>
                     <div className="grid grid-cols-2 gap-2">
                       {selectedConversation.visitorPhone && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-9"
-                          onClick={() => window.open(`tel:${selectedConversation.visitorPhone}`)}
-                        >
-                          <Phone className="w-4 h-4 mr-1.5" />
-                          Call
-                        </Button>
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-9"
+                            onClick={() => window.open(`tel:${selectedConversation.visitorPhone}`)}
+                          >
+                            <Phone className="w-4 h-4 mr-1.5" />
+                            Call
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-9 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                            onClick={() => window.open(`https://wa.me/${selectedConversation.visitorPhone?.replace(/\D/g, '')}`)}
+                          >
+                            <ExternalLink className="w-4 h-4 mr-1.5" />
+                            WhatsApp
+                          </Button>
+                        </>
                       )}
                       {selectedConversation.visitorEmail && (
                         <Button 

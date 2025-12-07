@@ -967,7 +967,7 @@ export type UpdateCallbackRequest = z.infer<typeof updateCallbackRequestSchema>;
 export type CallbackRequest = typeof callbackRequests.$inferSelect;
 
 // Chat Conversations Schema
-export const conversationStatuses = ["active", "waiting", "resolved", "closed"] as const;
+export const conversationStatuses = ["active", "waiting", "live_agent", "resolved", "closed"] as const;
 export type ConversationStatus = typeof conversationStatuses[number];
 
 export const conversations = pgTable("conversations", {
@@ -977,7 +977,12 @@ export const conversations = pgTable("conversations", {
   visitorPhone: text("visitor_phone"),
   visitorEmail: text("visitor_email"),
   eventType: text("event_type"),
+  eventDate: text("event_date"),
+  eventLocation: text("event_location"),
+  budgetRange: text("budget_range"),
   status: text("status").notNull().default("active"),
+  wantsLiveAgent: boolean("wants_live_agent").notNull().default(false),
+  liveAgentRequestedAt: timestamp("live_agent_requested_at"),
   assignedTo: varchar("assigned_to").references(() => users.id),
   lastMessageAt: timestamp("last_message_at").notNull().defaultNow(),
   unreadCount: integer("unread_count").notNull().default(0),
@@ -993,6 +998,8 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
   status: true,
   assignedTo: true,
   unreadCount: true,
+  wantsLiveAgent: true,
+  liveAgentRequestedAt: true,
 });
 
 export const updateConversationSchema = z.object({
@@ -1000,9 +1007,15 @@ export const updateConversationSchema = z.object({
   visitorPhone: z.string().optional(),
   visitorEmail: z.string().optional(),
   eventType: z.string().optional(),
+  eventDate: z.string().optional(),
+  eventLocation: z.string().optional(),
+  budgetRange: z.string().optional(),
   status: z.enum(conversationStatuses).optional(),
+  wantsLiveAgent: z.boolean().optional(),
+  liveAgentRequestedAt: z.date().or(z.string()).nullable().optional(),
   assignedTo: z.string().nullable().optional(),
   unreadCount: z.number().optional(),
+  lastMessageAt: z.date().or(z.string()).optional(),
   metadata: z.any().optional(),
 });
 
