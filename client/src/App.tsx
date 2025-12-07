@@ -46,6 +46,7 @@ import EmailSettingsPage from "@/pages/admin/email-settings";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
+import { StructuredData } from "@/components/seo/structured-data";
 
 function ScrollToTop() {
   const [location] = useLocation();
@@ -120,6 +121,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <StructuredData />
         <ScrollToTop />
         <Toaster />
         <Router />
