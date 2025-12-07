@@ -101,20 +101,6 @@ const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
   youtube: Youtube,
 };
 
-import { BRAND } from "@shared/branding";
-
-const DEFAULT_SETTINGS: WebsiteSettings = {
-  address: BRAND.addresses.primary.full,
-  phone: BRAND.contact.phones.join(", "),
-  email: BRAND.contact.email,
-  whatsappNumber: BRAND.contact.whatsapp,
-  mapEmbedCode: null,
-  topBarAddress: BRAND.addresses.topBar,
-  secondaryAddress: null,
-  socialMedia: [],
-  numberOfEventsHeld: BRAND.stats.eventsCompleted,
-  ratings: BRAND.stats.rating,
-};
 
 export default function ContactPage() {
   const { branding } = useBranding();
@@ -123,16 +109,18 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const { data: settings } = useQuery<WebsiteSettings>({
-    queryKey: ["/api/settings/website"],
-    queryFn: async () => {
-      const response = await fetch("/api/settings/website");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      return response.json();
-    },
-  });
-
-  const currentSettings = settings || DEFAULT_SETTINGS;
+  const currentSettings: WebsiteSettings = {
+    address: branding.addresses.primary.full,
+    phone: branding.contact.phones.join(", "),
+    email: branding.contact.email,
+    whatsappNumber: branding.contact.whatsapp,
+    mapEmbedCode: null,
+    topBarAddress: branding.addresses.topBar,
+    secondaryAddress: branding.addresses.secondary || null,
+    socialMedia: branding.social,
+    numberOfEventsHeld: branding.stats.eventsCompleted,
+    ratings: branding.stats.rating,
+  };
 
   const contactMethods = useMemo(() => {
     const methods = [];
@@ -245,20 +233,16 @@ export default function ContactPage() {
   }
 
   const whatsappLink = useMemo(() => {
-    if (currentSettings.whatsappNumber) {
-      const waClean = currentSettings.whatsappNumber.replace(/\s+/g, '').replace(/[^+\d]/g, '').replace('+', '');
-      return `https://wa.me/${waClean}`;
-    }
-    return `https://wa.me/${BRAND.contact.whatsapp.replace(/[^0-9]/g, '')}`;
-  }, [currentSettings.whatsappNumber]);
+    const waNumber = currentSettings.whatsappNumber || branding.contact.whatsapp;
+    const waClean = waNumber.replace(/\s+/g, '').replace(/[^+\d]/g, '').replace('+', '');
+    return `https://wa.me/${waClean}`;
+  }, [currentSettings.whatsappNumber, branding.contact.whatsapp]);
 
   const phoneLink = useMemo(() => {
-    if (currentSettings.phone) {
-      const phoneClean = currentSettings.phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
-      return `tel:${phoneClean}`;
-    }
-    return `tel:${BRAND.contact.phones[0].replace(/\s+/g, '')}`;
-  }, [currentSettings.phone]);
+    const phone = currentSettings.phone || branding.contact.phones[0];
+    const phoneClean = phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+    return `tel:${phoneClean}`;
+  }, [currentSettings.phone, branding.contact.phones]);
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
@@ -363,9 +347,9 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-foreground mb-1">Head Office</h4>
-                      <p className="text-muted-foreground">{currentSettings.address || DEFAULT_SETTINGS.address}</p>
+                      <p className="text-muted-foreground">{currentSettings.address}</p>
                       <a 
-                        href={`https://maps.google.com/?q=${encodeURIComponent(BRAND.addresses.primary.full)}`} 
+                        href={`https://maps.google.com/?q=${encodeURIComponent(currentSettings.address || branding.addresses.primary.full)}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-primary text-sm font-medium mt-2 inline-flex items-center gap-1 hover:gap-2 transition-all"

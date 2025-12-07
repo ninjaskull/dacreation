@@ -51,61 +51,39 @@ const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
   youtube: Youtube,
 };
 
-import { BRAND } from "@shared/branding";
-
-const DEFAULT_SETTINGS = {
-  address: BRAND.addresses.primary.full,
-  phone: BRAND.contact.phones.join(", "),
-  email: BRAND.contact.email,
-  numberOfEventsHeld: BRAND.stats.eventsCompleted,
-  ratings: BRAND.stats.rating,
-};
+import { useBranding, getSocialUrl } from "@/contexts/BrandingContext";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { branding } = useBranding();
 
-  const { data: settings } = useQuery<WebsiteSettings>({
-    queryKey: ["/api/settings/website"],
-    queryFn: async () => {
-      const response = await fetch("/api/settings/website");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      return response.json();
-    },
-  });
-
-  const currentAddress = settings?.address || DEFAULT_SETTINGS.address;
-  const currentPhone = settings?.phone || DEFAULT_SETTINGS.phone;
-  const currentEmail = settings?.email || DEFAULT_SETTINGS.email;
-  const currentEventsCount = settings?.numberOfEventsHeld || DEFAULT_SETTINGS.numberOfEventsHeld;
-  const currentRating = settings?.ratings || DEFAULT_SETTINGS.ratings;
+  const currentAddress = branding.addresses.primary.full;
+  const currentPhone = branding.contact.phones.join(", ");
+  const currentEmail = branding.contact.email;
+  const currentEventsCount = branding.stats.eventsCompleted;
+  const currentRating = branding.stats.rating;
 
   const phoneNumbers = useMemo(() => {
-    return currentPhone.split(',').map(phone => {
+    return currentPhone.split(',').map((phone: string) => {
       const trimmed = phone.trim();
       const cleaned = trimmed.replace(/\s+/g, '').replace(/[^+\d]/g, '');
       return {
         display: trimmed,
         link: `tel:${cleaned}`
       };
-    }).filter(p => p.display);
+    }).filter((p: { display: string; link: string }) => p.display);
   }, [currentPhone]);
 
   const socialLinks = useMemo(() => {
-    if (!settings?.socialMedia || settings.socialMedia.length === 0) {
-      return [
-        { icon: Instagram, href: BRAND.social.instagram, label: "Instagram" },
-        { icon: Facebook, href: BRAND.social.facebook, label: "Facebook" },
-        { icon: Twitter, href: `https://twitter.com/${BRAND.social.twitter.replace('@', '')}`, label: "Twitter" },
-        { icon: Linkedin, href: BRAND.social.linkedin, label: "LinkedIn" },
-        { icon: Youtube, href: BRAND.social.youtube, label: "YouTube" },
-      ];
+    if (!branding.social || branding.social.length === 0) {
+      return [];
     }
-    return settings.socialMedia.filter(link => link.url).map(link => ({
+    return branding.social.filter((link) => link.url).map((link) => ({
       icon: SOCIAL_ICON_MAP[link.platform.toLowerCase()] || Globe,
       href: link.url,
       label: link.platform.charAt(0).toUpperCase() + link.platform.slice(1),
     }));
-  }, [settings?.socialMedia]);
+  }, [branding.social]);
 
   const trustBadges = useMemo(() => [
     { icon: Award, text: `${currentEventsCount}+ Events` },

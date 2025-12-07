@@ -45,7 +45,12 @@ import {
   GripVertical,
   ArrowUp,
   ArrowDown,
-  ToggleLeft
+  ToggleLeft,
+  Building2,
+  Palette,
+  Search,
+  Globe,
+  Clock
 } from "lucide-react";
 import type { TeamMember, InsertTeamMember } from "@shared/schema";
 
@@ -56,7 +61,15 @@ interface SocialLink {
 }
 
 interface WebsiteSettings {
+  name: string;
+  tagline: string;
+  shortDescription: string;
+  fullDescription: string;
+  foundedYear: number;
+  website: string;
   address: string;
+  city: string;
+  country: string;
   phone: string;
   email: string;
   whatsappNumber: string;
@@ -73,8 +86,21 @@ interface WebsiteSettings {
   destinationsCount: number;
   happyGuestsCount: number;
   clientSatisfaction: number;
+  teamMembersCount: number;
   showPreferredBy: boolean;
   showTrustedBy: boolean;
+  businessHoursWeekdays: string;
+  businessHoursSunday: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string;
+  primaryColor: string;
+  primaryColorDark: string;
+  primaryColorLight: string;
+  secondaryColor: string;
+  accentColor: string;
+  logo: string;
+  logoWhite: string;
 }
 
 const SOCIAL_PLATFORMS = [
@@ -106,7 +132,15 @@ export default function WebsiteSettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
   
   const [formData, setFormData] = useState<WebsiteSettings>({
+    name: "",
+    tagline: "",
+    shortDescription: "",
+    fullDescription: "",
+    foundedYear: 2015,
+    website: "",
     address: "",
+    city: "",
+    country: "",
     phone: "",
     email: "",
     whatsappNumber: "",
@@ -123,8 +157,21 @@ export default function WebsiteSettingsPage() {
     destinationsCount: 0,
     happyGuestsCount: 0,
     clientSatisfaction: 0,
+    teamMembersCount: 0,
     showPreferredBy: true,
     showTrustedBy: true,
+    businessHoursWeekdays: "",
+    businessHoursSunday: "",
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+    primaryColor: "#8B0000",
+    primaryColorDark: "#601a29",
+    primaryColorLight: "#7a2233",
+    secondaryColor: "#D4AF37",
+    accentColor: "#C41E3A",
+    logo: "",
+    logoWhite: "",
   });
   const [newSocial, setNewSocial] = useState({ platform: "", url: "" });
 
@@ -156,7 +203,15 @@ export default function WebsiteSettingsPage() {
   useEffect(() => {
     if (settings) {
       setFormData({
+        name: settings.name || "",
+        tagline: settings.tagline || "",
+        shortDescription: settings.shortDescription || "",
+        fullDescription: settings.fullDescription || "",
+        foundedYear: settings.foundedYear || 2015,
+        website: settings.website || "",
         address: settings.address || "",
+        city: settings.city || "",
+        country: settings.country || "",
         phone: settings.phone || "",
         email: settings.email || "",
         whatsappNumber: settings.whatsappNumber || "",
@@ -173,8 +228,21 @@ export default function WebsiteSettingsPage() {
         destinationsCount: settings.destinationsCount || 0,
         happyGuestsCount: settings.happyGuestsCount || 0,
         clientSatisfaction: settings.clientSatisfaction || 0,
+        teamMembersCount: settings.teamMembersCount || 0,
         showPreferredBy: settings.showPreferredBy ?? true,
         showTrustedBy: settings.showTrustedBy ?? true,
+        businessHoursWeekdays: settings.businessHoursWeekdays || "",
+        businessHoursSunday: settings.businessHoursSunday || "",
+        seoTitle: settings.seoTitle || "",
+        seoDescription: settings.seoDescription || "",
+        seoKeywords: settings.seoKeywords || "",
+        primaryColor: settings.primaryColor || "#8B0000",
+        primaryColorDark: settings.primaryColorDark || "#601a29",
+        primaryColorLight: settings.primaryColorLight || "#7a2233",
+        secondaryColor: settings.secondaryColor || "#D4AF37",
+        accentColor: settings.accentColor || "#C41E3A",
+        logo: settings.logo || "",
+        logoWhite: settings.logoWhite || "",
       });
     }
   }, [settings]);
@@ -262,9 +330,10 @@ export default function WebsiteSettingsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    const numericFields = ["numberOfEventsHeld", "ratings", "weddingsCount", "corporateCount", "socialCount", "awardsCount", "destinationsCount", "happyGuestsCount", "clientSatisfaction", "teamMembersCount", "foundedYear"];
     setFormData(prev => ({
       ...prev,
-      [name]: name.includes("Events") || name === "ratings" || name.includes("Count") || name.includes("Satisfaction") ? parseInt(value) || 0 : value,
+      [name]: numericFields.includes(name) ? parseInt(value) || 0 : value,
     }));
   };
 
@@ -394,12 +463,24 @@ export default function WebsiteSettingsPage() {
   const sortedTeamMembers = [...teamMembers].sort((a, b) => a.displayOrder - b.displayOrder);
 
   return (
-    <AdminLayout title="Website Settings" description="Manage your website content and team">
+    <AdminLayout title="Website Settings" description="Manage your website content, branding, and team">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
+          <TabsTrigger value="branding" className="flex items-center gap-2" data-testid="tab-branding">
+            <Building2 className="w-4 h-4" />
+            Branding
+          </TabsTrigger>
           <TabsTrigger value="general" className="flex items-center gap-2" data-testid="tab-general">
             <Settings className="w-4 h-4" />
-            General
+            Contact
+          </TabsTrigger>
+          <TabsTrigger value="seo" className="flex items-center gap-2" data-testid="tab-seo">
+            <Search className="w-4 h-4" />
+            SEO
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2" data-testid="tab-appearance">
+            <Palette className="w-4 h-4" />
+            Appearance
           </TabsTrigger>
           <TabsTrigger value="teams" className="flex items-center gap-2" data-testid="tab-teams">
             <Users className="w-4 h-4" />
@@ -410,6 +491,196 @@ export default function WebsiteSettingsPage() {
             Other
           </TabsTrigger>
         </TabsList>
+
+        {/* Branding Tab */}
+        <TabsContent value="branding" className="space-y-6">
+          {/* Company Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Information</CardTitle>
+              <CardDescription>Your company name and branding details displayed across the website</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Company Name *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    data-testid="input-company-name"
+                    placeholder="Your Company Name"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">This name appears in headers, footers, and SEO</p>
+                </div>
+                <div>
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    name="tagline"
+                    value={formData.tagline}
+                    onChange={handleInputChange}
+                    data-testid="input-tagline"
+                    placeholder="Crafting Extraordinary Events"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="shortDescription">Short Description</Label>
+                <Input
+                  id="shortDescription"
+                  name="shortDescription"
+                  value={formData.shortDescription}
+                  onChange={handleInputChange}
+                  data-testid="input-short-description"
+                  placeholder="Best Event Management Company in Pune"
+                />
+                <p className="text-xs text-muted-foreground mt-1">A brief one-line description of your business</p>
+              </div>
+              <div>
+                <Label htmlFor="fullDescription">Full Description</Label>
+                <Textarea
+                  id="fullDescription"
+                  name="fullDescription"
+                  value={formData.fullDescription}
+                  onChange={handleInputChange}
+                  data-testid="textarea-full-description"
+                  placeholder="A detailed description of your company and services..."
+                  rows={4}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="foundedYear">Founded Year</Label>
+                  <Input
+                    id="foundedYear"
+                    name="foundedYear"
+                    type="number"
+                    value={formData.foundedYear}
+                    onChange={handleInputChange}
+                    data-testid="input-founded-year"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="website">Website URL</Label>
+                  <Input
+                    id="website"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    data-testid="input-website"
+                    placeholder="https://yourcompany.com"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Hours */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Business Hours
+              </CardTitle>
+              <CardDescription>Set your operating hours displayed on the website</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="businessHoursWeekdays">Weekdays</Label>
+                  <Input
+                    id="businessHoursWeekdays"
+                    name="businessHoursWeekdays"
+                    value={formData.businessHoursWeekdays}
+                    onChange={handleInputChange}
+                    data-testid="input-business-hours-weekdays"
+                    placeholder="Mon - Sat: 10AM - 7PM"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="businessHoursSunday">Sunday / Holidays</Label>
+                  <Input
+                    id="businessHoursSunday"
+                    name="businessHoursSunday"
+                    value={formData.businessHoursSunday}
+                    onChange={handleInputChange}
+                    data-testid="input-business-hours-sunday"
+                    placeholder="Sunday: By Appointment"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Logo URLs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Logo Images</CardTitle>
+              <CardDescription>Upload or enter URLs for your company logos</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="logo">Primary Logo URL (Dark/Maroon)</Label>
+                  <Input
+                    id="logo"
+                    name="logo"
+                    value={formData.logo}
+                    onChange={handleInputChange}
+                    data-testid="input-logo"
+                    placeholder="/images/logo-maroon.webp"
+                  />
+                  {formData.logo && (
+                    <div className="mt-2 p-4 bg-gray-100 rounded-lg">
+                      <img src={formData.logo} alt="Logo preview" className="max-h-16 object-contain" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="logoWhite">White Logo URL</Label>
+                  <Input
+                    id="logoWhite"
+                    name="logoWhite"
+                    value={formData.logoWhite}
+                    onChange={handleInputChange}
+                    data-testid="input-logo-white"
+                    placeholder="/images/logo-white.webp"
+                  />
+                  {formData.logoWhite && (
+                    <div className="mt-2 p-4 bg-gray-800 rounded-lg">
+                      <img src={formData.logoWhite} alt="White logo preview" className="max-h-16 object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Save Button */}
+          <div className="flex justify-end gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+              data-testid="button-save-branding"
+            >
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Branding
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
 
         <TabsContent value="general" className="space-y-6">
           {/* Contact Information */}
@@ -477,6 +748,30 @@ export default function WebsiteSettingsPage() {
                   rows={3}
                 />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    data-testid="input-city"
+                    placeholder="Pune"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    data-testid="input-country"
+                    placeholder="India"
+                  />
+                </div>
+              </div>
               <div>
                 <Label htmlFor="topBarAddress">Top Bar Address (Navbar)</Label>
                 <Input
@@ -485,8 +780,9 @@ export default function WebsiteSettingsPage() {
                   value={formData.topBarAddress}
                   onChange={handleInputChange}
                   data-testid="input-topbar-address"
-                  placeholder="123 Main Street, Mumbai"
+                  placeholder="Pune, India"
                 />
+                <p className="text-xs text-muted-foreground mt-1">Short address shown in the navigation bar</p>
               </div>
               <div>
                 <Label htmlFor="secondaryAddress">Secondary Address</Label>
@@ -717,6 +1013,18 @@ export default function WebsiteSettingsPage() {
                     max="100"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="teamMembersCount">Team Members</Label>
+                  <Input
+                    id="teamMembersCount"
+                    name="teamMembersCount"
+                    type="number"
+                    value={formData.teamMembersCount}
+                    onChange={handleInputChange}
+                    data-testid="input-team-members-count"
+                    min="0"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -737,6 +1045,263 @@ export default function WebsiteSettingsPage() {
                 <>
                   <Save className="w-4 h-4 mr-2" />
                   Save Settings
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* SEO Tab */}
+        <TabsContent value="seo" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                Search Engine Optimization
+              </CardTitle>
+              <CardDescription>Configure how your website appears in search engine results</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="seoTitle">SEO Title</Label>
+                <Input
+                  id="seoTitle"
+                  name="seoTitle"
+                  value={formData.seoTitle}
+                  onChange={handleInputChange}
+                  data-testid="input-seo-title"
+                  placeholder="Your Company | Best Event Management Company in Pune"
+                />
+                <p className="text-xs text-muted-foreground mt-1">This appears as the title in search results (recommended: 50-60 characters)</p>
+              </div>
+              <div>
+                <Label htmlFor="seoDescription">SEO Description</Label>
+                <Textarea
+                  id="seoDescription"
+                  name="seoDescription"
+                  value={formData.seoDescription}
+                  onChange={handleInputChange}
+                  data-testid="textarea-seo-description"
+                  placeholder="A compelling description of your business for search engines..."
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground mt-1">This appears as the description in search results (recommended: 150-160 characters)</p>
+              </div>
+              <div>
+                <Label htmlFor="seoKeywords">SEO Keywords</Label>
+                <Textarea
+                  id="seoKeywords"
+                  name="seoKeywords"
+                  value={formData.seoKeywords}
+                  onChange={handleInputChange}
+                  data-testid="textarea-seo-keywords"
+                  placeholder="event management, wedding planners, corporate events, pune..."
+                  rows={2}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Comma-separated keywords relevant to your business</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+              data-testid="button-save-seo"
+            >
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save SEO Settings
+                </>
+              )}
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* Appearance Tab */}
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Brand Colors
+              </CardTitle>
+              <CardDescription>Customize your website's color scheme</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="primaryColor">Primary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="primaryColor"
+                      name="primaryColor"
+                      type="color"
+                      value={formData.primaryColor}
+                      onChange={handleInputChange}
+                      data-testid="input-primary-color"
+                      className="w-16 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={formData.primaryColor}
+                      onChange={handleInputChange}
+                      name="primaryColor"
+                      placeholder="#8B0000"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="primaryColorDark">Primary Dark</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="primaryColorDark"
+                      name="primaryColorDark"
+                      type="color"
+                      value={formData.primaryColorDark}
+                      onChange={handleInputChange}
+                      data-testid="input-primary-color-dark"
+                      className="w-16 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={formData.primaryColorDark}
+                      onChange={handleInputChange}
+                      name="primaryColorDark"
+                      placeholder="#601a29"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="primaryColorLight">Primary Light</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="primaryColorLight"
+                      name="primaryColorLight"
+                      type="color"
+                      value={formData.primaryColorLight}
+                      onChange={handleInputChange}
+                      data-testid="input-primary-color-light"
+                      className="w-16 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={formData.primaryColorLight}
+                      onChange={handleInputChange}
+                      name="primaryColorLight"
+                      placeholder="#7a2233"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="secondaryColor">Secondary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="secondaryColor"
+                      name="secondaryColor"
+                      type="color"
+                      value={formData.secondaryColor}
+                      onChange={handleInputChange}
+                      data-testid="input-secondary-color"
+                      className="w-16 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={formData.secondaryColor}
+                      onChange={handleInputChange}
+                      name="secondaryColor"
+                      placeholder="#D4AF37"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="accentColor">Accent Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="accentColor"
+                      name="accentColor"
+                      type="color"
+                      value={formData.accentColor}
+                      onChange={handleInputChange}
+                      data-testid="input-accent-color"
+                      className="w-16 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={formData.accentColor}
+                      onChange={handleInputChange}
+                      name="accentColor"
+                      placeholder="#C41E3A"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Color Preview */}
+              <div className="mt-6 p-6 rounded-lg border">
+                <h4 className="font-medium mb-4">Color Preview</h4>
+                <div className="flex flex-wrap gap-4">
+                  <div className="text-center">
+                    <div 
+                      className="w-16 h-16 rounded-lg shadow-md" 
+                      style={{ backgroundColor: formData.primaryColor }}
+                    />
+                    <span className="text-xs mt-1 block">Primary</span>
+                  </div>
+                  <div className="text-center">
+                    <div 
+                      className="w-16 h-16 rounded-lg shadow-md" 
+                      style={{ backgroundColor: formData.primaryColorDark }}
+                    />
+                    <span className="text-xs mt-1 block">Dark</span>
+                  </div>
+                  <div className="text-center">
+                    <div 
+                      className="w-16 h-16 rounded-lg shadow-md" 
+                      style={{ backgroundColor: formData.primaryColorLight }}
+                    />
+                    <span className="text-xs mt-1 block">Light</span>
+                  </div>
+                  <div className="text-center">
+                    <div 
+                      className="w-16 h-16 rounded-lg shadow-md" 
+                      style={{ backgroundColor: formData.secondaryColor }}
+                    />
+                    <span className="text-xs mt-1 block">Secondary</span>
+                  </div>
+                  <div className="text-center">
+                    <div 
+                      className="w-16 h-16 rounded-lg shadow-md" 
+                      style={{ backgroundColor: formData.accentColor }}
+                    />
+                    <span className="text-xs mt-1 block">Accent</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+              data-testid="button-save-appearance"
+            >
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Appearance
                 </>
               )}
             </Button>
