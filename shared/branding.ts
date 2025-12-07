@@ -4,7 +4,7 @@ export const BRAND = {
     tagline: "Crafting Extraordinary Events",
     shortDescription: "Best Event Management Company in Pune",
     fullDescription: "DA Creation is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings. Transform your vision into unforgettable experiences.",
-    foundedYear: 2015,
+    foundedYear: 2020,
   },
   
   domain: {
@@ -41,7 +41,7 @@ export const BRAND = {
   stats: {
     eventsCompleted: 500,
     rating: 4.9,
-    yearsExperience: 9,
+    yearsExperience: 5,
     teamMembers: 25,
     happyClients: 450,
   },

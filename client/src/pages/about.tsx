@@ -24,7 +24,7 @@ import { SEOHead, useOrganizationSchema, getBreadcrumbSchema } from "@/component
 import { useBranding } from "@/contexts/BrandingContext";
 
 const stats = [
-  { icon: Calendar, value: "15+", label: "Years of Experience", description: "Crafting memorable events since 2009" },
+  { icon: Calendar, value: "5+", label: "Years of Experience", description: "Crafting memorable events since 2020" },
   { icon: Heart, value: "1000+", label: "Events Managed", description: "From intimate gatherings to grand celebrations" },
   { icon: Users, value: "50+", label: "Team Members", description: "Passionate professionals at your service" },
   { icon: Star, value: "98%", label: "Client Satisfaction", description: "Exceeding expectations every time" },
@@ -55,11 +55,10 @@ const values = [
 
 function getMilestones(companyName: string) {
   return [
-    { year: "2009", title: "The Beginning", description: `${companyName} was founded with a vision to transform event experiences in India.` },
-    { year: "2012", title: "First Destination Wedding", description: "Executed our first destination wedding in Udaipur, marking a new chapter." },
-    { year: "2015", title: "Corporate Division Launch", description: "Expanded into corporate events, partnering with Fortune 500 companies." },
-    { year: "2018", title: "International Expansion", description: "Began handling events in Dubai, Thailand, and other international destinations." },
-    { year: "2022", title: "500+ Events Milestone", description: "Celebrated the landmark of successfully executing over 500 events." },
+    { year: "2020", title: "The Beginning", description: `${companyName} was founded with a vision to transform event experiences in India.` },
+    { year: "2021", title: "First Destination Wedding", description: "Executed our first destination wedding in Udaipur, marking a new chapter." },
+    { year: "2022", title: "Corporate Division Launch", description: "Expanded into corporate events, partnering with leading companies." },
+    { year: "2023", title: "100+ Events Milestone", description: "Celebrated the landmark of successfully executing over 100 events." },
     { year: "2024", title: "Industry Recognition", description: "Awarded Best Event Management Company by Wedding Industry Awards." },
   ];
 }
@@ -138,7 +137,7 @@ export default function AboutPage() {
               About {branding.company.name}
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              {pageContent?.subtitle || "Crafting Unforgettable Moments Since 2009"}
+              {pageContent?.subtitle || "Crafting Unforgettable Moments Since 2020"}
             </p>
           </motion.div>
         </div>
@@ -352,7 +351,7 @@ export default function AboutPage() {
               <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Why {branding.company.name}</span>
               <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-6">What Sets Us Apart</h2>
               <p className="text-white/80 text-lg mb-8">
-                With over 15 years of experience, we've perfected the art of creating extraordinary events that exceed expectations.
+                With our passion and dedication, we've perfected the art of creating extraordinary events that exceed expectations.
               </p>
               <ul className="space-y-4">
                 {whyChooseUs.map((item, index) => (
