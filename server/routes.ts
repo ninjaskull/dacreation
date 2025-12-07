@@ -1,6 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import PDFDocument from "pdfkit";
+import path from "path";
+import fs from "fs";
 import passport from "passport";
 import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange } from "./websocket";
 import { 
@@ -2665,6 +2668,253 @@ Crawl-delay: 1
     } catch (error) {
       console.error("Get SEO config error:", error);
       res.status(500).json({ message: "Failed to fetch SEO config" });
+    }
+  });
+
+  // ==================== Press Kit PDF Generation ====================
+  app.get("/api/press-kit", async (req, res) => {
+    try {
+      const { BRAND } = await import('../shared/branding');
+      const settings = await storage.getCompanySettings();
+      
+      const companyName = settings?.name || BRAND.company.name;
+      const tagline = settings?.tagline || BRAND.company.tagline;
+      const description = settings?.fullDescription || BRAND.company.fullDescription;
+      const email = settings?.email || BRAND.contact.email;
+      const phone = settings?.phone || BRAND.contact.phones[0];
+      const website = settings?.website || BRAND.domain.url;
+      const address = settings?.address || BRAND.addresses.primary.full;
+      const foundedYear = settings?.foundedYear || BRAND.company.foundedYear;
+      const eventsCompleted = settings?.numberOfEventsHeld || BRAND.stats.eventsCompleted;
+      const rating = settings?.ratings || BRAND.stats.rating;
+      const currentYear = new Date().getFullYear();
+      const yearsExperience = currentYear - foundedYear;
+      
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 60, bottom: 60, left: 60, right: 60 },
+        info: {
+          Title: `${companyName} - Press Kit`,
+          Author: companyName,
+          Subject: 'Official Press Kit',
+          Keywords: 'press kit, media, event management'
+        }
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${companyName.replace(/\s+/g, '_')}_Press_Kit.pdf"`);
+      
+      doc.pipe(res);
+
+      const maroon = '#601a29';
+      const gold = '#D4AF37';
+      const darkText = '#333333';
+      const lightText = '#666666';
+      
+      const pageWidth = doc.page.width - 120;
+      
+      doc.rect(0, 0, doc.page.width, 200).fill(maroon);
+      
+      doc.fillColor('white')
+         .fontSize(36)
+         .font('Helvetica-Bold')
+         .text(companyName.toUpperCase(), 60, 70, { width: pageWidth, align: 'center' });
+      
+      doc.fillColor(gold)
+         .fontSize(14)
+         .font('Helvetica')
+         .text(tagline, 60, 120, { width: pageWidth, align: 'center' });
+      
+      doc.fillColor('white')
+         .fontSize(11)
+         .font('Helvetica')
+         .text('OFFICIAL PRESS KIT', 60, 155, { width: pageWidth, align: 'center' });
+
+      doc.fillColor(darkText)
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text('About Us', 60, 240);
+      
+      doc.moveTo(60, 268).lineTo(140, 268).strokeColor(gold).lineWidth(2).stroke();
+      
+      doc.fillColor(lightText)
+         .fontSize(11)
+         .font('Helvetica')
+         .text(description, 60, 285, { width: pageWidth, align: 'justify', lineGap: 4 });
+
+      const statsY = 380;
+      doc.rect(60, statsY, pageWidth, 80).fillAndStroke('#f9f5f0', gold);
+      
+      const statWidth = pageWidth / 3;
+      
+      doc.fillColor(maroon)
+         .fontSize(28)
+         .font('Helvetica-Bold')
+         .text(`${eventsCompleted}+`, 60, statsY + 15, { width: statWidth, align: 'center' });
+      doc.fillColor(lightText)
+         .fontSize(10)
+         .font('Helvetica')
+         .text('Events Completed', 60, statsY + 50, { width: statWidth, align: 'center' });
+      
+      doc.fillColor(maroon)
+         .fontSize(28)
+         .font('Helvetica-Bold')
+         .text(`${yearsExperience}+`, 60 + statWidth, statsY + 15, { width: statWidth, align: 'center' });
+      doc.fillColor(lightText)
+         .fontSize(10)
+         .font('Helvetica')
+         .text('Years Experience', 60 + statWidth, statsY + 50, { width: statWidth, align: 'center' });
+      
+      doc.fillColor(maroon)
+         .fontSize(28)
+         .font('Helvetica-Bold')
+         .text(`${rating}`, 60 + statWidth * 2, statsY + 15, { width: statWidth, align: 'center' });
+      doc.fillColor(lightText)
+         .fontSize(10)
+         .font('Helvetica')
+         .text('Star Rating', 60 + statWidth * 2, statsY + 50, { width: statWidth, align: 'center' });
+
+      doc.fillColor(darkText)
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text('Our Services', 60, 490);
+      
+      doc.moveTo(60, 518).lineTo(170, 518).strokeColor(gold).lineWidth(2).stroke();
+
+      const services = [
+        { name: 'Weddings & Cultural Celebrations', desc: 'Traditional ceremonies, modern celebrations, and destination weddings with cultural understanding.' },
+        { name: 'Corporate Events', desc: 'Conferences, product launches, award nights, and corporate retreats that achieve business objectives.' },
+        { name: 'Social Events', desc: 'Birthdays, anniversaries, baby showers, and private parties crafted with care.' },
+        { name: 'Destination Events', desc: 'Pan-India and international event planning with complete logistics management.' }
+      ];
+
+      let serviceY = 535;
+      services.forEach((service) => {
+        doc.fillColor(maroon)
+           .fontSize(12)
+           .font('Helvetica-Bold')
+           .text(`• ${service.name}`, 60, serviceY);
+        doc.fillColor(lightText)
+           .fontSize(10)
+           .font('Helvetica')
+           .text(service.desc, 72, serviceY + 16, { width: pageWidth - 12 });
+        serviceY += 45;
+      });
+
+      doc.addPage();
+      
+      doc.rect(0, 0, doc.page.width, 60).fill(maroon);
+      doc.fillColor('white')
+         .fontSize(16)
+         .font('Helvetica-Bold')
+         .text(companyName.toUpperCase(), 60, 22, { width: pageWidth, align: 'center' });
+
+      doc.fillColor(darkText)
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text('Brand Guidelines', 60, 100);
+      
+      doc.moveTo(60, 128).lineTo(200, 128).strokeColor(gold).lineWidth(2).stroke();
+      
+      doc.fillColor(lightText)
+         .fontSize(11)
+         .font('Helvetica')
+         .text('Our brand represents luxury, elegance, and attention to detail. When featuring our company, please adhere to the following guidelines:', 60, 145, { width: pageWidth, lineGap: 4 });
+
+      doc.fillColor(darkText)
+         .fontSize(14)
+         .font('Helvetica-Bold')
+         .text('Brand Colors', 60, 200);
+
+      const colorBoxY = 225;
+      doc.rect(60, colorBoxY, 80, 50).fill(maroon);
+      doc.fillColor(lightText).fontSize(9).font('Helvetica').text('Maroon', 60, colorBoxY + 55);
+      doc.fillColor(lightText).fontSize(8).text('#601a29', 60, colorBoxY + 67);
+
+      doc.rect(160, colorBoxY, 80, 50).fill(gold);
+      doc.fillColor(lightText).fontSize(9).font('Helvetica').text('Gold', 160, colorBoxY + 55);
+      doc.fillColor(lightText).fontSize(8).text('#D4AF37', 160, colorBoxY + 67);
+
+      doc.rect(260, colorBoxY, 80, 50).fill('#f9f5f0');
+      doc.fillColor(lightText).fontSize(9).font('Helvetica').text('Cream', 260, colorBoxY + 55);
+      doc.fillColor(lightText).fontSize(8).text('#F9F5F0', 260, colorBoxY + 67);
+
+      doc.rect(360, colorBoxY, 80, 50).fill('#333333');
+      doc.fillColor(lightText).fontSize(9).font('Helvetica').text('Charcoal', 360, colorBoxY + 55);
+      doc.fillColor(lightText).fontSize(8).text('#333333', 360, colorBoxY + 67);
+
+      doc.fillColor(darkText)
+         .fontSize(14)
+         .font('Helvetica-Bold')
+         .text('Typography', 60, 320);
+      
+      doc.fillColor(lightText)
+         .fontSize(11)
+         .font('Helvetica')
+         .text('Primary Font: Playfair Display (Headings)\nSecondary Font: Montserrat (Body Text)', 60, 340, { lineGap: 4 });
+
+      doc.fillColor(darkText)
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text('Contact Information', 60, 420);
+      
+      doc.moveTo(60, 448).lineTo(240, 448).strokeColor(gold).lineWidth(2).stroke();
+
+      doc.rect(60, 470, pageWidth, 140).fillAndStroke('#f9f5f0', gold);
+      
+      const contactInfo = [
+        { label: 'Email', value: email },
+        { label: 'Phone', value: phone },
+        { label: 'Website', value: website },
+        { label: 'Address', value: address },
+        { label: 'Press Inquiries', value: `press@${BRAND.domain.primary}` }
+      ];
+
+      let contactY = 485;
+      contactInfo.forEach((item) => {
+        doc.fillColor(maroon)
+           .fontSize(10)
+           .font('Helvetica-Bold')
+           .text(`${item.label}:`, 75, contactY);
+        doc.fillColor(darkText)
+           .fontSize(10)
+           .font('Helvetica')
+           .text(item.value, 170, contactY);
+        contactY += 22;
+      });
+
+      doc.fillColor(darkText)
+         .fontSize(20)
+         .font('Helvetica-Bold')
+         .text('Social Media', 60, 640);
+      
+      doc.moveTo(60, 668).lineTo(180, 668).strokeColor(gold).lineWidth(2).stroke();
+
+      const socialLinks = [
+        `Instagram: @${BRAND.domain.primary.replace('.in', '')}`,
+        `Facebook: facebook.com/${BRAND.domain.primary.replace('.in', '')}`,
+        `LinkedIn: linkedin.com/company/${BRAND.domain.primary.replace('.in', '')}`
+      ];
+
+      let socialY = 685;
+      socialLinks.forEach((link) => {
+        doc.fillColor(lightText)
+           .fontSize(10)
+           .font('Helvetica')
+           .text(`• ${link}`, 60, socialY);
+        socialY += 18;
+      });
+
+      doc.rect(0, doc.page.height - 50, doc.page.width, 50).fill(maroon);
+      doc.fillColor('white')
+         .fontSize(9)
+         .font('Helvetica')
+         .text(`© ${currentYear} ${companyName}. All Rights Reserved.`, 60, doc.page.height - 32, { width: pageWidth, align: 'center' });
+
+      doc.end();
+    } catch (error) {
+      console.error("Press kit generation error:", error);
+      res.status(500).json({ message: "Failed to generate press kit" });
     }
   });
 

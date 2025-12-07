@@ -390,10 +390,12 @@ export default function PressPage() {
               <p className="text-gray-600 mb-6">
                 Download our official press kit containing company information, high-resolution logos, and brand guidelines.
               </p>
-              <Button variant="outline" className="rounded-full gap-2 border-[#601a29] text-[#601a29] hover:bg-[#601a29] hover:text-white">
-                <Download className="w-4 h-4" />
-                Download Press Kit
-              </Button>
+              <a href="/api/press-kit" download data-testid="button-download-press-kit">
+                <Button variant="outline" className="rounded-full gap-2 border-[#601a29] text-[#601a29] hover:bg-[#601a29] hover:text-white">
+                  <Download className="w-4 h-4" />
+                  Download Press Kit
+                </Button>
+              </a>
             </motion.div>
 
             <motion.div
