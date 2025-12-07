@@ -2591,6 +2591,28 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== SEO: Robots.txt ====================
+
+  app.get("/robots.txt", (req, res) => {
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const robotsTxt = `# Robots.txt for ${baseUrl}
+User-agent: *
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /admin/*
+
+# Sitemap location
+Sitemap: ${baseUrl}/sitemap.xml
+
+# Crawl delay (optional - be nice to servers)
+Crawl-delay: 1
+`;
+    res.set('Content-Type', 'text/plain');
+    res.send(robotsTxt);
+  });
+
   // ==================== SEO: Sitemap ====================
 
   app.get("/sitemap.xml", async (req, res) => {
