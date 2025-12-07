@@ -93,10 +93,10 @@ export default function WeddingsPage() {
   });
 
   const stats = [
-    { value: `${websiteSettings?.weddingsCount || 0}+`, label: "Weddings Planned", icon: Heart },
-    { value: "15+", label: "Years Experience", icon: Calendar },
-    { value: "98%", label: "Happy Couples", icon: Star },
-    { value: "50+", label: "Destinations", icon: Award },
+    { value: `${websiteSettings?.weddingsCount || branding.stats.weddingsCount}+`, label: "Weddings Planned", icon: Heart },
+    { value: `${branding.stats.yearsExperience}+`, label: "Years Experience", icon: Calendar },
+    { value: `${branding.stats.clientSatisfaction}%`, label: "Happy Couples", icon: Star },
+    { value: `${branding.stats.destinationsCount}+`, label: "Destinations", icon: Award },
   ];
 
   return (

@@ -93,10 +93,10 @@ export default function SocialPage() {
   });
 
   const stats = [
-    { value: `${websiteSettings?.socialCount || 0}+`, label: "Social Events", icon: PartyPopper },
+    { value: `${websiteSettings?.socialCount || branding.stats.socialCount}+`, label: "Social Events", icon: PartyPopper },
     { value: "100%", label: "Custom Themes", icon: Sparkles },
-    { value: "5000+", label: "Happy Guests", icon: Users },
-    { value: "4.9/5", label: "Client Rating", icon: Star },
+    { value: `${branding.stats.happyClients}+`, label: "Happy Guests", icon: Users },
+    { value: `${branding.stats.rating}/5`, label: "Client Rating", icon: Star },
   ];
 
   return (

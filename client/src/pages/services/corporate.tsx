@@ -97,10 +97,10 @@ export default function CorporatePage() {
   });
 
   const stats = [
-    { value: `${websiteSettings?.corporateCount || 0}+`, label: "Corporate Events", icon: Building2 },
-    { value: "50+", label: "Fortune 500 Clients", icon: Award },
-    { value: "100K+", label: "Attendees Served", icon: Users },
-    { value: "99%", label: "Client Retention", icon: Star },
+    { value: `${websiteSettings?.corporateCount || branding.stats.corporateCount}+`, label: "Corporate Events", icon: Building2 },
+    { value: `${branding.stats.happyClients}+`, label: "Happy Clients", icon: Award },
+    { value: `${branding.stats.eventsCompleted}+`, label: "Events Delivered", icon: Users },
+    { value: `${branding.stats.clientSatisfaction}%`, label: "Client Satisfaction", icon: Star },
   ];
 
   return (

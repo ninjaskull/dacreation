@@ -23,12 +23,14 @@ import heroImage from "@assets/generated_images/destination_event_beach.png";
 import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 
-const stats = [
-  { value: "50+", label: "Destinations", icon: MapPin },
-  { value: "200+", label: "Destination Events", icon: Calendar },
-  { value: "15+", label: "Countries", icon: Globe },
-  { value: "100%", label: "Logistics Managed", icon: Plane },
-];
+function getStats(branding: any) {
+  return [
+    { value: `${branding.stats.destinationsCount}+`, label: "Destinations", icon: MapPin },
+    { value: `${branding.stats.eventsCompleted}+`, label: "Destination Events", icon: Calendar },
+    { value: `${branding.stats.yearsExperience}+`, label: "Years Experience", icon: Globe },
+    { value: "100%", label: "Logistics Managed", icon: Plane },
+  ];
+}
 
 const services = [
   {
@@ -145,7 +147,7 @@ export default function DestinationPage() {
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 md:p-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
+              {getStats(branding).map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}

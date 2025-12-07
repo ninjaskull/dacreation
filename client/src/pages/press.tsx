@@ -121,10 +121,10 @@ export default function PressPage() {
   });
 
   const stats = [
-    { value: "100+", label: "Media Features", icon: Newspaper },
-    { value: "25+", label: "TV Appearances", icon: Tv },
-    { value: `${websiteSettings?.awardsCount || 0}+`, label: "Awards", icon: Award },
-    { value: "15+", label: "Publications", icon: BookOpen },
+    { value: `${branding.stats.eventsCompleted}+`, label: "Media Features", icon: Newspaper },
+    { value: `${branding.stats.yearsExperience}+`, label: "Years in Media", icon: Tv },
+    { value: `${websiteSettings?.awardsCount || branding.stats.awardsCount}+`, label: "Awards", icon: Award },
+    { value: `${branding.stats.destinationsCount}+`, label: "Publications", icon: BookOpen },
   ];
 
   const { data: articles = [], isLoading } = useQuery<PressArticle[]>({

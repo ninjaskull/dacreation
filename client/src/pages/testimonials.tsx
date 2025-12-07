@@ -110,10 +110,10 @@ export default function TestimonialsPage() {
   });
 
   const stats = [
-    { value: "98%", label: "Happy Clients", icon: Heart },
-    { value: "4.9/5", label: "Average Rating", icon: Star },
-    { value: "500+", label: "Reviews", icon: MessageSquare },
-    { value: `${websiteSettings?.awardsCount || 0}+`, label: "Awards Won", icon: Award },
+    { value: `${branding.stats.clientSatisfaction}%`, label: "Happy Clients", icon: Heart },
+    { value: `${branding.stats.rating}/5`, label: "Average Rating", icon: Star },
+    { value: `${branding.stats.happyClients}+`, label: "Reviews", icon: MessageSquare },
+    { value: `${websiteSettings?.awardsCount || branding.stats.awardsCount}+`, label: "Awards Won", icon: Award },
   ];
 
   const { data: testimonials = [], isLoading } = useQuery<Testimonial[]>({
