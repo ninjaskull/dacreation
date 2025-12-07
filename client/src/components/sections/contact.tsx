@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Phone, Calendar, Check } from "lucide-react";
 import { budgetRanges } from "@shared/schema";
-import { BRAND } from "@shared/branding";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -30,6 +30,7 @@ const formSchema = z.object({
 
 export function Contact() {
   const { toast } = useToast();
+  const { branding } = useBranding();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
@@ -103,21 +104,21 @@ export function Contact() {
                 <div className="mt-1 text-primary text-xl">✉️</div>
                 <div>
                   <h4 className="font-medium text-foreground">Email</h4>
-                  <span>{BRAND.contact.email}</span>
+                  <span>{branding.contact.email}</span>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <div className="mt-1 text-primary text-xl">📞</div>
                 <div>
                   <h4 className="font-medium text-foreground">Phone / WhatsApp</h4>
-                  <span>{BRAND.contact.phones[0]}</span>
+                  <span>{branding.contact.phones[0]}</span>
                 </div>
               </div>
               <div className="flex items-start space-x-4">
                 <div className="mt-1 text-primary text-xl">📍</div>
                 <div>
                   <h4 className="font-medium text-foreground">Office</h4>
-                  <span>{BRAND.addresses.primary.full}<br/><span className="text-sm text-muted-foreground">Available globally for destination events.</span></span>
+                  <span>{branding.addresses.primary.full}<br/><span className="text-sm text-muted-foreground">Available globally for destination events.</span></span>
                 </div>
               </div>
             </div>
@@ -135,7 +136,7 @@ export function Contact() {
                 </p>
                 <div className="flex flex-col gap-2">
                   <a 
-                    href={`https://wa.me/${BRAND.contact.whatsapp.replace(/[^0-9]/g, '')}`} 
+                    href={`https://wa.me/${branding.contact.whatsapp.replace(/[^0-9]/g, '')}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 text-primary hover:underline"
