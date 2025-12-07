@@ -6,18 +6,18 @@ export const BRAND = {
     fullDescription: "DA Creation is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings. Transform your vision into unforgettable experiences.",
     foundedYear: 2020,
   },
-  
+
   domain: {
     primary: "dacreation.in",
     url: "https://dacreation.in",
   },
-  
+
   contact: {
     phones: ["+91 9179724040"],
     email: "hello@dacreation.in",
     whatsapp: "+919179724040",
   },
-  
+
   addresses: {
     primary: {
       full: "Pune, Maharashtra, India",
@@ -28,7 +28,7 @@ export const BRAND = {
     },
     topBar: "Pune, India",
   },
-  
+
   social: {
     instagram: "https://instagram.com/dacreation.in",
     facebook: "https://facebook.com/dacreation.in",
@@ -37,7 +37,7 @@ export const BRAND = {
     twitter: "@dacreation",
     pinterest: "https://pinterest.com/dacreation",
   },
-  
+
   stats: {
     eventsCompleted: 500,
     rating: 4.9,
@@ -45,7 +45,7 @@ export const BRAND = {
     teamMembers: 25,
     happyClients: 450,
   },
-  
+
   assets: {
     logos: {
       white: "/images/logo-white.webp",
@@ -56,7 +56,7 @@ export const BRAND = {
     favicon: "/favicon.webp",
     ogImage: "/og-image.webp",
   },
-  
+
   seo: {
     defaultTitle: "DA Creation | Best Event Management Company in Pune",
     titleSuffix: " | DA Creation",
@@ -70,7 +70,7 @@ export const BRAND = {
       "destination wedding planners Maharashtra",
     ],
   },
-  
+
   colors: {
     primary: "#8B0000",
     primaryDark: "#601a29",
@@ -78,12 +78,12 @@ export const BRAND = {
     secondary: "#D4AF37",
     accent: "#C41E3A",
   },
-  
+
   typography: {
     headingFont: "Playfair Display",
     bodyFont: "Montserrat",
   },
-  
+
   businessHours: {
     weekdays: "Mon - Sat: 10AM - 7PM",
     sunday: "Sunday: By Appointment",

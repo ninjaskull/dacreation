@@ -41,10 +41,13 @@ export function About() {
             
             <div className="space-y-6 text-lg text-muted-foreground font-light leading-relaxed mb-10">
               <p>
-                {branding.company.name} is a full-service event management company trusted by families, multinational corporations, and individuals looking for excellence. From a wedding planning brand, we've evolved into a complete event solutions studio serving both personal celebrations and business objectives.
+                Founded in 2020, {branding.company.name} has grown to become one of India's most trusted event management companies. With a team of passionate professionals, we have successfully executed over 100 events across 20+ cities.
               </p>
               <p>
-                Our philosophy is simple: whether you're planning a multi-day wedding, a product launch, an annual corporate conference, or a milestone birthday—we bring creativity, strategic thinking, and flawless execution to every detail.
+                From intimate gatherings to grand celebrations, we bring creativity, precision, and heart to every project. Our team of dedicated professionals works tirelessly to transform your dreams into stunning reality.
+              </p>
+              <p>
+                What sets us apart is our deep understanding of Indian traditions combined with contemporary design sensibilities. Whether it's a traditional wedding ceremony or a modern corporate gala, we craft experiences that resonate with meaning and beauty.
               </p>
             </div>
 
