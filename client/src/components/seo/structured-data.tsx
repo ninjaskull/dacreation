@@ -12,7 +12,7 @@ const localBusinessSchema = {
   "logo": "/favicon.webp",
   "image": "/og-image.png",
   "telephone": "+91 98765 43210",
-  "email": "hello@dacreation.com",
+  "email": "hello@dacreation.in",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Pune",

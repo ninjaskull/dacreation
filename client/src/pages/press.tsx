@@ -143,10 +143,10 @@ export default function PressPage() {
         title={SEO_DATA.press.title}
         description={SEO_DATA.press.description}
         keywords={SEO_DATA.press.keywords}
-        canonicalUrl="https://dacreation.com/press"
+        canonicalUrl="https://dacreation.in/press"
         structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.com" },
-          { name: "Press & Media", url: "https://dacreation.com/press" }
+          { name: "Home", url: "https://dacreation.in" },
+          { name: "Press & Media", url: "https://dacreation.in/press" }
         ])}
       />
       <Navbar />

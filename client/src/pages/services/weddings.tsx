@@ -103,13 +103,13 @@ export default function WeddingsPage() {
         title={SEO_DATA.weddings.title}
         description={SEO_DATA.weddings.description}
         keywords={SEO_DATA.weddings.keywords}
-        canonicalUrl="https://dacreation.com/services/weddings"
+        canonicalUrl="https://dacreation.in/services/weddings"
         structuredData={{
-          ...getServiceSchema("Wedding Planning", SEO_DATA.weddings.description, "https://dacreation.com/services/weddings"),
+          ...getServiceSchema("Wedding Planning", SEO_DATA.weddings.description, "https://dacreation.in/services/weddings"),
           ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.com" },
-            { name: "Services", url: "https://dacreation.com/services" },
-            { name: "Weddings", url: "https://dacreation.com/services/weddings" }
+            { name: "Home", url: "https://dacreation.in" },
+            { name: "Services", url: "https://dacreation.in/services" },
+            { name: "Weddings", url: "https://dacreation.in/services/weddings" }
           ])
         }}
       />

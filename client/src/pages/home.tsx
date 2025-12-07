@@ -29,7 +29,7 @@ export default function Home() {
         title={SEO_DATA.home.title}
         description={SEO_DATA.home.description}
         keywords={SEO_DATA.home.keywords}
-        canonicalUrl="https://dacreation.com/"
+        canonicalUrl="https://dacreation.in/"
         structuredData={{...getOrganizationSchema(), ...getLocalBusinessSchema()}}
       />
       <Navbar />

@@ -107,13 +107,13 @@ export default function CorporatePage() {
         title={SEO_DATA.corporate.title}
         description={SEO_DATA.corporate.description}
         keywords={SEO_DATA.corporate.keywords}
-        canonicalUrl="https://dacreation.com/services/corporate"
+        canonicalUrl="https://dacreation.in/services/corporate"
         structuredData={{
-          ...getServiceSchema("Corporate Event Management", SEO_DATA.corporate.description, "https://dacreation.com/services/corporate"),
+          ...getServiceSchema("Corporate Event Management", SEO_DATA.corporate.description, "https://dacreation.in/services/corporate"),
           ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.com" },
-            { name: "Services", url: "https://dacreation.com/services" },
-            { name: "Corporate Events", url: "https://dacreation.com/services/corporate" }
+            { name: "Home", url: "https://dacreation.in" },
+            { name: "Services", url: "https://dacreation.in/services" },
+            { name: "Corporate Events", url: "https://dacreation.in/services/corporate" }
           ])
         }}
       />

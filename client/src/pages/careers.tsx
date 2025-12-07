@@ -104,10 +104,10 @@ export default function CareersPage() {
         title={SEO_DATA.careers.title}
         description={SEO_DATA.careers.description}
         keywords={SEO_DATA.careers.keywords}
-        canonicalUrl="https://dacreation.com/careers"
+        canonicalUrl="https://dacreation.in/careers"
         structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.com" },
-          { name: "Careers", url: "https://dacreation.com/careers" }
+          { name: "Home", url: "https://dacreation.in" },
+          { name: "Careers", url: "https://dacreation.in/careers" }
         ])}
       />
       <Navbar />

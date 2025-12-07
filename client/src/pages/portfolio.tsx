@@ -209,10 +209,10 @@ export default function PortfolioPage() {
         title={SEO_DATA.portfolio.title}
         description={SEO_DATA.portfolio.description}
         keywords={SEO_DATA.portfolio.keywords}
-        canonicalUrl="https://dacreation.com/portfolio"
+        canonicalUrl="https://dacreation.in/portfolio"
         structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.com" },
-          { name: "Portfolio", url: "https://dacreation.com/portfolio" }
+          { name: "Home", url: "https://dacreation.in" },
+          { name: "Portfolio", url: "https://dacreation.in/portfolio" }
         ])}
       />
       <Navbar />

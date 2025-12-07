@@ -103,13 +103,13 @@ export default function SocialPage() {
         title={SEO_DATA.social.title}
         description={SEO_DATA.social.description}
         keywords={SEO_DATA.social.keywords}
-        canonicalUrl="https://dacreation.com/services/social"
+        canonicalUrl="https://dacreation.in/services/social"
         structuredData={{
-          ...getServiceSchema("Social Event Planning", SEO_DATA.social.description, "https://dacreation.com/services/social"),
+          ...getServiceSchema("Social Event Planning", SEO_DATA.social.description, "https://dacreation.in/services/social"),
           ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.com" },
-            { name: "Services", url: "https://dacreation.com/services" },
-            { name: "Social Events", url: "https://dacreation.com/services/social" }
+            { name: "Home", url: "https://dacreation.in" },
+            { name: "Services", url: "https://dacreation.in/services" },
+            { name: "Social Events", url: "https://dacreation.in/services/social" }
           ])
         }}
       />

@@ -103,7 +103,7 @@ const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
 const DEFAULT_SETTINGS: WebsiteSettings = {
   address: "123 Event Avenue, Bandra West, Mumbai, Maharashtra 400050, India",
   phone: "+91 98765 43210",
-  email: "hello@dacreation.com",
+  email: "hello@dacreation.in",
   whatsappNumber: "+91 98765 43210",
   mapEmbedCode: null,
   topBarAddress: "Mumbai, India",
@@ -261,12 +261,12 @@ export default function ContactPage() {
         title={SEO_DATA.contact.title}
         description={SEO_DATA.contact.description}
         keywords={SEO_DATA.contact.keywords}
-        canonicalUrl="https://dacreation.com/contact"
+        canonicalUrl="https://dacreation.in/contact"
         structuredData={[
           getLocalBusinessSchema(),
           getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.com" },
-            { name: "Contact", url: "https://dacreation.com/contact" }
+            { name: "Home", url: "https://dacreation.in" },
+            { name: "Contact", url: "https://dacreation.in/contact" }
           ])
         ]}
       />

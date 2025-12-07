@@ -176,7 +176,7 @@ export function getOrganizationSchema() {
     "@type": "Organization",
     "name": "DA Creation",
     "description": "Best event management company in Pune specializing in luxury weddings, corporate events, and social celebrations",
-    "url": BASE_URL || "https://dacreation.com",
+    "url": BASE_URL || "https://dacreation.in",
     "logo": `${BASE_URL}/logo.png`,
     "contactPoint": {
       "@type": "ContactPoint",
@@ -200,7 +200,7 @@ export function getLocalBusinessSchema() {
     "@id": `${BASE_URL}/#localbusiness`,
     "name": "DA Creation - Event Management Company",
     "description": "Best event management company in Pune offering luxury wedding planning, corporate events, social celebrations and destination weddings",
-    "url": BASE_URL || "https://dacreation.com",
+    "url": BASE_URL || "https://dacreation.in",
     "priceRange": "$$$$",
     "address": {
       "@type": "PostalAddress",
@@ -274,7 +274,7 @@ export function getWebPageSchema(title: string, description: string, url: string
     "isPartOf": {
       "@type": "WebSite",
       "name": "DA Creation",
-      "url": BASE_URL || "https://dacreation.com"
+      "url": BASE_URL || "https://dacreation.in"
     }
   };
 }

@@ -77,7 +77,7 @@ const companyLinks = [
 
 const DEFAULT_SETTINGS = {
   phone: "+91 98765 43210",
-  email: "hello@dacreation.com",
+  email: "hello@dacreation.in",
   topBarAddress: "Mumbai, India",
   numberOfEventsHeld: 500,
 };

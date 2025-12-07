@@ -11,10 +11,10 @@ export default function InquirePage() {
         title={SEO_DATA.inquire.title}
         description={SEO_DATA.inquire.description}
         keywords={SEO_DATA.inquire.keywords}
-        canonicalUrl="https://dacreation.com/inquire"
+        canonicalUrl="https://dacreation.in/inquire"
         structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.com" },
-          { name: "Book Event", url: "https://dacreation.com/inquire" }
+          { name: "Home", url: "https://dacreation.in" },
+          { name: "Book Event", url: "https://dacreation.in/inquire" }
         ])}
       />
       <Navbar />

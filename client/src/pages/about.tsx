@@ -100,12 +100,12 @@ export default function AboutPage() {
         title={SEO_DATA.about.title}
         description={SEO_DATA.about.description}
         keywords={SEO_DATA.about.keywords}
-        canonicalUrl="https://dacreation.com/about"
+        canonicalUrl="https://dacreation.in/about"
         structuredData={{
           ...getOrganizationSchema(),
           ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.com" },
-            { name: "About Us", url: "https://dacreation.com/about" }
+            { name: "Home", url: "https://dacreation.in" },
+            { name: "About Us", url: "https://dacreation.in/about" }
           ])
         }}
       />

@@ -54,7 +54,7 @@ const SOCIAL_ICON_MAP: Record<string, LucideIcon> = {
 const DEFAULT_SETTINGS = {
   address: "123 Event Avenue,\nMumbai, MH 400001",
   phone: "+91 98765 43210",
-  email: "hello@dacreation.com",
+  email: "hello@dacreation.in",
   numberOfEventsHeld: 500,
   ratings: 4.9,
 };

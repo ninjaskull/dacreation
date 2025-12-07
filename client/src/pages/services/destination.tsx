@@ -95,13 +95,13 @@ export default function DestinationPage() {
         title={SEO_DATA.destination.title}
         description={SEO_DATA.destination.description}
         keywords={SEO_DATA.destination.keywords}
-        canonicalUrl="https://dacreation.com/services/destination"
+        canonicalUrl="https://dacreation.in/services/destination"
         structuredData={{
-          ...getServiceSchema("Destination Event Planning", SEO_DATA.destination.description, "https://dacreation.com/services/destination"),
+          ...getServiceSchema("Destination Event Planning", SEO_DATA.destination.description, "https://dacreation.in/services/destination"),
           ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.com" },
-            { name: "Services", url: "https://dacreation.com/services" },
-            { name: "Destination Events", url: "https://dacreation.com/services/destination" }
+            { name: "Home", url: "https://dacreation.in" },
+            { name: "Services", url: "https://dacreation.in/services" },
+            { name: "Destination Events", url: "https://dacreation.in/services/destination" }
           ])
         }}
       />

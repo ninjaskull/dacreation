@@ -60,10 +60,10 @@ export default function TeamPage() {
         title={SEO_DATA.team.title}
         description={SEO_DATA.team.description}
         keywords={SEO_DATA.team.keywords}
-        canonicalUrl="https://dacreation.com/team"
+        canonicalUrl="https://dacreation.in/team"
         structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.com" },
-          { name: "Our Team", url: "https://dacreation.com/team" }
+          { name: "Home", url: "https://dacreation.in" },
+          { name: "Our Team", url: "https://dacreation.in/team" }
         ])}
       />
       <Navbar />

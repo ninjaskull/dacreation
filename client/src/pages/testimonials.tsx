@@ -132,10 +132,10 @@ export default function TestimonialsPage() {
         title={SEO_DATA.testimonials.title}
         description={SEO_DATA.testimonials.description}
         keywords={SEO_DATA.testimonials.keywords}
-        canonicalUrl="https://dacreation.com/testimonials"
+        canonicalUrl="https://dacreation.in/testimonials"
         structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.com" },
-          { name: "Testimonials", url: "https://dacreation.com/testimonials" }
+          { name: "Home", url: "https://dacreation.in" },
+          { name: "Testimonials", url: "https://dacreation.in/testimonials" }
         ])}
       />
       <Navbar />
