@@ -24,7 +24,8 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import heroImage from "@assets/generated_images/corporate_conference_stage.png";
 import galaImg from "@assets/generated_images/corporate_event_gala.png";
-import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -85,6 +86,7 @@ const processSteps = [
 ];
 
 export default function CorporatePage() {
+  const { branding } = useBranding();
   const { data: websiteSettings } = useQuery<WebsiteSettings>({
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
@@ -104,16 +106,14 @@ export default function CorporatePage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.corporate.title}
-        description={SEO_DATA.corporate.description}
-        keywords={SEO_DATA.corporate.keywords}
-        canonicalUrl="https://dacreation.in/services/corporate"
+        pageType="corporate"
+        canonicalUrl={`${branding.domain.url}/services/corporate`}
         structuredData={{
-          ...getServiceSchema("Corporate Event Management", SEO_DATA.corporate.description, "https://dacreation.in/services/corporate"),
-          ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.in" },
-            { name: "Services", url: "https://dacreation.in/services" },
-            { name: "Corporate Events", url: "https://dacreation.in/services/corporate" }
+          ...getServiceSchema(branding, "Corporate Event Management", `${branding.domain.url}/services/corporate`),
+          ...getBreadcrumbSchema(branding, [
+            { name: "Home", url: branding.domain.url },
+            { name: "Services", url: `${branding.domain.url}/services` },
+            { name: "Corporate Events", url: `${branding.domain.url}/services/corporate` }
           ])
         }}
       />

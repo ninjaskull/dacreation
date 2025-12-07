@@ -8,7 +8,8 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -94,6 +95,7 @@ const defaultTestimonials = [
 ];
 
 export default function TestimonialsPage() {
+  const { branding } = useBranding();
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   
   const { data: websiteSettings } = useQuery<WebsiteSettings>({
@@ -129,13 +131,11 @@ export default function TestimonialsPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.testimonials.title}
-        description={SEO_DATA.testimonials.description}
-        keywords={SEO_DATA.testimonials.keywords}
-        canonicalUrl="https://dacreation.in/testimonials"
-        structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.in" },
-          { name: "Testimonials", url: "https://dacreation.in/testimonials" }
+        pageType="testimonials"
+        canonicalUrl={`${branding.domain.url}/testimonials`}
+        structuredData={getBreadcrumbSchema(branding, [
+          { name: "Home", url: branding.domain.url },
+          { name: "Testimonials", url: `${branding.domain.url}/testimonials` }
         ])}
       />
       <Navbar />

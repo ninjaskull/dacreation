@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { SEOHead, SEO_DATA, getOrganizationSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, useOrganizationSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const stats = [
   { icon: Calendar, value: "15+", label: "Years of Experience", description: "Crafting memorable events since 2009" },
@@ -52,14 +53,16 @@ const values = [
   },
 ];
 
-const milestones = [
-  { year: "2009", title: "The Beginning", description: "DA Creation was founded with a vision to transform event experiences in India." },
-  { year: "2012", title: "First Destination Wedding", description: "Executed our first destination wedding in Udaipur, marking a new chapter." },
-  { year: "2015", title: "Corporate Division Launch", description: "Expanded into corporate events, partnering with Fortune 500 companies." },
-  { year: "2018", title: "International Expansion", description: "Began handling events in Dubai, Thailand, and other international destinations." },
-  { year: "2022", title: "500+ Events Milestone", description: "Celebrated the landmark of successfully executing over 500 events." },
-  { year: "2024", title: "Industry Recognition", description: "Awarded Best Event Management Company by Wedding Industry Awards." },
-];
+function getMilestones(companyName: string) {
+  return [
+    { year: "2009", title: "The Beginning", description: `${companyName} was founded with a vision to transform event experiences in India.` },
+    { year: "2012", title: "First Destination Wedding", description: "Executed our first destination wedding in Udaipur, marking a new chapter." },
+    { year: "2015", title: "Corporate Division Launch", description: "Expanded into corporate events, partnering with Fortune 500 companies." },
+    { year: "2018", title: "International Expansion", description: "Began handling events in Dubai, Thailand, and other international destinations." },
+    { year: "2022", title: "500+ Events Milestone", description: "Celebrated the landmark of successfully executing over 500 events." },
+    { year: "2024", title: "Industry Recognition", description: "Awarded Best Event Management Company by Wedding Industry Awards." },
+  ];
+}
 
 const whyChooseUs = [
   "Dedicated project manager for every event",
@@ -71,6 +74,9 @@ const whyChooseUs = [
 ];
 
 export default function AboutPage() {
+  const { branding } = useBranding();
+  const orgSchema = useOrganizationSchema();
+  
   const { data: pageContent } = useQuery<PageContent>({
     queryKey: ["/api/cms/pages/about"],
   });
@@ -97,15 +103,13 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.about.title}
-        description={SEO_DATA.about.description}
-        keywords={SEO_DATA.about.keywords}
-        canonicalUrl="https://dacreation.in/about"
+        pageType="about"
+        canonicalUrl={`${branding.domain.url}/about`}
         structuredData={{
-          ...getOrganizationSchema(),
-          ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.in" },
-            { name: "About Us", url: "https://dacreation.in/about" }
+          ...orgSchema,
+          ...getBreadcrumbSchema(branding, [
+            { name: "Home", url: branding.domain.url },
+            { name: "About Us", url: `${branding.domain.url}/about` }
           ])
         }}
       />
@@ -131,7 +135,7 @@ export default function AboutPage() {
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6"
               data-testid="text-page-title"
             >
-              {pageContent?.title || "About DA Creation"}
+              {pageContent?.title || `About ${branding.company.name}`}
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
               {pageContent?.subtitle || "Crafting Unforgettable Moments Since 2009"}
@@ -183,7 +187,7 @@ export default function AboutPage() {
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">Our Story</h2>
               <div className="prose prose-lg text-gray-600 space-y-4">
                 <p>
-                  {pageContent?.content || `Founded in 2009, DA Creation has grown from a passionate vision to one of India's most trusted event management companies. We believe that every event tells a story, and our mission is to make that story unforgettable.`}
+                  {pageContent?.content || `Founded in ${branding.company.foundedYear}, ${branding.company.name} has grown from a passionate vision to one of India's most trusted event management companies. We believe that every event tells a story, and our mission is to make that story unforgettable.`}
                 </p>
                 <p>
                   From intimate gatherings to grand celebrations, we bring creativity, precision, and heart to every project. Our team of dedicated professionals works tirelessly to transform your dreams into stunning reality.
@@ -211,7 +215,7 @@ export default function AboutPage() {
                 <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#601a29] to-[#d4af37] overflow-hidden shadow-2xl">
                   <img 
                     src={pageContent?.heroImage || "/images/logo-maroon.webp"} 
-                    alt="DA Creation"
+                    alt={branding.company.name}
                     className="w-full h-full object-contain p-12 bg-white"
                   />
                 </div>
@@ -312,7 +316,7 @@ export default function AboutPage() {
             <div className="relative">
               <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#601a29] via-[#d4af37] to-[#601a29]" />
               
-              {milestones.map((milestone, index) => (
+              {getMilestones(branding.company.name).map((milestone, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
@@ -345,7 +349,7 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Why DA Creation</span>
+              <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Why {branding.company.name}</span>
               <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-6">What Sets Us Apart</h2>
               <p className="text-white/80 text-lg mb-8">
                 With over 15 years of experience, we've perfected the art of creating extraordinary events that exceed expectations.
@@ -406,7 +410,7 @@ export default function AboutPage() {
               <span className="text-[#d4af37] font-medium uppercase tracking-wider text-sm">Our People</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">Meet Our Team</h2>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                The talented individuals behind DA Creation's success
+                The talented individuals behind {branding.company.name}'s success
               </p>
             </motion.div>
 

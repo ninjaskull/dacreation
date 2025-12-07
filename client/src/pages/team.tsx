@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const departments = [
   { name: "Leadership", description: "Visionary leaders guiding our success" },
@@ -44,6 +45,7 @@ const cultureValues = [
 ];
 
 export default function TeamPage() {
+  const { branding } = useBranding();
   const { data: teamMembers = [], isLoading } = useQuery<TeamMember[]>({
     queryKey: ["/api/cms/team", { active: true }],
     queryFn: async () => {
@@ -57,13 +59,11 @@ export default function TeamPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.team.title}
-        description={SEO_DATA.team.description}
-        keywords={SEO_DATA.team.keywords}
-        canonicalUrl="https://dacreation.in/team"
-        structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.in" },
-          { name: "Our Team", url: "https://dacreation.in/team" }
+        pageType="team"
+        canonicalUrl={`${branding.domain.url}/team`}
+        structuredData={getBreadcrumbSchema(branding, [
+          { name: "Home", url: branding.domain.url },
+          { name: "Our Team", url: `${branding.domain.url}/team` }
         ])}
       />
       <Navbar />

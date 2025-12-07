@@ -1,17 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import heroImage from "@assets/generated_images/luxury_indian_wedding_reception_venue.webp";
-
+import { useBranding } from "@/contexts/BrandingContext";
 import { Link } from "wouter";
 
 export function Hero() {
+  const { branding } = useBranding();
   return (
     <section className="relative h-screen w-full overflow-hidden flex items-center justify-center bg-[#1a1a1a]">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
-          alt="Luxury Indian Wedding Venue - DA Creation Event Management" 
+          alt={`Luxury Indian Wedding Venue - ${branding.company.name} Event Management`} 
           className="w-full h-full object-cover transition-transform duration-[20s] ease-in-out transform scale-100 hover:scale-105"
           loading="eager"
           fetchPriority="high"

@@ -22,7 +22,8 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import heroImage from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
 import decorImg from "@assets/generated_images/indian_wedding_decor_detail.png";
-import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -81,6 +82,7 @@ const processSteps = [
 ];
 
 export default function WeddingsPage() {
+  const { branding } = useBranding();
   const { data: websiteSettings } = useQuery<WebsiteSettings>({
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
@@ -100,16 +102,14 @@ export default function WeddingsPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.weddings.title}
-        description={SEO_DATA.weddings.description}
-        keywords={SEO_DATA.weddings.keywords}
-        canonicalUrl="https://dacreation.in/services/weddings"
+        pageType="weddings"
+        canonicalUrl={`${branding.domain.url}/services/weddings`}
         structuredData={{
-          ...getServiceSchema("Wedding Planning", SEO_DATA.weddings.description, "https://dacreation.in/services/weddings"),
-          ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.in" },
-            { name: "Services", url: "https://dacreation.in/services" },
-            { name: "Weddings", url: "https://dacreation.in/services/weddings" }
+          ...getServiceSchema(branding, "Wedding Planning", `${branding.domain.url}/services/weddings`),
+          ...getBreadcrumbSchema(branding, [
+            { name: "Home", url: branding.domain.url },
+            { name: "Services", url: `${branding.domain.url}/services` },
+            { name: "Weddings", url: `${branding.domain.url}/services/weddings` }
           ])
         }}
       />

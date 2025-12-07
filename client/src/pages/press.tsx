@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -107,6 +108,7 @@ const defaultArticles = [
 ];
 
 export default function PressPage() {
+  const { branding } = useBranding();
   const { data: websiteSettings } = useQuery<WebsiteSettings>({
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
@@ -140,13 +142,11 @@ export default function PressPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.press.title}
-        description={SEO_DATA.press.description}
-        keywords={SEO_DATA.press.keywords}
-        canonicalUrl="https://dacreation.in/press"
-        structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.in" },
-          { name: "Press & Media", url: "https://dacreation.in/press" }
+        pageType="press"
+        canonicalUrl={`${branding.domain.url}/press`}
+        structuredData={getBreadcrumbSchema(branding, [
+          { name: "Home", url: branding.domain.url },
+          { name: "Press & Media", url: `${branding.domain.url}/press` }
         ])}
       />
       <Navbar />

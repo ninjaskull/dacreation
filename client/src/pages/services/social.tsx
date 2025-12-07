@@ -22,7 +22,8 @@ import {
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import heroImage from "@assets/generated_images/luxury_private_dinner.png";
-import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -81,6 +82,7 @@ const processSteps = [
 ];
 
 export default function SocialPage() {
+  const { branding } = useBranding();
   const { data: websiteSettings } = useQuery<WebsiteSettings>({
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
@@ -100,16 +102,14 @@ export default function SocialPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.social.title}
-        description={SEO_DATA.social.description}
-        keywords={SEO_DATA.social.keywords}
-        canonicalUrl="https://dacreation.in/services/social"
+        pageType="social"
+        canonicalUrl={`${branding.domain.url}/services/social`}
         structuredData={{
-          ...getServiceSchema("Social Event Planning", SEO_DATA.social.description, "https://dacreation.in/services/social"),
-          ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.in" },
-            { name: "Services", url: "https://dacreation.in/services" },
-            { name: "Social Events", url: "https://dacreation.in/services/social" }
+          ...getServiceSchema(branding, "Social Event Planning", `${branding.domain.url}/services/social`),
+          ...getBreadcrumbSchema(branding, [
+            { name: "Home", url: branding.domain.url },
+            { name: "Services", url: `${branding.domain.url}/services` },
+            { name: "Social Events", url: `${branding.domain.url}/services/social` }
           ])
         }}
       />

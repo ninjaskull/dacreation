@@ -2,19 +2,20 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { LeadCaptureWizard } from "@/components/sales/lead-capture-wizard";
 import { Check } from "lucide-react";
-import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 export default function InquirePage() {
+  const { branding } = useBranding();
+  
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary selection:text-white">
       <SEOHead
-        title={SEO_DATA.inquire.title}
-        description={SEO_DATA.inquire.description}
-        keywords={SEO_DATA.inquire.keywords}
-        canonicalUrl="https://dacreation.in/inquire"
-        structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.in" },
-          { name: "Book Event", url: "https://dacreation.in/inquire" }
+        pageType="inquire"
+        canonicalUrl={`${branding.domain.url}/inquire`}
+        structuredData={getBreadcrumbSchema(branding, [
+          { name: "Home", url: branding.domain.url },
+          { name: "Book Event", url: `${branding.domain.url}/inquire` }
         ])}
       />
       <Navbar />

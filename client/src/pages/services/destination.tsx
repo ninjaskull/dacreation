@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/destination_event_beach.png";
-import { SEOHead, SEO_DATA, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const stats = [
   { value: "50+", label: "Destinations", icon: MapPin },
@@ -89,19 +90,19 @@ const processSteps = [
 ];
 
 export default function DestinationPage() {
+  const { branding } = useBranding();
+  
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.destination.title}
-        description={SEO_DATA.destination.description}
-        keywords={SEO_DATA.destination.keywords}
-        canonicalUrl="https://dacreation.in/services/destination"
+        pageType="destination"
+        canonicalUrl={`${branding.domain.url}/services/destination`}
         structuredData={{
-          ...getServiceSchema("Destination Event Planning", SEO_DATA.destination.description, "https://dacreation.in/services/destination"),
-          ...getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.in" },
-            { name: "Services", url: "https://dacreation.in/services" },
-            { name: "Destination Events", url: "https://dacreation.in/services/destination" }
+          ...getServiceSchema(branding, "Destination Event Planning", `${branding.domain.url}/services/destination`),
+          ...getBreadcrumbSchema(branding, [
+            { name: "Home", url: branding.domain.url },
+            { name: "Services", url: `${branding.domain.url}/services` },
+            { name: "Destination Events", url: `${branding.domain.url}/services/destination` }
           ])
         }}
       />

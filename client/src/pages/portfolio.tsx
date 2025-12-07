@@ -21,7 +21,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -141,6 +142,7 @@ type PortfolioDisplayItem = {
 };
 
 export default function PortfolioPage() {
+  const { branding } = useBranding();
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedItem, setSelectedItem] = useState<PortfolioDisplayItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | string | null>(null);
@@ -206,13 +208,11 @@ export default function PortfolioPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.portfolio.title}
-        description={SEO_DATA.portfolio.description}
-        keywords={SEO_DATA.portfolio.keywords}
-        canonicalUrl="https://dacreation.in/portfolio"
-        structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.in" },
-          { name: "Portfolio", url: "https://dacreation.in/portfolio" }
+        pageType="portfolio"
+        canonicalUrl={`${branding.domain.url}/portfolio`}
+        structuredData={getBreadcrumbSchema(branding, [
+          { name: "Home", url: branding.domain.url },
+          { name: "Portfolio", url: `${branding.domain.url}/portfolio` }
         ])}
       />
       <Navbar />

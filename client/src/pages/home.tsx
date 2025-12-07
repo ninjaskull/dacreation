@@ -11,10 +11,15 @@ import { Contact } from "@/components/sections/contact";
 import { LeadMagnetsSection } from "@/components/sales/lead-magnets";
 import { ConsultationCTA } from "@/components/sales/consultation-cta";
 import { TrustedClients } from "@/components/sections/trusted-clients";
-import { SEOHead, SEO_DATA, getOrganizationSchema, getLocalBusinessSchema } from "@/components/seo/SEOHead";
+import { SEOHead, useOrganizationSchema, useLocalBusinessSchema } from "@/components/seo/SEOHead";
 import { useQuery } from "@tanstack/react-query";
+import { useBranding } from "@/contexts/BrandingContext";
 
 export default function Home() {
+  const { branding } = useBranding();
+  const orgSchema = useOrganizationSchema();
+  const localBusinessSchema = useLocalBusinessSchema();
+  
   const { data: websiteSettings } = useQuery({
     queryKey: ["/api/settings/website"],
     queryFn: async () => {
@@ -26,11 +31,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground selection:bg-primary selection:text-white">
       <SEOHead
-        title={SEO_DATA.home.title}
-        description={SEO_DATA.home.description}
-        keywords={SEO_DATA.home.keywords}
-        canonicalUrl="https://dacreation.in/"
-        structuredData={{...getOrganizationSchema(), ...getLocalBusinessSchema()}}
+        pageType="home"
+        canonicalUrl={`${branding.domain.url}/`}
+        structuredData={{...orgSchema, ...localBusinessSchema}}
       />
       <Navbar />
       <main>

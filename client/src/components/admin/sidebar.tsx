@@ -34,6 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface SidebarItem {
   name: string;
@@ -149,6 +150,8 @@ export function AdminSidebar() {
     return content;
   };
 
+  const { branding } = useBranding();
+  
   return (
     <div
       className={cn(
@@ -159,11 +162,11 @@ export function AdminSidebar() {
       <div className={cn("flex items-center h-16 border-b border-border px-4", collapsed ? "justify-center" : "justify-between")}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <img src="/images/icon-maroon.webp" alt="DA" className="h-8 w-8 object-contain" />
-            <span className="font-serif font-bold text-lg text-primary">DA Creation</span>
+            <img src={branding.assets.logos.iconMaroon} alt={branding.company.name} className="h-8 w-8 object-contain" />
+            <span className="font-serif font-bold text-lg text-primary">{branding.company.name}</span>
           </div>
         )}
-        {collapsed && <img src="/images/icon-maroon.webp" alt="DA" className="h-8 w-8 object-contain" />}
+        {collapsed && <img src={branding.assets.logos.iconMaroon} alt={branding.company.name} className="h-8 w-8 object-contain" />}
         <Button
           variant="ghost"
           size="icon"

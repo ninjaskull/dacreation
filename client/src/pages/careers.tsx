@@ -24,7 +24,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { SEOHead, SEO_DATA, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const benefits = [
   { icon: Heart, title: "Health Insurance", desc: "Comprehensive health coverage for you and family" },
@@ -70,6 +71,7 @@ type CareerDisplayItem = {
 };
 
 export default function CareersPage() {
+  const { branding } = useBranding();
   const [selectedCareer, setSelectedCareer] = useState<CareerDisplayItem | null>(null);
   
   const { data: careers = [], isLoading } = useQuery<CareerDisplayItem[]>({
@@ -101,13 +103,11 @@ export default function CareersPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEOHead
-        title={SEO_DATA.careers.title}
-        description={SEO_DATA.careers.description}
-        keywords={SEO_DATA.careers.keywords}
-        canonicalUrl="https://dacreation.in/careers"
-        structuredData={getBreadcrumbSchema([
-          { name: "Home", url: "https://dacreation.in" },
-          { name: "Careers", url: "https://dacreation.in/careers" }
+        pageType="careers"
+        canonicalUrl={`${branding.domain.url}/careers`}
+        structuredData={getBreadcrumbSchema(branding, [
+          { name: "Home", url: branding.domain.url },
+          { name: "Careers", url: `${branding.domain.url}/careers` }
         ])}
       />
       <Navbar />

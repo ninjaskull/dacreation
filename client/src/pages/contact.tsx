@@ -39,7 +39,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { budgetRanges } from "@shared/schema";
-import { SEOHead, SEO_DATA, getLocalBusinessSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { SEOHead, useLocalBusinessSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface SocialLink {
   platform: string;
@@ -116,6 +117,8 @@ const DEFAULT_SETTINGS: WebsiteSettings = {
 };
 
 export default function ContactPage() {
+  const { branding } = useBranding();
+  const localBusinessSchema = useLocalBusinessSchema();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -260,15 +263,13 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <SEOHead
-        title={SEO_DATA.contact.title}
-        description={SEO_DATA.contact.description}
-        keywords={SEO_DATA.contact.keywords}
-        canonicalUrl="https://dacreation.in/contact"
+        pageType="contact"
+        canonicalUrl={`${branding.domain.url}/contact`}
         structuredData={[
-          getLocalBusinessSchema(),
-          getBreadcrumbSchema([
-            { name: "Home", url: "https://dacreation.in" },
-            { name: "Contact", url: "https://dacreation.in/contact" }
+          localBusinessSchema,
+          getBreadcrumbSchema(branding, [
+            { name: "Home", url: branding.domain.url },
+            { name: "Contact", url: `${branding.domain.url}/contact` }
           ])
         ]}
       />
