@@ -10,6 +10,9 @@ import rateLimit from "express-rate-limit";
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy for rate limiting (required for X-Forwarded-For header)
+app.set("trust proxy", 1);
+
 // Security headers with helmet
 app.use(helmet({
   contentSecurityPolicy: {

@@ -23,11 +23,13 @@ Preferred communication style: Simple, everyday language.
 - **Security**: Helmet middleware, rate limiting, SQL injection prevention, WebSocket session authentication, strong password requirements.
 
 ### Data Storage
-- **Database**: PostgreSQL via Neon serverless driver.
+- **Database**: PostgreSQL via Neon serverless driver (custom external Neon database via `NEON_DATABASE_URL`).
+- **Database Configuration**: The server prioritizes `NEON_DATABASE_URL` over `DATABASE_URL`. When adding new tables, ensure they are created in the NEON database (not the Replit-provisioned one).
 - **ORM**: Drizzle ORM for type-safe queries, Drizzle Kit for migrations.
 - **Data Models**:
     - **Users**: Admin credentials (UUID, username, hashed password).
     - **Leads**: Event inquiries (event type, date, guest count, location, budget, contact info, lead source, status, notes).
+    - **Callback Requests**: Quick callback submissions (name, phone, event type, status, priority).
 - **Storage Layer**: Repository pattern using `DatabaseStorage` for abstracted CRUD operations.
 
 ### CRM System
