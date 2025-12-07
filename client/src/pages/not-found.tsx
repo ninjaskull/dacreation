@@ -31,7 +31,7 @@ export default function NotFound() {
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
       
-      <main className="flex-1 flex items-center justify-center py-20">
+      <main className="flex-1 flex items-center justify-center pt-32 lg:pt-40 pb-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
