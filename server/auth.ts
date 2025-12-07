@@ -59,15 +59,31 @@ export function setupAuth(app: Express) {
   
   const developmentOnlyFallback = `dev-${Date.now()}-${Math.random().toString(36)}`;
   
-  const sessionStore = isProduction 
-    ? new PgSession({
+  let sessionStore;
+  
+  if (isProduction) {
+    try {
+      sessionStore = new PgSession({
         pool: pool as any,
         tableName: 'session',
         createTableIfMissing: true,
-      })
-    : new MemoryStore({
+        errorLog: (err: Error) => {
+          console.error('Session store error:', err);
+        },
+      });
+      console.log('[auth] Using PostgreSQL session store');
+    } catch (err) {
+      console.error('[auth] Failed to create PostgreSQL session store, falling back to memory store:', err);
+      sessionStore = new MemoryStore({
         checkPeriod: 86400000,
       });
+    }
+  } else {
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
+    console.log('[auth] Using memory session store');
+  }
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret || developmentOnlyFallback,

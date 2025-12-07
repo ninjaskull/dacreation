@@ -75,14 +75,17 @@ export async function registerRoutes(
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
       if (err) {
+        console.error("Passport authentication error:", err);
         return res.status(500).json({ message: "Internal server error" });
       }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
-      req.logIn(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Login failed" });
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error("Session login error:", loginErr);
+          console.error("Session login error stack:", loginErr.stack);
+          return res.status(500).json({ message: "Login failed - session error", error: process.env.NODE_ENV !== 'production' ? loginErr.message : undefined });
         }
         return res.json({ user });
       });
