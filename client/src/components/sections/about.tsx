@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import mandala from "@assets/generated_images/subtle_mandala_texture_background.png";
+import mandala from "@assets/generated_images/subtle_mandala_texture_background.webp";
 import { useBranding } from "@/contexts/BrandingContext";
 import { Building2, Heart, Briefcase, Users } from "lucide-react";
 

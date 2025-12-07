@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import heroImage from "@assets/generated_images/luxury_private_dinner.png";
+import heroImage from "@assets/generated_images/luxury_private_dinner.webp";
 import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 

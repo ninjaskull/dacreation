@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import wedding1 from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
-import corporate1 from "@assets/generated_images/corporate_event_gala.png";
-import social1 from "@assets/generated_images/luxury_private_dinner.png";
+import wedding1 from "@assets/generated_images/indian_bride_and_groom_minimalist.webp";
+import corporate1 from "@assets/generated_images/corporate_event_gala.webp";
+import social1 from "@assets/generated_images/luxury_private_dinner.webp";
 
 // We will need to update these images with the newly generated ones for corporate/social
 const portfolioItems = [

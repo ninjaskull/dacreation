@@ -4,10 +4,10 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
-import weddingImg from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
-import corporateImg from "@assets/generated_images/corporate_conference_stage.png";
-import socialImg from "@assets/generated_images/luxury_private_dinner.png";
-import destImg from "@assets/generated_images/destination_event_beach.png";
+import weddingImg from "@assets/generated_images/indian_bride_and_groom_minimalist.webp";
+import corporateImg from "@assets/generated_images/corporate_conference_stage.webp";
+import socialImg from "@assets/generated_images/luxury_private_dinner.webp";
+import destImg from "@assets/generated_images/destination_event_beach.webp";
 
 const serviceData = {
   corporate: {

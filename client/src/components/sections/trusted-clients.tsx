@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 
 const clientLogos = [
-  { name: "Axis Bank", logo: "/images/clients/axis_bank_logo.png", logoWhite: "/images/clients/axis_bank_logo_white.png" },
-  { name: "BNP Paribas", logo: "/images/clients/Bnp_paribhas_logo.png", logoWhite: "/images/clients/Bnp_paribhas_logo_white.png" },
-  { name: "HDFC Bank", logo: "/images/clients/hdfc_bank_logo.png", logoWhite: "/images/clients/hdfc_bank_logo_white.png" },
-  { name: "Kotak Bank", logo: "/images/clients/kotak_bank_logo.png", logoWhite: "/images/clients/kotak_bank_logo_white.png" },
-  { name: "Standard Bank", logo: "/images/clients/standard_bank_logo.png", logoWhite: "/images/clients/standard_bank_logo_white.png" },
-  { name: "Yes Bank", logo: "/images/clients/yes_bank_logo.png", logoWhite: "/images/clients/yes_bank_logo_white.png" },
+  { name: "Axis Bank", logo: "/images/clients/axis_bank_logo.webp", logoWhite: "/images/clients/axis_bank_logo_white.webp" },
+  { name: "BNP Paribas", logo: "/images/clients/Bnp_paribhas_logo.webp", logoWhite: "/images/clients/Bnp_paribhas_logo_white.webp" },
+  { name: "HDFC Bank", logo: "/images/clients/hdfc_bank_logo.webp", logoWhite: "/images/clients/hdfc_bank_logo_white.webp" },
+  { name: "Kotak Bank", logo: "/images/clients/kotak_bank_logo.webp", logoWhite: "/images/clients/kotak_bank_logo_white.webp" },
+  { name: "Standard Bank", logo: "/images/clients/standard_bank_logo.webp", logoWhite: "/images/clients/standard_bank_logo_white.webp" },
+  { name: "Yes Bank", logo: "/images/clients/yes_bank_logo.webp", logoWhite: "/images/clients/yes_bank_logo_white.webp" },
 ];
 
 interface TrustedClientsProps {

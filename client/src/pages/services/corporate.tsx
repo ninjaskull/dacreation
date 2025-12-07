@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import heroImage from "@assets/generated_images/corporate_conference_stage.png";
-import galaImg from "@assets/generated_images/corporate_event_gala.png";
+import heroImage from "@assets/generated_images/corporate_conference_stage.webp";
+import galaImg from "@assets/generated_images/corporate_event_gala.webp";
 import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 

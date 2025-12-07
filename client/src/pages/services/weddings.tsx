@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import heroImage from "@assets/generated_images/indian_bride_and_groom_minimalist.png";
-import decorImg from "@assets/generated_images/indian_wedding_decor_detail.png";
+import heroImage from "@assets/generated_images/indian_bride_and_groom_minimalist.webp";
+import decorImg from "@assets/generated_images/indian_wedding_decor_detail.webp";
 import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 

@@ -19,7 +19,7 @@ import {
   Users
 } from "lucide-react";
 import { Link } from "wouter";
-import heroImage from "@assets/generated_images/destination_event_beach.png";
+import heroImage from "@assets/generated_images/destination_event_beach.webp";
 import { SEOHead, getServiceSchema, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 

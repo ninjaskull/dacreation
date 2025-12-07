@@ -1,0 +1,43 @@
+/home/ubuntu/.pm2/logs/dacreation-error.log last 15 lines:
+0|dacreati |     at async open (node:internal/fs/promises:639:25)
+0|dacreati |     at async Object.readFile (node:internal/fs/promises:1246:14)
+0|dacreati |     at async n._rawEnsureSessionStoreTable (/var/www/dacreation/dacreation/dist/index.cjs:160:28228)
+0|dacreati |     at async n._asyncQuery (/var/www/dacreation/dacreation/dist/index.cjs:160:29313)
+0|dacreati | [error handler] ENOENT: no such file or directory, open '/var/www/dacreation/dacreation/dist/table.sql'
+0|dacreati | [error handler] Headers already sent, cannot send error response
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+0|dacreati | Session store error: Failed to prune sessions:
+
+0|dacreation  | [auth] Using PostgreSQL session store
+0|dacreation  | [WebSocket] Server initialized on /ws/chat
+0|dacreation  | 9:37:02 PM [express] serving on port 5000
+0|dacreation  | [WebSocket] Client connected: client_1765143440033_daltjpvjk
+0|dacreation  | [WebSocket] Visitor client client_1765143440033_daltjpvjk joined
+0|dacreation  | 9:37:20 PM [express] GET /api/settings/website 200 in 193ms :: {"address":"Aradhana Society, Shop No. 2, Ground Floor, Punyai Nagar, Opp. KK Market, Dhankawadi, Pune – 411043","phone":"+917972496366, +917887828280","email":"info@dacreation.in","whatsappNumber":"+917972496366","mapEmbedCode":"","topBarAddress":"Pune, Maharashtra","secondaryAddress":"","socialMedia":[],"numberOfEventsHeld":100,"ratings":5,"weddingsCount":50,"corporateCount":20,"socialCount":20,"awardsCount":25,"destinationsCount":15,"happyGuestsCount":5000,"clientSatisfaction":98,"showPreferredBy":false,"showTrustedBy":false}
+0|dacreation  | [WebSocket] Client disconnected: client_1765143440033_daltjpvjk
+0|dacreation  | 9:37:40 PM [express] GET /api/settings/website 304 in 755ms :: {"address":"Aradhana Society, Shop No. 2, Ground Floor, Punyai Nagar, Opp. KK Market, Dhankawadi, Pune – 411043","phone":"+917972496366, +917887828280","email":"info@dacreation.in","whatsappNumber":"+917972496366","mapEmbedCode":"","topBarAddress":"Pune, Maharashtra","secondaryAddress":"","socialMedia":[],"numberOfEventsHeld":100,"ratings":5,"weddingsCount":50,"corporateCount":20,"socialCount":20,"awardsCount":25,"destinationsCount":15,"happyGuestsCount":5000,"clientSatisfaction":98,"showPreferredBy":false,"showTrustedBy":false}
+0|dacreation  | Session login error: Error: ENOENT: no such file or directory, open '/var/www/dacreation/dacreation/dist/table.sql'
+0|dacreation  |     at async open (node:internal/fs/promises:639:25)
+0|dacreation  |     at async Object.readFile (node:internal/fs/promises:1246:14)
+0|dacreation  |     at async n._rawEnsureSessionStoreTable (/var/www/dacreation/dacreation/dist/index.cjs:102:28228)
+0|dacreation  |     at async n._asyncQuery (/var/www/dacreation/dacreation/dist/index.cjs:102:29313) {
+0|dacreation  |   errno: -2,
+0|dacreation  |   code: 'ENOENT',
+0|dacreation  |   syscall: 'open',
+0|dacreation  |   path: '/var/www/dacreation/dacreation/dist/table.sql'
+0|dacreation  | }
+0|dacreation  | Session login error stack: Error: ENOENT: no such file or directory, open '/var/www/dacreation/dacreation/dist/table.sql'
+0|dacreation  |     at async open (node:internal/fs/promises:639:25)
+0|dacreation  |     at async Object.readFile (node:internal/fs/promises:1246:14)
+0|dacreation  |     at async n._rawEnsureSessionStoreTable (/var/www/dacreation/dacreation/dist/index.cjs:102:28228)
+0|dacreation  |     at async n._asyncQuery (/var/www/dacreation/dacreation/dist/index.cjs:102:29313)
+0|dacreation  | 9:37:45 PM [express] POST /api/auth/login 500 in 255ms :: {"message":"Login failed - session error"}
+0|dacreation  | [error handler] ENOENT: no such file or directory, open '/var/www/dacreation/dacreation/dist/table.sql'
+0|dacreation  | [error handler] Headers already sent, cannot send error response
