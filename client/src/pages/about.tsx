@@ -188,7 +188,7 @@ export default function AboutPage() {
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-6">Our Story</h2>
               <div className="prose prose-lg text-gray-600 space-y-4">
                 <p>
-                  Founded in 2020, EventPro has grown to become one of India's most trusted event management companies. With a team of passionate professionals, we have successfully executed over 100 events across 15 cities.
+                  Founded in 2020, DA Creation has grown to become one of India's most trusted event management companies. With a team of passionate professionals, we have successfully executed over 100 events across 15 cities.
                 </p>
                 <p>
                   From intimate gatherings to grand celebrations, we bring creativity, precision, and heart to every project. Our team of dedicated professionals works tirelessly to transform your dreams into stunning reality.
