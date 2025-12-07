@@ -142,11 +142,11 @@ export default function TeamPage() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                  <p className="text-3xl font-bold text-[#601a29]">50+</p>
+                  <p className="text-3xl font-bold text-[#601a29]">{branding.stats.teamMembers}+</p>
                   <p className="text-gray-600 text-sm">Team Members</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                  <p className="text-3xl font-bold text-[#601a29]">15+</p>
+                  <p className="text-3xl font-bold text-[#601a29]">{branding.stats.yearsExperience}+</p>
                   <p className="text-gray-600 text-sm">Years Experience</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
