@@ -16,7 +16,8 @@ import {
   Newspaper, 
   Phone, 
   Calendar,
-  MapPin
+  MapPin,
+  Shield
 } from "lucide-react";
 
 function getSitemapData(companyName: string) {
@@ -50,6 +51,15 @@ function getSitemapData(companyName: string) {
         { name: "Testimonials", href: "/testimonials", description: "What our clients say" },
         { name: "Careers", href: "/careers", description: "Join our team" },
         { name: "Press & Media", href: "/press", description: "News and media coverage" },
+      ]
+    },
+    {
+      category: "Legal",
+      icon: Shield,
+      links: [
+        { name: "Privacy Policy", href: "/privacy-policy", description: "How we protect your data" },
+        { name: "Terms of Service", href: "/terms-of-service", description: "Our terms and conditions" },
+        { name: "Cookie Policy", href: "/cookie-policy", description: "How we use cookies" },
       ]
     },
   ];

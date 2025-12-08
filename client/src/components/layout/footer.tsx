@@ -115,9 +115,9 @@ export function Footer() {
   ];
 
   const legal = [
-    { name: "Privacy Policy", href: "#" },
-    { name: "Terms of Service", href: "#" },
-    { name: "Cookie Policy", href: "#" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Terms of Service", href: "/terms-of-service" },
+    { name: "Cookie Policy", href: "/cookie-policy" },
   ];
 
   return (
@@ -354,14 +354,14 @@ export function Footer() {
 
             <div className="flex flex-wrap justify-center gap-6">
               {legal.map((item) => (
-                <a
+                <Link
                   key={item.name}
                   href={item.href}
                   className="text-sm text-primary-foreground/50 hover:text-white transition-colors"
                   data-testid={`footer-legal-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {item.name}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
