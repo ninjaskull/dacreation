@@ -4,51 +4,51 @@ import { eq } from "drizzle-orm";
 
 const baseStyles = `
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f5f5f5; }
+    body { font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f9f7f4; }
     .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-    .header { background: linear-gradient(135deg, #722F37 0%, #8B4513 100%); padding: 30px 40px; text-align: center; }
+    .header { background: linear-gradient(135deg, #601a29 0%, #7a2234 50%, #601a29 100%); padding: 30px 40px; text-align: center; }
     .header img { max-height: 60px; }
-    .header h1 { color: #ffffff; margin: 15px 0 0 0; font-size: 24px; font-weight: 600; }
+    .header h1 { color: #ffffff; margin: 15px 0 0 0; font-size: 24px; font-weight: 600; font-family: 'Playfair Display', Georgia, serif; }
     .content { padding: 40px; }
-    .content h2 { color: #722F37; margin-top: 0; font-size: 22px; }
+    .content h2 { color: #601a29; margin-top: 0; font-size: 22px; font-family: 'Playfair Display', Georgia, serif; }
     .content p { margin: 15px 0; color: #555555; }
-    .highlight-box { background-color: #FDF8F3; border-left: 4px solid #722F37; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0; }
-    .highlight-box h3 { color: #722F37; margin: 0 0 10px 0; font-size: 16px; }
+    .highlight-box { background-color: #FDF8F3; border-left: 4px solid #d4af37; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0; }
+    .highlight-box h3 { color: #601a29; margin: 0 0 10px 0; font-size: 16px; }
     .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
     .details-table td { padding: 12px 15px; border-bottom: 1px solid #eeeeee; }
     .details-table td:first-child { color: #888888; width: 40%; font-weight: 500; }
     .details-table td:last-child { color: #333333; }
-    .cta-button { display: inline-block; background: linear-gradient(135deg, #722F37 0%, #8B4513 100%); color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+    .cta-button { display: inline-block; background: linear-gradient(135deg, #601a29 0%, #7a2234 100%); color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 6px; font-weight: 600; margin: 20px 0; }
     .cta-button:hover { opacity: 0.9; }
-    .secondary-button { display: inline-block; background-color: #ffffff; color: #722F37 !important; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 600; border: 2px solid #722F37; margin: 10px 5px; }
+    .secondary-button { display: inline-block; background-color: #ffffff; color: #601a29 !important; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 600; border: 2px solid #601a29; margin: 10px 5px; }
     .footer { background-color: #2D2D2D; padding: 30px 40px; text-align: center; color: #999999; font-size: 13px; }
-    .footer a { color: #D4A574; text-decoration: none; }
+    .footer a { color: #d4af37; text-decoration: none; }
     .social-links { margin: 15px 0; }
     .social-links a { display: inline-block; margin: 0 10px; color: #ffffff; }
-    .divider { height: 1px; background-color: #eeeeee; margin: 30px 0; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent 0%, #d4af37 50%, transparent 100%); margin: 30px 0; }
     .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .badge-success { background-color: #D4EDDA; color: #155724; }
     .badge-warning { background-color: #FFF3CD; color: #856404; }
     .badge-info { background-color: #D1ECF1; color: #0C5460; }
     .badge-danger { background-color: #F8D7DA; color: #721C24; }
-    .amount { font-size: 28px; font-weight: 700; color: #722F37; }
+    .amount { font-size: 28px; font-weight: 700; color: #601a29; }
     .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
     .status-success { background-color: #28a745; }
-    .status-pending { background-color: #ffc107; }
+    .status-pending { background-color: #d4af37; }
     .status-urgent { background-color: #dc3545; }
+    .gold-accent { color: #d4af37; }
   </style>
 `;
 
 const emailHeader = `
   <div class="header">
-    <img src="{{company_logo}}" alt="{{company_name}}" style="max-height: 60px;">
-    <h1>{{company_name}}</h1>
+    {{company_name_text}}
   </div>
 `;
 
 const emailFooter = `
   <div class="footer">
-    <p style="margin: 0 0 10px 0;"><strong>{{company_name}}</strong></p>
+    <p style="margin: 0 0 10px 0;"><strong>{{company_name_text}}</strong></p>
     <p style="margin: 5px 0;">{{company_address}}</p>
     <p style="margin: 5px 0;">
       <a href="tel:{{company_phone}}">{{company_phone}}</a> | 
@@ -58,7 +58,7 @@ const emailFooter = `
       <a href="{{company_website}}">Visit our website</a>
     </p>
     <p style="margin-top: 20px; font-size: 11px; color: #777777;">
-      © {{current_year}} {{company_name}}. All rights reserved.
+      © {{current_year}} {{company_name_text}}. All rights reserved.
     </p>
   </div>
 `;
@@ -71,7 +71,7 @@ const templates = [
     name: "Welcome Email",
     templateKey: "welcome_email",
     type: "transactional",
-    subject: "Welcome to {{company_name}} - Let's Create Something Extraordinary!",
+    subject: "Welcome to {{company_name_text}} - Let's Create Something Extraordinary!",
     variables: ["client_name", "client_email"],
     htmlContent: `
 <!DOCTYPE html>
@@ -82,14 +82,14 @@ const templates = [
     ${emailHeader}
     <div class="content">
       <h2>Welcome, {{client_name}}! 🎉</h2>
-      <p>We're thrilled to have you join the {{company_name}} family. Your journey towards creating an unforgettable event begins here.</p>
+      <p>We're thrilled to have you join the {{company_name_text}} family. Your journey towards creating an unforgettable event begins here.</p>
       
       <div class="highlight-box">
         <h3>What happens next?</h3>
         <p style="margin: 0;">Our team will be reaching out to you shortly to discuss your vision and how we can bring it to life. In the meantime, feel free to explore our portfolio and get inspired!</p>
       </div>
       
-      <p>At {{company_name}}, we believe every event is a unique story waiting to be told. Whether it's a grand wedding celebration, a corporate gala, or an intimate gathering, we're here to make it extraordinary.</p>
+      <p>At {{company_name_text}}, we believe every event is a unique story waiting to be told. Whether it's a grand wedding celebration, a corporate gala, or an intimate gathering, we're here to make it extraordinary.</p>
       
       <div style="text-align: center; margin: 30px 0;">
         <a href="{{company_website}}/portfolio" class="cta-button">View Our Portfolio</a>
@@ -103,7 +103,7 @@ const templates = [
   </div>
 </body>
 </html>`,
-    textContent: `Welcome to {{company_name}}, {{client_name}}!
+    textContent: `Welcome to {{company_name_text}}, {{client_name}}!
 
 We're thrilled to have you join our family. Your journey towards creating an unforgettable event begins here.
 
@@ -112,14 +112,14 @@ Our team will be reaching out to you shortly to discuss your vision. In the mean
 Questions? Reply to this email or call us at {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
     name: "Inquiry Confirmation",
     templateKey: "inquiry_confirmation",
     type: "transactional",
-    subject: "Thank You for Your Inquiry - {{company_name}}",
+    subject: "Thank You for Your Inquiry - {{company_name_text}}",
     variables: ["lead_name", "event_type", "event_date", "guest_count", "inquiry_id"],
     htmlContent: `
 <!DOCTYPE html>
@@ -173,7 +173,7 @@ A dedicated event specialist from our team will contact you within 24 hours.
 Can't wait? Call us at {{company_phone}} or email {{company_email}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
@@ -241,7 +241,7 @@ Please bring any inspiration photos, your approximate budget range, and any ques
 Need to reschedule? Please contact us at least 24 hours in advance at {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
@@ -303,7 +303,7 @@ We're excited to discuss your event and help bring your vision to life!
 Call {{company_phone}} to confirm or reschedule.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
@@ -382,7 +382,7 @@ WHAT'S NEXT:
 Questions? Contact us at {{company_email}} or {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
@@ -455,14 +455,14 @@ Your Event Manager: {{event_manager_name}}
 Phone: {{event_manager_phone}}
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
     name: "Invoice Sent",
     templateKey: "invoice_sent",
     type: "transactional",
-    subject: "Invoice #{{invoice_number}} from {{company_name}}",
+    subject: "Invoice #{{invoice_number}} from {{company_name_text}}",
     variables: ["client_name", "invoice_number", "invoice_date", "due_date", "total_amount", "event_name", "payment_link"],
     htmlContent: `
 <!DOCTYPE html>
@@ -526,7 +526,7 @@ Payment Methods: Bank Transfer, UPI, Credit/Debit Card, Cheque
 For assistance, contact {{company_email}} or {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
@@ -587,7 +587,7 @@ PAYMENT DETAILS:
 This is an automated receipt. Please retain for your records.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
@@ -649,14 +649,14 @@ If you've already made this payment, please disregard this reminder.
 For assistance, contact {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
     name: "Thank You - Post Event",
     templateKey: "thank_you_post_event",
     type: "marketing",
-    subject: "Thank You for Celebrating with {{company_name}}! 💐",
+    subject: "Thank You for Celebrating with {{company_name_text}}! 💐",
     variables: ["client_name", "event_name", "event_date", "feedback_link", "gallery_link"],
     htmlContent: `
 <!DOCTYPE html>
@@ -689,7 +689,7 @@ Best regards,
       
       <p>And remember, whether it's your next milestone celebration or a friend's special day, we're always here to create magic together!</p>
       
-      <p style="margin-top: 30px;">With warm regards and gratitude,<br><strong>The {{company_name}} Team</strong></p>
+      <p style="margin-top: 30px;">With warm regards and gratitude,<br><strong>The {{company_name_text}} Team</strong></p>
     </div>
     ${emailFooter}
   </div>
@@ -709,14 +709,14 @@ View event photos: {{gallery_link}}
 Whether it's your next celebration or a friend's special day, we're always here to create magic together!
 
 With warm regards,
-The {{company_name}} Team`
+The {{company_name_text}} Team`
   },
 
   {
     name: "Callback Request Confirmation",
     templateKey: "callback_request_confirmation",
     type: "transactional",
-    subject: "We'll Call You Back Shortly - {{company_name}}",
+    subject: "We'll Call You Back Shortly - {{company_name_text}}",
     variables: ["customer_name", "phone_number", "preferred_time", "request_id"],
     htmlContent: `
 <!DOCTYPE html>
@@ -728,7 +728,7 @@ The {{company_name}} Team`
     <div class="content">
       <h2>Callback Request Received ✓</h2>
       <p>Dear {{customer_name}},</p>
-      <p>Thank you for your interest in {{company_name}}. We've received your callback request and will be in touch shortly.</p>
+      <p>Thank you for your interest in {{company_name_text}}. We've received your callback request and will be in touch shortly.</p>
       
       <div class="highlight-box">
         <h3>Your Request Details</h3>
@@ -765,7 +765,7 @@ Our team typically responds within 2-4 business hours.
 Need immediate help? Call us at {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   // ==========================================
@@ -1570,7 +1570,7 @@ Good luck! You've got this!`
     name: "Password Reset",
     templateKey: "password_reset",
     type: "transactional",
-    subject: "Reset Your Password - {{company_name}}",
+    subject: "Reset Your Password - {{company_name_text}}",
     variables: ["user_name", "reset_link", "expiry_time"],
     htmlContent: `
 <!DOCTYPE html>
@@ -1615,14 +1615,14 @@ This link will expire in {{expiry_time}}.
 If you didn't request a password reset, please ignore this email.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
     name: "New Team Member Welcome",
     templateKey: "new_team_member_welcome",
     type: "internal",
-    subject: "Welcome to the Team! - {{company_name}}",
+    subject: "Welcome to the Team! - {{company_name_text}}",
     variables: ["employee_name", "role", "manager_name", "start_date", "login_link", "temp_password"],
     htmlContent: `
 <!DOCTYPE html>
@@ -1633,7 +1633,7 @@ Best regards,
     ${emailHeader}
     <div class="content">
       <h2>Welcome to the Team, {{employee_name}}! 🎉</h2>
-      <p>We're thrilled to have you join {{company_name}}. Your expertise and enthusiasm will be a valuable addition to our team.</p>
+      <p>We're thrilled to have you join {{company_name_text}}. Your expertise and enthusiasm will be a valuable addition to our team.</p>
       
       <div class="highlight-box">
         <h3>Your Details</h3>
@@ -1673,7 +1673,7 @@ Best regards,
 </html>`,
     textContent: `Welcome to the Team, {{employee_name}}!
 
-We're thrilled to have you join {{company_name}}.
+We're thrilled to have you join {{company_name_text}}.
 
 YOUR DETAILS:
 - Role: {{role}}
@@ -1692,14 +1692,14 @@ Temporary Password: {{temp_password}}
 Login: {{login_link}}
 
 Welcome aboard!
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {
     name: "Quote Request Received",
     templateKey: "quote_request_received",
     type: "transactional",
-    subject: "Your Quote Request Has Been Received - {{company_name}}",
+    subject: "Your Quote Request Has Been Received - {{company_name_text}}",
     variables: ["client_name", "event_type", "event_date", "guest_count", "budget_range", "request_id"],
     htmlContent: `
 <!DOCTYPE html>
@@ -1711,7 +1711,7 @@ Welcome aboard!
     <div class="content">
       <h2>Quote Request Received ✓</h2>
       <p>Dear {{client_name}},</p>
-      <p>Thank you for your interest in {{company_name}}! We've received your quote request and our team is already working on a customized proposal for you.</p>
+      <p>Thank you for your interest in {{company_name_text}}! We've received your quote request and our team is already working on a customized proposal for you.</p>
       
       <div class="highlight-box">
         <h3>Your Request Details</h3>
@@ -1745,7 +1745,7 @@ Welcome aboard!
 
 Dear {{client_name}},
 
-Thank you for your interest in {{company_name}}! We've received your quote request.
+Thank you for your interest in {{company_name_text}}! We've received your quote request.
 
 REQUEST DETAILS:
 - Reference ID: #{{request_id}}
@@ -1762,7 +1762,7 @@ WHAT HAPPENS NEXT:
 Questions? Call {{company_phone}}.
 
 Best regards,
-{{company_name}}`
+{{company_name_text}}`
   },
 
   {

@@ -279,45 +279,43 @@ export function renderTemplate(
     ...variables,
   };
   
-  if (companySettings) {
-    let baseUrl = '';
-    
-    if (companySettings.website) {
-      baseUrl = companySettings.website.replace(/\/$/, '');
-    } else if (process.env.APP_ORIGIN) {
-      baseUrl = process.env.APP_ORIGIN.replace(/\/$/, '');
-    } else {
-      const replitDomains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN;
-      if (replitDomains) {
-        const primaryDomain = replitDomains.split(',')[0];
-        baseUrl = `https://${primaryDomain}`;
-      }
+  let baseUrl = '';
+  
+  if (companySettings?.website) {
+    baseUrl = companySettings.website.replace(/\/$/, '');
+  } else if (process.env.APP_ORIGIN) {
+    baseUrl = process.env.APP_ORIGIN.replace(/\/$/, '');
+  } else {
+    const replitDomains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN;
+    if (replitDomains) {
+      const primaryDomain = replitDomains.split(',')[0];
+      baseUrl = `https://${primaryDomain}`;
     }
-    
-    const makeAbsoluteUrl = (path: string): string => {
-      if (!path) return '';
-      if (path.startsWith('http')) return path;
-      if (!baseUrl) return '';
-      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-      return `${baseUrl}${normalizedPath}`;
-    };
-    
-    const logoWhitePath = companySettings.logoWhite || '/images/logo-white.webp';
-    const logoWhiteFullUrl = makeAbsoluteUrl(logoWhitePath);
-    const logoFullUrl = makeAbsoluteUrl(companySettings.logo || '');
-    
-    const companyName = companySettings.name || '';
-    allVariables['company_name'] = logoWhiteFullUrl
-      ? `<img src="${logoWhiteFullUrl}" alt="${companyName || 'Company Logo'}" style="max-height: 60px; width: auto;" />`
-      : companyName;
-    allVariables['company_name_text'] = companyName;
-    allVariables['company_email'] = companySettings.email || '';
-    allVariables['company_phone'] = companySettings.phone || '';
-    allVariables['company_address'] = companySettings.address || '';
-    allVariables['company_website'] = companySettings.website || '';
-    allVariables['company_logo'] = logoFullUrl || companyName;
-    allVariables['company_logo_white'] = logoWhiteFullUrl || companyName;
   }
+  
+  const makeAbsoluteUrl = (path: string): string => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    if (!baseUrl) return '';
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${baseUrl}${normalizedPath}`;
+  };
+  
+  const companyName = companySettings?.name || 'Our Team';
+  const logoWhitePath = companySettings?.logoWhite || '/images/logo-white.webp';
+  const logoWhiteFullUrl = makeAbsoluteUrl(logoWhitePath);
+  const logoFullUrl = makeAbsoluteUrl(companySettings?.logo || '');
+  
+  allVariables['company_name'] = logoWhiteFullUrl
+    ? `<img src="${logoWhiteFullUrl}" alt="${companyName}" style="max-height: 60px; width: auto;" />`
+    : `<h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">${companyName}</h1>`;
+  allVariables['company_name_text'] = companyName;
+  allVariables['company_email'] = companySettings?.email || '';
+  allVariables['company_phone'] = companySettings?.phone || '';
+  allVariables['company_address'] = companySettings?.address || '';
+  allVariables['company_website'] = companySettings?.website || baseUrl || '';
+  allVariables['company_logo'] = logoFullUrl || companyName;
+  allVariables['company_logo_white'] = logoWhiteFullUrl || companyName;
   
   allVariables['current_year'] = new Date().getFullYear().toString();
   allVariables['current_date'] = new Date().toLocaleDateString();
@@ -326,7 +324,7 @@ export function renderTemplate(
     const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'gi');
     subject = subject.replace(regex, value);
     html = html.replace(regex, value);
-    text = text.replace(regex, value);
+    text = text.replace(regex, value.replace(/<[^>]*>/g, ''));
   }
   
   return { subject, html, text };
