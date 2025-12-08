@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import wedding1 from "@assets/generated_images/indian_bride_and_groom_minimalist.webp";
 import corporate1 from "@assets/generated_images/corporate_event_gala.webp";
 import social1 from "@assets/generated_images/luxury_private_dinner.webp";
@@ -38,9 +39,11 @@ export function Portfolio() {
               Every event tells a story. Browse through our curated collection of events crafted with intention, precision, and emotion.
             </p>
           </div>
-          <Button variant="link" className="hidden md:inline-flex text-primary hover:text-secondary text-lg group mt-6 md:mt-0">
-            View Full Portfolio <span className="ml-2 transition-transform group-hover:translate-x-1">→</span>
-          </Button>
+          <Link href="/portfolio">
+            <Button variant="link" className="hidden md:inline-flex text-primary hover:text-secondary text-lg group mt-6 md:mt-0" data-testid="button-view-portfolio-desktop">
+              View Full Portfolio <span className="ml-2 transition-transform group-hover:translate-x-1">→</span>
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -72,7 +75,11 @@ export function Portfolio() {
         </div>
         
         <div className="mt-12 text-center md:hidden">
-          <Button variant="outline" className="w-full border-primary text-primary">View Full Portfolio</Button>
+          <Link href="/portfolio">
+            <Button variant="outline" className="w-full border-primary text-primary" data-testid="button-view-portfolio-mobile">
+              View Full Portfolio
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
