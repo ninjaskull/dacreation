@@ -52,6 +52,7 @@ import WebsiteSettingsPage from "@/pages/admin/website-settings";
 import AdminPortfolioPage from "@/pages/admin/portfolio";
 import EmailSettingsPage from "@/pages/admin/email-settings";
 import AdminBlogPage from "@/pages/admin/blog";
+import AdminSubscribersPage from "@/pages/admin/subscribers";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -223,6 +224,9 @@ function Router() {
       </Route>
       <Route path="/admin/email-settings">
         {() => <RequireAuth requiredRole="admin"><EmailSettingsPage /></RequireAuth>}
+      </Route>
+      <Route path="/admin/subscribers">
+        {() => <RequireAuth requiredRole="staff"><AdminSubscribersPage /></RequireAuth>}
       </Route>
       
       <Route component={NotFound} />

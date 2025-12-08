@@ -3036,5 +3036,396 @@ Crawl-delay: 1
     }
   });
 
+  // Newsletter Subscribers - Public Routes
+  app.post("/api/subscribe", async (req, res) => {
+    try {
+      const { email, name, source = "footer" } = req.body;
+      
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Please provide a valid email address" });
+      }
+      
+      const existing = await storage.getSubscriberByEmail(email);
+      if (existing) {
+        if (existing.status === 'active') {
+          return res.status(200).json({ 
+            message: "You're already subscribed to our newsletter!",
+            alreadySubscribed: true 
+          });
+        }
+        const updated = await storage.updateSubscriber(existing.id, { 
+          status: 'active',
+          unsubscribedAt: null,
+          unsubscribeReason: null
+        } as any);
+        
+        sendTemplatedEmail('newsletter_welcome', email, name, {
+          subscriber_name: name || 'there',
+          subscriber_email: email,
+        }).catch(err => console.error('Failed to send welcome email:', err));
+        
+        return res.status(200).json({ 
+          message: "Welcome back! You've been re-subscribed to our newsletter.",
+          subscriber: updated
+        });
+      }
+      
+      const subscriber = await storage.createSubscriber({
+        email,
+        name,
+        source: source as any,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        status: 'active',
+      });
+      
+      sendTemplatedEmail('newsletter_welcome', email, name, {
+        subscriber_name: name || 'there',
+        subscriber_email: email,
+      }).catch(err => console.error('Failed to send welcome email:', err));
+      
+      res.status(201).json({ 
+        message: "Thank you for subscribing! Check your inbox for a welcome email.",
+        subscriber 
+      });
+    } catch (error) {
+      console.error("Subscribe error:", error);
+      res.status(500).json({ message: "Failed to subscribe. Please try again." });
+    }
+  });
+
+  app.post("/api/unsubscribe", async (req, res) => {
+    try {
+      const { email, reason } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      const subscriber = await storage.unsubscribeByEmail(email, reason);
+      if (!subscriber) {
+        return res.status(404).json({ message: "Email not found in our mailing list" });
+      }
+      
+      res.json({ message: "You have been successfully unsubscribed." });
+    } catch (error) {
+      console.error("Unsubscribe error:", error);
+      res.status(500).json({ message: "Failed to unsubscribe" });
+    }
+  });
+
+  app.get("/api/unsubscribe/:email", async (req, res) => {
+    try {
+      const email = decodeURIComponent(req.params.email);
+      const reason = req.query.reason as string;
+      
+      const subscriber = await storage.unsubscribeByEmail(email, reason);
+      if (!subscriber) {
+        return res.status(404).json({ message: "Email not found" });
+      }
+      
+      res.json({ message: "You have been unsubscribed successfully." });
+    } catch (error) {
+      console.error("Unsubscribe error:", error);
+      res.status(500).json({ message: "Failed to unsubscribe" });
+    }
+  });
+
+  // Newsletter Subscribers - Admin Routes
+  app.get("/api/subscribers", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.source) filters.source = req.query.source as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
+      if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
+      
+      const subscribers = await storage.getAllSubscribers(filters);
+      res.json(subscribers);
+    } catch (error) {
+      console.error("Get subscribers error:", error);
+      res.status(500).json({ message: "Failed to fetch subscribers" });
+    }
+  });
+
+  app.get("/api/subscribers/stats", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getSubscriberStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get subscriber stats error:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get("/api/subscribers/export", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const subscribers = await storage.getAllSubscribers();
+      const format = req.query.format as string || 'csv';
+      
+      if (format === 'csv') {
+        const headers = ['Email', 'Name', 'Status', 'Source', 'Tags', 'Subscribed At', 'Emails Sent', 'Emails Opened'];
+        const rows = subscribers.map(sub => [
+          sub.email,
+          sub.name || '',
+          sub.status,
+          sub.source,
+          (sub.tags || []).join('; '),
+          new Date(sub.createdAt).toLocaleDateString(),
+          sub.emailsSentCount.toString(),
+          sub.emailsOpenedCount.toString(),
+        ]);
+        
+        const csv = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=subscribers.csv');
+        res.send(csv);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 'attachment; filename=subscribers.json');
+        res.json(subscribers);
+      }
+    } catch (error) {
+      console.error("Export subscribers error:", error);
+      res.status(500).json({ message: "Failed to export subscribers" });
+    }
+  });
+
+  app.get("/api/subscribers/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const subscriber = await storage.getSubscriberById(req.params.id);
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+      res.json(subscriber);
+    } catch (error) {
+      console.error("Get subscriber error:", error);
+      res.status(500).json({ message: "Failed to fetch subscriber" });
+    }
+  });
+
+  app.post("/api/subscribers", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const { email, name, status, source, tags } = req.body;
+      
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+      
+      const existing = await storage.getSubscriberByEmail(email);
+      if (existing) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      
+      const subscriber = await storage.createSubscriber({
+        email,
+        name,
+        status: status || 'active',
+        source: source || 'manual',
+        tags,
+      });
+      
+      res.status(201).json(subscriber);
+    } catch (error) {
+      console.error("Create subscriber error:", error);
+      res.status(500).json({ message: "Failed to create subscriber" });
+    }
+  });
+
+  app.patch("/api/subscribers/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const subscriber = await storage.updateSubscriber(req.params.id, req.body);
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+      res.json(subscriber);
+    } catch (error) {
+      console.error("Update subscriber error:", error);
+      res.status(500).json({ message: "Failed to update subscriber" });
+    }
+  });
+
+  app.delete("/api/subscribers/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteSubscriber(req.params.id);
+      res.json({ message: "Subscriber deleted successfully" });
+    } catch (error) {
+      console.error("Delete subscriber error:", error);
+      res.status(500).json({ message: "Failed to delete subscriber" });
+    }
+  });
+
+  // Bulk Operations
+  app.post("/api/subscribers/bulk/delete", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "IDs array is required" });
+      }
+      const count = await storage.bulkDeleteSubscribers(ids);
+      res.json({ message: `${count} subscribers deleted`, count });
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      res.status(500).json({ message: "Failed to delete subscribers" });
+    }
+  });
+
+  app.post("/api/subscribers/bulk/status", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const { ids, status } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0 || !status) {
+        return res.status(400).json({ message: "IDs array and status are required" });
+      }
+      const count = await storage.bulkUpdateSubscriberStatus(ids, status);
+      res.json({ message: `${count} subscribers updated`, count });
+    } catch (error) {
+      console.error("Bulk status update error:", error);
+      res.status(500).json({ message: "Failed to update subscribers" });
+    }
+  });
+
+  app.post("/api/subscribers/bulk/tags", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const { ids, tags } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0 || !Array.isArray(tags)) {
+        return res.status(400).json({ message: "IDs array and tags array are required" });
+      }
+      const count = await storage.bulkAddTags(ids, tags);
+      res.json({ message: `Tags added to ${count} subscribers`, count });
+    } catch (error) {
+      console.error("Bulk add tags error:", error);
+      res.status(500).json({ message: "Failed to add tags" });
+    }
+  });
+
+  app.post("/api/subscribers/import", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { subscribers: importData, source = 'import' } = req.body;
+      
+      if (!Array.isArray(importData)) {
+        return res.status(400).json({ message: "Subscribers array is required" });
+      }
+      
+      let imported = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+      
+      for (const item of importData) {
+        if (!item.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item.email)) {
+          errors.push(`Invalid email: ${item.email}`);
+          skipped++;
+          continue;
+        }
+        
+        const existing = await storage.getSubscriberByEmail(item.email);
+        if (existing) {
+          skipped++;
+          continue;
+        }
+        
+        try {
+          await storage.createSubscriber({
+            email: item.email,
+            name: item.name,
+            source: source as any,
+            status: 'active',
+            tags: item.tags,
+          });
+          imported++;
+        } catch (e) {
+          errors.push(`Failed to import: ${item.email}`);
+          skipped++;
+        }
+      }
+      
+      res.json({ 
+        message: `Imported ${imported} subscribers, ${skipped} skipped`,
+        imported,
+        skipped,
+        errors: errors.slice(0, 10)
+      });
+    } catch (error) {
+      console.error("Import subscribers error:", error);
+      res.status(500).json({ message: "Failed to import subscribers" });
+    }
+  });
+
+  // Send Email to Subscribers
+  app.post("/api/subscribers/send-email", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { subscriberIds, templateKey, subject, htmlContent, customVariables } = req.body;
+      
+      let targetSubscribers: any[];
+      
+      if (subscriberIds && Array.isArray(subscriberIds) && subscriberIds.length > 0) {
+        targetSubscribers = [];
+        for (const id of subscriberIds) {
+          const sub = await storage.getSubscriberById(id);
+          if (sub && sub.status === 'active') {
+            targetSubscribers.push(sub);
+          }
+        }
+      } else {
+        targetSubscribers = await storage.getActiveSubscribers();
+      }
+      
+      if (targetSubscribers.length === 0) {
+        return res.status(400).json({ message: "No active subscribers found" });
+      }
+      
+      let sent = 0;
+      let failed = 0;
+      
+      for (const subscriber of targetSubscribers) {
+        try {
+          const variables = {
+            subscriber_name: subscriber.name || 'there',
+            subscriber_email: subscriber.email,
+            ...customVariables,
+          };
+          
+          let result;
+          if (templateKey) {
+            result = await sendTemplatedEmail(templateKey, subscriber.email, subscriber.name, variables);
+          } else if (subject && htmlContent) {
+            result = await sendEmail({
+              to: subscriber.email,
+              toName: subscriber.name,
+              subject,
+              html: htmlContent,
+              type: 'marketing',
+            });
+          } else {
+            continue;
+          }
+          
+          if (result.success) {
+            await storage.incrementEmailStats(subscriber.id, 'sent');
+            sent++;
+          } else {
+            failed++;
+          }
+        } catch (e) {
+          failed++;
+        }
+      }
+      
+      res.json({ 
+        message: `Email sent to ${sent} subscribers, ${failed} failed`,
+        sent,
+        failed,
+        total: targetSubscribers.length
+      });
+    } catch (error) {
+      console.error("Send email to subscribers error:", error);
+      res.status(500).json({ message: "Failed to send emails" });
+    }
+  });
+
   return httpServer;
 }

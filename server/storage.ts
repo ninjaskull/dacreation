@@ -27,12 +27,13 @@ import {
   type EmailTemplate, type InsertEmailTemplate, type UpdateEmailTemplate,
   type EmailLog, type InsertEmailLog,
   type BlogPost, type InsertBlogPost, type UpdateBlogPost,
+  type Subscriber, type InsertSubscriber, type UpdateSubscriber,
   users, leads, appointments, activityLogs, leadNotes,
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
   invoiceTemplates, invoices, invoiceItems, invoicePayments,
   callbackRequests, conversations, chatMessages, agentStatus,
-  smtpSettings, emailTypeSettings, emailTemplates, emailLogs, blogPosts
+  smtpSettings, emailTypeSettings, emailTemplates, emailLogs, blogPosts, subscribers
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -239,6 +240,28 @@ export interface BlogFilters {
   isFeatured?: boolean;
 }
 
+export interface SubscriberFilters {
+  status?: string;
+  source?: string;
+  search?: string;
+  tags?: string[];
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export interface SubscriberStats {
+  total: number;
+  active: number;
+  unsubscribed: number;
+  pending: number;
+  bounced: number;
+  complained: number;
+  thisWeek: number;
+  thisMonth: number;
+  bySource: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -402,6 +425,20 @@ export interface IStorage {
   updateBlogPost(id: string, data: UpdateBlogPost): Promise<BlogPost | undefined>;
   deleteBlogPost(id: string): Promise<boolean>;
   incrementBlogViewCount(id: string): Promise<BlogPost | undefined>;
+  
+  getAllSubscribers(filters?: SubscriberFilters): Promise<Subscriber[]>;
+  getActiveSubscribers(): Promise<Subscriber[]>;
+  getSubscriberById(id: string): Promise<Subscriber | undefined>;
+  getSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
+  createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
+  updateSubscriber(id: string, data: UpdateSubscriber): Promise<Subscriber | undefined>;
+  deleteSubscriber(id: string): Promise<boolean>;
+  bulkDeleteSubscribers(ids: string[]): Promise<number>;
+  bulkUpdateSubscriberStatus(ids: string[], status: string): Promise<number>;
+  bulkAddTags(ids: string[], tags: string[]): Promise<number>;
+  unsubscribeByEmail(email: string, reason?: string): Promise<Subscriber | undefined>;
+  getSubscriberStats(): Promise<SubscriberStats>;
+  incrementEmailStats(id: string, field: 'sent' | 'opened' | 'clicked'): Promise<Subscriber | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2548,6 +2585,195 @@ export class DatabaseStorage implements IStorage {
       .where(eq(blogPosts.id, id))
       .returning();
     return updated;
+  }
+
+  async getAllSubscribers(filters?: SubscriberFilters): Promise<Subscriber[]> {
+    const conditions = [];
+    
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(subscribers.status, filters.status));
+    }
+    if (filters?.source && filters.source !== 'all') {
+      conditions.push(eq(subscribers.source, filters.source));
+    }
+    if (filters?.dateFrom) {
+      conditions.push(gte(subscribers.createdAt, filters.dateFrom));
+    }
+    if (filters?.dateTo) {
+      conditions.push(lte(subscribers.createdAt, filters.dateTo));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
+      conditions.push(
+        or(
+          like(subscribers.email, searchTerm),
+          like(subscribers.name, searchTerm)
+        )
+      );
+    }
+
+    return await db
+      .select()
+      .from(subscribers)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(subscribers.createdAt));
+  }
+
+  async getActiveSubscribers(): Promise<Subscriber[]> {
+    return await db
+      .select()
+      .from(subscribers)
+      .where(eq(subscribers.status, 'active'))
+      .orderBy(desc(subscribers.createdAt));
+  }
+
+  async getSubscriberById(id: string): Promise<Subscriber | undefined> {
+    const [subscriber] = await db.select().from(subscribers).where(eq(subscribers.id, id));
+    return subscriber;
+  }
+
+  async getSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
+    const [subscriber] = await db.select().from(subscribers).where(eq(subscribers.email, email.toLowerCase()));
+    return subscriber;
+  }
+
+  async createSubscriber(data: InsertSubscriber): Promise<Subscriber> {
+    const [subscriber] = await db
+      .insert(subscribers)
+      .values({ ...data, email: data.email.toLowerCase() } as any)
+      .returning();
+    return subscriber;
+  }
+
+  async updateSubscriber(id: string, data: UpdateSubscriber): Promise<Subscriber | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.email) {
+      updateData.email = data.email.toLowerCase();
+    }
+    
+    const [subscriber] = await db
+      .update(subscribers)
+      .set(updateData)
+      .where(eq(subscribers.id, id))
+      .returning();
+    return subscriber;
+  }
+
+  async deleteSubscriber(id: string): Promise<boolean> {
+    await db.delete(subscribers).where(eq(subscribers.id, id));
+    return true;
+  }
+
+  async bulkDeleteSubscribers(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    const result = await db.delete(subscribers).where(
+      sql`${subscribers.id} = ANY(ARRAY[${sql.join(ids.map(id => sql`${id}`), sql`, `)}]::text[])`
+    );
+    return ids.length;
+  }
+
+  async bulkUpdateSubscriberStatus(ids: string[], status: string): Promise<number> {
+    if (ids.length === 0) return 0;
+    await db
+      .update(subscribers)
+      .set({ status, updatedAt: new Date() })
+      .where(sql`${subscribers.id} = ANY(ARRAY[${sql.join(ids.map(id => sql`${id}`), sql`, `)}]::text[])`);
+    return ids.length;
+  }
+
+  async bulkAddTags(ids: string[], tags: string[]): Promise<number> {
+    if (ids.length === 0 || tags.length === 0) return 0;
+    
+    for (const id of ids) {
+      const existing = await this.getSubscriberById(id);
+      if (existing) {
+        const currentTags = existing.tags || [];
+        const newTags = Array.from(new Set([...currentTags, ...tags]));
+        await this.updateSubscriber(id, { tags: newTags });
+      }
+    }
+    return ids.length;
+  }
+
+  async unsubscribeByEmail(email: string, reason?: string): Promise<Subscriber | undefined> {
+    const [subscriber] = await db
+      .update(subscribers)
+      .set({ 
+        status: 'unsubscribed', 
+        unsubscribedAt: new Date(),
+        unsubscribeReason: reason,
+        updatedAt: new Date() 
+      })
+      .where(eq(subscribers.email, email.toLowerCase()))
+      .returning();
+    return subscriber;
+  }
+
+  async getSubscriberStats(): Promise<SubscriberStats> {
+    const allSubscribers = await db.select().from(subscribers);
+    
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const bySource: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+    let thisWeek = 0;
+    let thisMonth = 0;
+    let active = 0;
+    let unsubscribed = 0;
+    let pending = 0;
+    let bounced = 0;
+    let complained = 0;
+    
+    for (const sub of allSubscribers) {
+      bySource[sub.source] = (bySource[sub.source] || 0) + 1;
+      byStatus[sub.status] = (byStatus[sub.status] || 0) + 1;
+      
+      if (new Date(sub.createdAt) >= weekAgo) thisWeek++;
+      if (new Date(sub.createdAt) >= monthAgo) thisMonth++;
+      
+      if (sub.status === 'active') active++;
+      else if (sub.status === 'unsubscribed') unsubscribed++;
+      else if (sub.status === 'pending') pending++;
+      else if (sub.status === 'bounced') bounced++;
+      else if (sub.status === 'complained') complained++;
+    }
+    
+    return {
+      total: allSubscribers.length,
+      active,
+      unsubscribed,
+      pending,
+      bounced,
+      complained,
+      thisWeek,
+      thisMonth,
+      bySource,
+      byStatus,
+    };
+  }
+
+  async incrementEmailStats(id: string, field: 'sent' | 'opened' | 'clicked'): Promise<Subscriber | undefined> {
+    const existing = await this.getSubscriberById(id);
+    if (!existing) return undefined;
+
+    const updateData: any = { updatedAt: new Date() };
+    if (field === 'sent') {
+      updateData.emailsSentCount = existing.emailsSentCount + 1;
+      updateData.lastEmailSentAt = new Date();
+    } else if (field === 'opened') {
+      updateData.emailsOpenedCount = existing.emailsOpenedCount + 1;
+    } else if (field === 'clicked') {
+      updateData.emailsClickedCount = existing.emailsClickedCount + 1;
+    }
+
+    const [subscriber] = await db
+      .update(subscribers)
+      .set(updateData)
+      .where(eq(subscribers.id, id))
+      .returning();
+    return subscriber;
   }
 }
 

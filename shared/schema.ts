@@ -1339,3 +1339,76 @@ export const updateBlogPostSchema = z.object({
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type UpdateBlogPost = z.infer<typeof updateBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
+
+// Newsletter Subscribers Schema
+export const subscriberStatuses = ["active", "unsubscribed", "bounced", "complained", "pending"] as const;
+export type SubscriberStatus = typeof subscriberStatuses[number];
+
+export const subscriberSources = ["footer", "popup", "lead_magnet", "import", "manual", "api"] as const;
+export type SubscriberSource = typeof subscriberSources[number];
+
+export const subscribers = pgTable("subscribers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  status: text("status").notNull().default("active"),
+  source: text("source").notNull().default("footer"),
+  tags: text("tags").array(),
+  preferences: jsonb("preferences"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  confirmationToken: text("confirmation_token"),
+  confirmedAt: timestamp("confirmed_at"),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  unsubscribeReason: text("unsubscribe_reason"),
+  bouncedAt: timestamp("bounced_at"),
+  bounceType: text("bounce_type"),
+  complainedAt: timestamp("complained_at"),
+  lastEmailSentAt: timestamp("last_email_sent_at"),
+  emailsSentCount: integer("emails_sent_count").notNull().default(0),
+  emailsOpenedCount: integer("emails_opened_count").notNull().default(0),
+  emailsClickedCount: integer("emails_clicked_count").notNull().default(0),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  confirmedAt: true,
+  unsubscribedAt: true,
+  bouncedAt: true,
+  complainedAt: true,
+  lastEmailSentAt: true,
+  emailsSentCount: true,
+  emailsOpenedCount: true,
+  emailsClickedCount: true,
+}).extend({
+  email: z.string().email("Invalid email address"),
+  name: z.string().optional(),
+  status: z.enum(subscriberStatuses).optional(),
+  source: z.enum(subscriberSources).optional(),
+  tags: z.array(z.string()).optional(),
+  preferences: z.any().optional(),
+  ipAddress: z.string().optional(),
+  userAgent: z.string().optional(),
+  confirmationToken: z.string().optional(),
+  metadata: z.any().optional(),
+});
+
+export const updateSubscriberSchema = z.object({
+  email: z.string().email().optional(),
+  name: z.string().optional(),
+  status: z.enum(subscriberStatuses).optional(),
+  tags: z.array(z.string()).optional(),
+  preferences: z.any().optional(),
+  unsubscribeReason: z.string().optional(),
+  bounceType: z.string().optional(),
+  metadata: z.any().optional(),
+});
+
+export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
+export type UpdateSubscriber = z.infer<typeof updateSubscriberSchema>;
+export type Subscriber = typeof subscribers.$inferSelect;

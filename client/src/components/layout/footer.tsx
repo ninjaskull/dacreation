@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   Instagram, 
   Facebook, 
@@ -18,11 +18,14 @@ import {
   Star,
   Sparkles,
   Globe,
+  Loader2,
+  CheckCircle,
   type LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 interface SocialLink {
   platform: string;
@@ -56,6 +59,52 @@ import { useBranding, getSocialUrl } from "@/contexts/BrandingContext";
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { branding } = useBranding();
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const subscribeMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "footer" }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to subscribe");
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      setIsSubscribed(true);
+      setEmail("");
+      toast({
+        title: "Subscribed!",
+        description: data.message || "Thank you for subscribing to our newsletter.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Subscription Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    subscribeMutation.mutate(email);
+  };
 
   const currentAddress = branding.addresses.primary.full;
   const currentPhone = branding.contact.phones.join(", ");
@@ -153,22 +202,38 @@ export function Footer() {
                 <p className="text-primary-foreground/60 text-sm">
                   Subscribe for exclusive event tips and inspiration.
                 </p>
-                <div className="flex gap-2">
-                  <Input 
-                    type="email" 
-                    placeholder="Enter your email" 
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-secondary"
-                    data-testid="footer-newsletter-input"
-                  />
-                  <Button 
-                    variant="secondary" 
-                    size="icon"
-                    className="shrink-0"
-                    data-testid="footer-newsletter-submit"
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                {isSubscribed ? (
+                  <div className="flex items-center gap-2 text-green-400 py-2">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="text-sm">Thank you for subscribing!</span>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubscribe} className="flex gap-2">
+                    <Input 
+                      type="email" 
+                      placeholder="Enter your email" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-secondary"
+                      data-testid="footer-newsletter-input"
+                      disabled={subscribeMutation.isPending}
+                    />
+                    <Button 
+                      type="submit"
+                      variant="secondary" 
+                      size="icon"
+                      className="shrink-0"
+                      data-testid="footer-newsletter-submit"
+                      disabled={subscribeMutation.isPending}
+                    >
+                      {subscribeMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </form>
+                )}
               </div>
 
               <div className="flex gap-4">

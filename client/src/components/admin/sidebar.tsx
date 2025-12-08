@@ -71,6 +71,7 @@ const sidebarSections: SidebarSection[] = [
     items: [
       { name: "Leads", href: "/admin/leads", icon: Users },
       { name: "Clients", href: "/admin/clients", icon: UserCheck, staffAndAbove: true },
+      { name: "Subscribers", href: "/admin/subscribers", icon: Mail, staffAndAbove: true },
       { name: "Chat", href: "/admin/chat", icon: MessagesSquare, staffAndAbove: true },
       { name: "Callbacks", href: "/admin/callbacks", icon: Phone, staffAndAbove: true },
     ],
