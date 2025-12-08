@@ -126,7 +126,8 @@ export default function ContactPage() {
     const methods = [];
     
     if (currentSettings.phone) {
-      const phoneClean = currentSettings.phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+      const firstPhone = branding.contact.phones[0] || currentSettings.phone.split(',')[0];
+      const phoneClean = firstPhone.trim().replace(/\s+/g, '').replace(/[^+\d]/g, '');
       methods.push({
         icon: Phone,
         title: "Phone",
@@ -239,8 +240,8 @@ export default function ContactPage() {
   }, [currentSettings.whatsappNumber, branding.contact.whatsapp]);
 
   const phoneLink = useMemo(() => {
-    const phone = currentSettings.phone || branding.contact.phones[0];
-    const phoneClean = phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+    const phone = branding.contact.phones[0] || currentSettings.phone?.split(',')[0] || '';
+    const phoneClean = phone.trim().replace(/\s+/g, '').replace(/[^+\d]/g, '');
     return `tel:${phoneClean}`;
   }, [currentSettings.phone, branding.contact.phones]);
 
