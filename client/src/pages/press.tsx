@@ -28,74 +28,7 @@ interface WebsiteSettings {
 }
 
 function getDefaultArticles(companyName: string) {
-  return [
-    {
-      id: 1,
-      title: `${companyName} Named Best Event Management Company 2024`,
-      publication: "Wedding Industry Awards",
-      publishedDate: "November 2024",
-      excerpt: `${companyName} has been recognized as the Best Event Management Company at the prestigious Wedding Industry Awards 2024, celebrating excellence in creating memorable celebrations.`,
-      image: null,
-      externalUrl: "#",
-      isFeatured: true,
-      isActive: true,
-    },
-    {
-      id: 2,
-      title: `The Rise of Destination Weddings: An Interview with ${companyName}'s Founder`,
-      publication: "Vogue India",
-      publishedDate: "October 2024",
-      excerpt: `An exclusive interview discussing the growing trend of destination weddings and how ${companyName} is leading the charge in creating unforgettable experiences.`,
-      image: null,
-      externalUrl: "#",
-      isFeatured: true,
-      isActive: true,
-    },
-    {
-      id: 3,
-      title: "Top 10 Event Planners Transforming Indian Weddings",
-      publication: "Harper's Bazaar",
-      publishedDate: "September 2024",
-      excerpt: `${companyName} featured among the top event planners who are revolutionizing the Indian wedding industry with innovative concepts and flawless execution.`,
-      image: null,
-      externalUrl: "#",
-      isFeatured: false,
-      isActive: true,
-    },
-    {
-      id: 4,
-      title: `Corporate Events: How ${companyName} Delivers Excellence`,
-      publication: "Economic Times",
-      publishedDate: "August 2024",
-      excerpt: `A feature on how ${companyName} has become the preferred partner for Fortune 500 companies for their corporate events and conferences.`,
-      image: null,
-      externalUrl: "#",
-      isFeatured: false,
-      isActive: true,
-    },
-    {
-      id: 5,
-      title: `Sustainability in Event Planning: ${companyName}'s Green Initiative`,
-      publication: "India Today",
-      publishedDate: "July 2024",
-      excerpt: `Exploring ${companyName}'s commitment to sustainable event practices and eco-friendly alternatives without compromising on luxury.`,
-      image: null,
-      externalUrl: "#",
-      isFeatured: false,
-      isActive: true,
-    },
-    {
-      id: 6,
-      title: "Behind the Scenes: Planning a Royal Palace Wedding",
-      publication: "Wedding Sutra",
-      publishedDate: "June 2024",
-      excerpt: `An exclusive behind-the-scenes look at how ${companyName} orchestrated a magnificent three-day celebration at a Rajasthani palace.`,
-      image: null,
-      externalUrl: "#",
-      isFeatured: false,
-      isActive: true,
-    },
-  ];
+  return [];
 }
 
 export default function PressPage() {
