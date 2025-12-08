@@ -23,6 +23,7 @@ import {
   Image,
   Mail,
   Search,
+  BookOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ const sidebarSections: SidebarSection[] = [
       { name: "Vendors", href: "/admin/vendors", icon: Truck, staffAndAbove: true },
       { name: "Team", href: "/admin/team", icon: Building2 },
       { name: "Portfolio", href: "/admin/portfolio", icon: Image, staffAndAbove: true },
+      { name: "Blog", href: "/admin/blog", icon: BookOpen, staffAndAbove: true },
       { name: "Careers", href: "/admin/careers", icon: Briefcase, staffAndAbove: true },
       { name: "Tasks", href: "/admin/tasks", icon: FileText, staffAndAbove: true },
     ],

@@ -24,6 +24,8 @@ import SitemapPage from "@/pages/sitemap";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import CookiePolicyPage from "@/pages/cookie-policy";
+import BlogPage from "@/pages/blog";
+import BlogPostPage from "@/pages/blog-post";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import LeadsPage from "@/pages/admin/leads";
@@ -49,6 +51,7 @@ import AdminCallbacksPage from "@/pages/admin/callbacks";
 import WebsiteSettingsPage from "@/pages/admin/website-settings";
 import AdminPortfolioPage from "@/pages/admin/portfolio";
 import EmailSettingsPage from "@/pages/admin/email-settings";
+import AdminBlogPage from "@/pages/admin/blog";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -141,6 +144,8 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/cookie-policy" component={CookiePolicyPage} />
+      <Route path="/blog" component={BlogPage} />
+      <Route path="/blog/:slug" component={BlogPostPage} />
       
       {/* Admin login - no auth required */}
       <Route path="/admin/login" component={AdminLogin} />
@@ -204,6 +209,9 @@ function Router() {
       </Route>
       <Route path="/admin/tasks">
         {() => <RequireAuth requiredRole="staff"><TasksPage /></RequireAuth>}
+      </Route>
+      <Route path="/admin/blog">
+        {() => <RequireAuth requiredRole="staff"><AdminBlogPage /></RequireAuth>}
       </Route>
       
       {/* Admin only pages (full system access) */}

@@ -26,12 +26,13 @@ import {
   type EmailTypeSettings, type InsertEmailTypeSettings, type UpdateEmailTypeSettings,
   type EmailTemplate, type InsertEmailTemplate, type UpdateEmailTemplate,
   type EmailLog, type InsertEmailLog,
+  type BlogPost, type InsertBlogPost, type UpdateBlogPost,
   users, leads, appointments, activityLogs, leadNotes,
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
   invoiceTemplates, invoices, invoiceItems, invoicePayments,
   callbackRequests, conversations, chatMessages, agentStatus,
-  smtpSettings, emailTypeSettings, emailTemplates, emailLogs
+  smtpSettings, emailTypeSettings, emailTemplates, emailLogs, blogPosts
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
@@ -231,6 +232,13 @@ export interface ConversationStats {
   unreadCount: number;
 }
 
+export interface BlogFilters {
+  status?: string;
+  category?: string;
+  search?: string;
+  isFeatured?: boolean;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -385,6 +393,15 @@ export interface IStorage {
   upsertAgentStatus(userId: string, data: InsertAgentStatus | UpdateAgentStatus): Promise<AgentStatus>;
   updateAgentActiveConversations(userId: string, increment: number): Promise<AgentStatus | undefined>;
   getOnlineAgents(): Promise<(AgentStatus & { user: { id: string; name: string | null; username: string } })[]>;
+  
+  getAllBlogPosts(filters?: BlogFilters): Promise<BlogPost[]>;
+  getPublishedBlogPosts(): Promise<BlogPost[]>;
+  getBlogPostById(id: string): Promise<BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: string, data: UpdateBlogPost): Promise<BlogPost | undefined>;
+  deleteBlogPost(id: string): Promise<boolean>;
+  incrementBlogViewCount(id: string): Promise<BlogPost | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2434,6 +2451,103 @@ export class DatabaseStorage implements IStorage {
       ...r.agentStatus,
       user: r.user,
     }));
+  }
+
+  async getAllBlogPosts(filters?: BlogFilters): Promise<BlogPost[]> {
+    const conditions = [];
+    
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(blogPosts.status, filters.status));
+    }
+    if (filters?.category && filters.category !== 'all') {
+      conditions.push(eq(blogPosts.category, filters.category));
+    }
+    if (filters?.isFeatured !== undefined) {
+      conditions.push(eq(blogPosts.isFeatured, filters.isFeatured));
+    }
+    if (filters?.search) {
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
+      conditions.push(
+        or(
+          like(blogPosts.title, searchTerm),
+          like(blogPosts.excerpt, searchTerm),
+          like(blogPosts.content, searchTerm)
+        )
+      );
+    }
+
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(blogPosts.createdAt));
+  }
+
+  async getPublishedBlogPosts(): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.status, 'published'))
+      .orderBy(desc(blogPosts.publishedAt));
+  }
+
+  async getBlogPostById(id: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post;
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
+    return post;
+  }
+
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const postData = {
+      ...post,
+      publishedAt: post.publishedAt ? new Date(post.publishedAt) : (post.status === 'published' ? new Date() : null),
+    };
+    
+    const [created] = await db.insert(blogPosts).values(postData as any).returning();
+    return created;
+  }
+
+  async updateBlogPost(id: string, data: UpdateBlogPost): Promise<BlogPost | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    
+    if (data.status === 'published') {
+      const existing = await this.getBlogPostById(id);
+      if (existing && !existing.publishedAt) {
+        updateData.publishedAt = new Date();
+      }
+    }
+    
+    if (data.publishedAt) {
+      updateData.publishedAt = new Date(data.publishedAt);
+    }
+
+    const [updated] = await db
+      .update(blogPosts)
+      .set(updateData)
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBlogPost(id: string): Promise<boolean> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+    return true;
+  }
+
+  async incrementBlogViewCount(id: string): Promise<BlogPost | undefined> {
+    const existing = await this.getBlogPostById(id);
+    if (!existing) return undefined;
+
+    const [updated] = await db
+      .update(blogPosts)
+      .set({ viewCount: existing.viewCount + 1 })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updated;
   }
 }
 

@@ -71,6 +71,7 @@ const companyLinks = [
   { name: "Our Team", href: "/team" },
   { name: "Portfolio", href: "/portfolio" },
   { name: "Testimonials", href: "/testimonials" },
+  { name: "Blog", href: "/blog" },
   { name: "Careers", href: "/careers" },
   { name: "Press", href: "/press" }
 ];

@@ -1285,3 +1285,57 @@ export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
 
 export type InsertEmailLog = z.infer<typeof insertEmailLogSchema>;
 export type EmailLog = typeof emailLogs.$inferSelect;
+
+// Blog Posts Schema
+export const blogPostStatuses = ["draft", "published", "archived"] as const;
+export type BlogPostStatus = typeof blogPostStatuses[number];
+
+export const blogPosts = pgTable("blog_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  featuredImage: text("featured_image"),
+  author: text("author"),
+  category: text("category"),
+  tags: text("tags").array(),
+  status: text("status").notNull().default("draft"),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  publishedAt: timestamp("published_at"),
+  viewCount: integer("view_count").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  viewCount: true,
+}).extend({
+  publishedAt: z.date().or(z.string()).nullable().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export const updateBlogPostSchema = z.object({
+  title: z.string().optional(),
+  slug: z.string().optional(),
+  excerpt: z.string().optional(),
+  content: z.string().optional(),
+  featuredImage: z.string().nullable().optional(),
+  author: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  status: z.enum(blogPostStatuses).optional(),
+  isFeatured: z.boolean().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  publishedAt: z.date().or(z.string()).nullable().optional(),
+});
+
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type UpdateBlogPost = z.infer<typeof updateBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;

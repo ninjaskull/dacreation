@@ -24,7 +24,8 @@ import {
   insertCallbackRequestSchema, updateCallbackRequestSchema,
   insertConversationSchema, updateConversationSchema,
   insertChatMessageSchema,
-  insertSmtpSettingsSchema, insertEmailTemplateSchema
+  insertSmtpSettingsSchema, insertEmailTemplateSchema,
+  insertBlogPostSchema, updateBlogPostSchema
 } from "@shared/schema";
 import { encryptPassword, isPasswordEncrypted, testSmtpConnection, clearTransporterCache, sendEmail, sendTemplatedEmail } from "./email";
 import { crypto } from "./auth";
@@ -2922,6 +2923,116 @@ Crawl-delay: 1
     } catch (error) {
       console.error("Press kit generation error:", error);
       res.status(500).json({ message: "Failed to generate press kit" });
+    }
+  });
+
+  // Blog Posts Routes - Public
+  app.get("/api/blog", async (req, res) => {
+    try {
+      const posts = await storage.getPublishedBlogPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Get published blog posts error:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get("/api/blog/:slug", async (req, res) => {
+    try {
+      const post = await storage.getBlogPostBySlug(req.params.slug);
+      if (!post || post.status !== 'published') {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      await storage.incrementBlogViewCount(post.id);
+      res.json(post);
+    } catch (error) {
+      console.error("Get blog post error:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  // Blog Posts Routes - Admin
+  app.get("/api/cms/blog", isAuthenticated, async (req, res) => {
+    try {
+      const filters: any = {};
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.category) filters.category = req.query.category as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.isFeatured) filters.isFeatured = req.query.isFeatured === 'true';
+      
+      const posts = await storage.getAllBlogPosts(filters);
+      res.json(posts);
+    } catch (error) {
+      console.error("Get all blog posts error:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get("/api/cms/blog/:id", isAuthenticated, async (req, res) => {
+    try {
+      const post = await storage.getBlogPostById(req.params.id);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Get blog post error:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  app.post("/api/cms/blog", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const result = insertBlogPostSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      
+      const existingBySlug = await storage.getBlogPostBySlug(result.data.slug);
+      if (existingBySlug) {
+        return res.status(400).json({ message: "A blog post with this slug already exists. Please use a different URL slug." });
+      }
+      
+      const post = await storage.createBlogPost(result.data);
+      res.status(201).json(post);
+    } catch (error) {
+      console.error("Create blog post error:", error);
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
+  app.patch("/api/cms/blog/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const result = updateBlogPostSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+      
+      if (result.data.slug) {
+        const existingBySlug = await storage.getBlogPostBySlug(result.data.slug);
+        if (existingBySlug && existingBySlug.id !== req.params.id) {
+          return res.status(400).json({ message: "A blog post with this slug already exists. Please use a different URL slug." });
+        }
+      }
+      
+      const post = await storage.updateBlogPost(req.params.id, result.data);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Update blog post error:", error);
+      res.status(500).json({ message: "Failed to update blog post" });
+    }
+  });
+
+  app.delete("/api/cms/blog/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteBlogPost(req.params.id);
+      res.json({ message: "Blog post deleted successfully" });
+    } catch (error) {
+      console.error("Delete blog post error:", error);
+      res.status(500).json({ message: "Failed to delete blog post" });
     }
   });
 

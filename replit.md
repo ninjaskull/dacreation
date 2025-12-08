@@ -47,6 +47,19 @@ Preferred communication style: Simple, everyday language.
     8. Consultation CTA Section
 - **Lead Attribution**: `leadSource` field tracks origin (e.g., `inquiry_form`, `popup`, `chatbot`).
 
+### Blog System
+- **Public Pages**: Blog listing at `/blog` and individual posts at `/blog/:slug`.
+- **Admin Management**: Full CRUD operations at `/admin/blog` with search, filter by status/category.
+- **Features**:
+    - SEO-optimized with meta titles and descriptions
+    - Featured images and author attribution
+    - Categories and tags for organization
+    - Draft/Published/Archived status management
+    - Featured post highlighting
+    - View count tracking
+    - Responsive design matching maroon/gold theme
+- **Sample Content**: Pre-loaded with posts covering Indian event industry keywords (destination weddings, corporate events, sangeet ceremonies, wedding venues).
+
 ### SEO
 - **Sitemap System**: Automatic generation of `/sitemap.xml`, `/robots.txt`, and HTML `/sitemap`.
 - **Sitemap Configuration**: New pages added via `shared/seo-config.ts` with defined `path`, `title`, `description`, `keywords`, `priority`, `changefreq`, `isPublic`.
