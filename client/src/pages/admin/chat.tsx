@@ -33,7 +33,19 @@ import {
   IndianRupee,
   AlertCircle,
   ExternalLink,
+  Zap,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+
+const QUICK_REPLIES = [
+  { label: "Greeting", text: "Hi! Thank you for reaching out. How can I help you today?" },
+  { label: "Pricing", text: "Our event packages start from ₹5 Lakhs. Would you like me to share detailed pricing based on your requirements?" },
+  { label: "Availability", text: "Let me check our availability for your preferred date. Could you please confirm the date you have in mind?" },
+  { label: "Callback", text: "I'd be happy to have our event specialist call you. What's the best time to reach you?" },
+  { label: "Follow-up", text: "Is there anything else I can help you with today?" },
+  { label: "Thanks", text: "Thank you for choosing DA Creation! We look forward to making your event memorable." },
+];
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
@@ -171,16 +183,32 @@ export default function ChatPage() {
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQQNZ7X/8p5JESNPpvfvkjMQHT+X6vCRNg8iQJnt75E5DyI/l+vwkjcQIz6W6u+ROQ4iP5fq75E4DyM+luvwkjkPIz6W6++RNw8jP5fr8JE5DyI+luvvkTgQIj6X6/CROQ8iPpbr75E4DyM+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI+luvvkTgPIz6X6/CROQ8iPpbr75E4DyM+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI+luvvkTgPIz6X6/CROQ8iPpbr75I4ECI+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI+luvvkTgPIz6X6/CROQ8iPpbr75E4DyM+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI=");
+    audioRef.current.volume = 0.5;
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    if (soundEnabled && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  }, [soundEnabled]);
 
   const { isConnected, typingUsers, sendTyping, subscribeToConversation } = useChatWebSocket({
     isAdmin: true,
     userId: "admin",
     onMessage: useCallback(() => {
       scrollToBottom();
-    }, []),
+      playNotificationSound();
+    }, [playNotificationSound]),
   });
 
   useEffect(() => {
@@ -680,37 +708,94 @@ export default function ChatPage() {
                   </div>
                 </ScrollArea>
 
-                <div className="p-4 border-t bg-background">
-                  <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-                    <div className="flex-1 relative">
-                      <Input
-                        ref={inputRef}
-                        value={messageInput}
-                        onChange={handleInputChange}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Type a message..."
-                        className="pr-20 py-6 text-base rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
-                        data-testid="input-chat-message"
-                      />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                          <Paperclip className="w-4 h-4" />
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                          <Smile className="w-4 h-4" />
+                <div className="border-t bg-background">
+                  {showQuickReplies && (
+                    <div className="p-3 border-b bg-muted/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-muted-foreground">Quick Replies</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowQuickReplies(false)}>
+                          <X className="w-3 h-3" />
                         </Button>
                       </div>
+                      <div className="flex flex-wrap gap-2">
+                        {QUICK_REPLIES.map((reply, idx) => (
+                          <Button
+                            key={idx}
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setMessageInput(reply.text);
+                              setShowQuickReplies(false);
+                              inputRef.current?.focus();
+                            }}
+                            data-testid={`quick-reply-${idx}`}
+                          >
+                            {reply.label}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                    <Button 
-                      type="submit" 
-                      size="icon"
-                      disabled={!messageInput.trim() || isSending}
-                      className="h-12 w-12 rounded-xl shrink-0"
-                      data-testid="button-send-message"
-                    >
-                      <Send className="w-5 h-5" />
-                    </Button>
-                  </form>
+                  )}
+                  <div className="p-4">
+                    <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
+                      <div className="flex gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant={showQuickReplies ? "secondary" : "ghost"} 
+                              size="icon" 
+                              className="h-12 w-12 rounded-xl shrink-0"
+                              onClick={() => setShowQuickReplies(!showQuickReplies)}
+                            >
+                              <Zap className="w-5 h-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Quick Replies</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-12 w-12 rounded-xl shrink-0"
+                              onClick={() => setSoundEnabled(!soundEnabled)}
+                            >
+                              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{soundEnabled ? "Mute notifications" : "Enable notifications"}</TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="flex-1 relative">
+                        <Input
+                          ref={inputRef}
+                          value={messageInput}
+                          onChange={handleInputChange}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Type a message..."
+                          className="pr-10 py-6 text-base rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
+                          data-testid="input-chat-message"
+                        />
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <Smile className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <Button 
+                        type="submit" 
+                        size="icon"
+                        disabled={!messageInput.trim() || isSending}
+                        className="h-12 w-12 rounded-xl shrink-0"
+                        data-testid="button-send-message"
+                      >
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               </>
             ) : (
