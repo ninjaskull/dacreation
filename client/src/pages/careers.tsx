@@ -9,7 +9,7 @@ import {
   Clock, 
   ArrowRight, 
   CheckCircle2, 
-  DollarSign,
+  IndianRupee,
   Users,
   Heart,
   Award,
@@ -270,7 +270,7 @@ export default function CareersPage() {
                                 )}
                                 {career.salary && (
                                   <span className="flex items-center gap-1 font-medium text-[#601a29]">
-                                    <DollarSign className="w-4 h-4" />
+                                    <IndianRupee className="w-4 h-4" />
                                     {career.salary}
                                   </span>
                                 )}
@@ -292,12 +292,14 @@ export default function CareersPage() {
               <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg mb-4">No open positions at the moment.</p>
               <p className="text-gray-400 mb-6">Check back soon or send us your resume for future opportunities.</p>
-              <a href="mailto:careers@dacreation.in">
-                <Button variant="outline" className="rounded-full gap-2">
-                  Send Your Resume
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </a>
+              <Button 
+                variant="outline" 
+                className="rounded-full gap-2"
+                onClick={() => window.location.href = `mailto:${branding.contact.email}?subject=Resume Submission for Future Opportunities`}
+              >
+                Send Your Resume
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             </div>
           )}
         </div>
@@ -317,15 +319,15 @@ export default function CareersPage() {
             <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
               We're always looking for talented individuals. Send us your resume and we'll reach out when a suitable opportunity arises.
             </p>
-            <a
-              href="mailto:careers@dacreation.in"
-              data-testid="link-email-careers"
+            <Button 
+              size="lg" 
+              className="rounded-full gap-2 bg-[#d4af37] hover:bg-[#c5a030] text-white"
+              onClick={() => window.location.href = `mailto:${branding.contact.email}?subject=Resume Submission for Future Opportunities`}
+              data-testid="button-email-careers"
             >
-              <Button size="lg" className="rounded-full gap-2 bg-[#d4af37] hover:bg-[#c5a030] text-white">
-                Send Your Resume
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </a>
+              Send Your Resume
+              <ArrowRight className="w-5 h-5" />
+            </Button>
           </motion.div>
         </div>
       </section>
@@ -359,7 +361,7 @@ export default function CareersPage() {
                   )}
                   {selectedCareer.salary && (
                     <span className="flex items-center gap-1 text-sm font-medium text-[#601a29]">
-                      <DollarSign className="w-4 h-4" />
+                      <IndianRupee className="w-4 h-4" />
                       {selectedCareer.salary}
                     </span>
                   )}
