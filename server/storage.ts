@@ -589,7 +589,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteLead(id: string): Promise<boolean> {
-    const result = await db.delete(leads).where(eq(leads.id, id));
+    // First, delete related records to avoid foreign key constraint violations
+    // Delete lead notes
+    await db.delete(leadNotes).where(eq(leadNotes.leadId, id));
+    
+    // Delete activity logs
+    await db.delete(activityLogs).where(eq(activityLogs.leadId, id));
+    
+    // Delete appointments
+    await db.delete(appointments).where(eq(appointments.leadId, id));
+    
+    // Set leadId to null in events (don't delete events, just unlink them)
+    await db.update(events).set({ leadId: null }).where(eq(events.leadId, id));
+    
+    // Now delete the lead
+    await db.delete(leads).where(eq(leads.id, id));
     return true;
   }
 
@@ -1170,6 +1184,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteClient(id: string): Promise<boolean> {
+    // First, handle related records to avoid foreign key constraint violations
+    // Set referredBy to null for any clients that reference this client
+    await db.update(clients).set({ referredBy: null }).where(eq(clients.referredBy, id));
+    
+    // Set clientId to null in events (don't delete events, just unlink them)
+    await db.update(events).set({ clientId: null }).where(eq(events.clientId, id));
+    
+    // Set clientId to null in invoices (don't delete invoices, just unlink them)
+    await db.update(invoices).set({ clientId: null }).where(eq(invoices.clientId, id));
+    
+    // Now delete the client
     await db.delete(clients).where(eq(clients.id, id));
     return true;
   }
