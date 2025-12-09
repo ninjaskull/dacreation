@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import type { BlogPost } from "@shared/schema";
 import { format } from "date-fns";
 
@@ -195,18 +196,12 @@ function BlogForm({
         </h4>
         <div>
           <Label htmlFor="content">Blog Content <span className="text-red-500">*</span></Label>
-          <Textarea 
-            id="content"
-            value={form.content} 
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            placeholder="Write your blog post content here. Use ## for headings, **text** for bold, *text* for italic."
-            rows={12}
+          <RichTextEditor
+            content={form.content}
+            onChange={(content) => setForm({ ...form, content })}
+            placeholder="Start writing your blog post..."
             className={errors.content ? "border-red-500" : ""}
-            data-testid="input-blog-content"
           />
-          <p className="text-xs text-muted-foreground mt-1">
-            Supports basic Markdown: ## Heading, **bold**, *italic*
-          </p>
           {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content}</p>}
         </div>
       </div>

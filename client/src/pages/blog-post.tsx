@@ -20,11 +20,40 @@ import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import DOMPurify from "dompurify";
 
 function estimateReadTime(content: string): number {
   const wordsPerMinute = 200;
-  const wordCount = content.split(/\s+/).length;
-  return Math.ceil(wordCount / wordsPerMinute);
+  const textContent = content.replace(/<[^>]*>/g, ' ');
+  const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+  return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+}
+
+function isHtmlContent(content: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(content);
+}
+
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'p', 'br', 'hr',
+      'strong', 'b', 'em', 'i', 'u', 's', 'strike',
+      'ul', 'ol', 'li',
+      'blockquote', 'pre', 'code',
+      'a', 'img',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'div', 'span'
+    ],
+    ALLOWED_ATTR: [
+      'href', 'src', 'alt', 'title', 'class', 'id',
+      'target', 'rel', 'style', 'width', 'height'
+    ],
+    ALLOW_DATA_ATTR: false,
+    ADD_ATTR: ['target'],
+    FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'input', 'button', 'object', 'embed'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']
+  });
 }
 
 export default function BlogPostPage() {
@@ -197,8 +226,8 @@ export default function BlogPostPage() {
               )}
 
               <div 
-                className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-img:rounded-xl"
-                dangerouslySetInnerHTML={{ __html: formatContent(post.content) }}
+                className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-img:rounded-xl prose-blockquote:border-l-primary prose-blockquote:border-l-4 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded"
+                dangerouslySetInnerHTML={{ __html: isHtmlContent(post.content) ? sanitizeHtml(post.content) : formatContent(post.content) }}
                 data-testid="blog-post-content"
               />
 
@@ -325,18 +354,65 @@ export default function BlogPostPage() {
 }
 
 function formatContent(content: string): string {
-  let formatted = content
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br/>')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>');
+  let formatted = content;
   
-  formatted = formatted.replace(/## (.*?)(<br\/>|<\/p>)/g, '</p><h2>$1</h2><p>');
-  formatted = formatted.replace(/### (.*?)(<br\/>|<\/p>)/g, '</p><h3>$1</h3><p>');
-  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  // Process headings first (before paragraph wrapping)
+  // Match headings at the start of lines
+  formatted = formatted.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  formatted = formatted.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  formatted = formatted.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  formatted = formatted.replace(/^# (.+)$/gm, '<h1>$1</h1>');
   
+  // Process lists
+  formatted = formatted.replace(/^\* (.+)$/gm, '<li>$1</li>');
+  formatted = formatted.replace(/^- (.+)$/gm, '<li>$1</li>');
+  formatted = formatted.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  
+  // Wrap consecutive li elements in ul
+  formatted = formatted.replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`);
+  
+  // Process inline formatting
+  formatted = formatted.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  formatted = formatted.replace(/_(.+?)_/g, '<em>$1</em>');
+  
+  // Process links
+  formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  // Process blockquotes
+  formatted = formatted.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  
+  // Process inline code
+  formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Process code blocks
+  formatted = formatted.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  
+  // Process horizontal rules
+  formatted = formatted.replace(/^---$/gm, '<hr/>');
+  formatted = formatted.replace(/^\*\*\*$/gm, '<hr/>');
+  
+  // Split by double newlines for paragraphs (excluding already processed elements)
+  const paragraphs = formatted.split(/\n\n+/);
+  formatted = paragraphs.map(p => {
+    const trimmed = p.trim();
+    // Don't wrap block elements in paragraphs
+    if (trimmed.startsWith('<h1>') || trimmed.startsWith('<h2>') || 
+        trimmed.startsWith('<h3>') || trimmed.startsWith('<h4>') ||
+        trimmed.startsWith('<ul>') || trimmed.startsWith('<ol>') ||
+        trimmed.startsWith('<blockquote>') || trimmed.startsWith('<pre>') ||
+        trimmed.startsWith('<hr')) {
+      return trimmed;
+    }
+    // Replace single newlines with <br/> within paragraphs
+    const withBreaks = trimmed.replace(/\n/g, '<br/>');
+    return withBreaks ? `<p>${withBreaks}</p>` : '';
+  }).filter(p => p).join('\n');
+  
+  // Clean up empty paragraphs
   formatted = formatted.replace(/<p><\/p>/g, '');
+  formatted = formatted.replace(/<p>\s*<\/p>/g, '');
   
   return formatted;
 }
