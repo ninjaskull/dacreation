@@ -653,7 +653,7 @@ export function Chatbot() {
     <div className="floating-widget">
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 right-4 md:bottom-6 md:left-6 md:right-auto z-50 w-14 h-14 bg-secondary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/90 transition-colors"
+        className="fixed bottom-24 right-4 md:bottom-16 md:left-6 md:right-auto z-50 w-14 h-14 bg-secondary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/90 transition-colors"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         data-testid="chatbot-button"
@@ -687,7 +687,7 @@ export function Chatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-40 right-4 md:bottom-24 md:left-6 md:right-auto z-50 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-xl shadow-2xl border overflow-hidden flex flex-col"
+            className="fixed bottom-40 right-4 md:bottom-32 md:left-6 md:right-auto z-50 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-xl shadow-2xl border overflow-hidden flex flex-col"
             style={{ maxHeight: "70vh" }}
             data-testid="chatbot-window"
           >

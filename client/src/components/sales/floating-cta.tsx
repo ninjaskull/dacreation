@@ -83,7 +83,7 @@ export function FloatingCTA() {
     <div className="floating-widget">
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-4 md:right-6 z-50 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+        className="fixed bottom-6 right-4 md:right-6 md:bottom-16 z-50 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         data-testid="floating-cta-button"
@@ -117,7 +117,7 @@ export function FloatingCTA() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="fixed bottom-6 right-24 z-50 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium text-primary hidden md:block"
+            className="fixed bottom-16 right-24 z-50 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium text-primary hidden md:block"
           >
             Talk to an Event Planner
           </motion.div>
@@ -130,7 +130,7 @@ export function FloatingCTA() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-4 md:right-6 z-50 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-xl shadow-2xl border overflow-hidden"
+            className="fixed bottom-24 right-4 md:right-6 md:bottom-32 z-50 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-xl shadow-2xl border overflow-hidden"
             data-testid="floating-cta-form"
           >
             {!isSuccess ? (
