@@ -264,29 +264,67 @@ export function Chatbot() {
     }, 500);
   };
 
-  const handleBudgetSelect = (budget: string, label: string) => {
+  const handleBudgetSelect = async (budget: string, label: string) => {
     addUserMessage(label);
-    setCollectedData((prev) => ({ ...prev, budget }));
+    const updatedData = { ...collectedData, budget };
+    setCollectedData(updatedData);
+    
     setTimeout(() => {
-      showConfirmation({ ...collectedData, budget });
-    }, 500);
+      addBotMessage("Thank you for providing all the details! Submitting your inquiry...");
+    }, 300);
+    
+    setTimeout(() => {
+      handleDirectSubmit(updatedData);
+    }, 800);
   };
 
-  const showConfirmation = (data: CollectedData) => {
-    setCollectionStep("confirm");
-    addBotMessage(`Thank you! Here's a summary of your inquiry:
+  const handleDirectSubmit = async (data: CollectedData) => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          visitorId,
+          visitorName: data.name,
+          visitorPhone: data.phone,
+          visitorEmail: data.email,
+          eventType: data.eventType,
+          eventDate: data.eventDate,
+          eventLocation: data.location,
+          budgetRange: data.budget,
+          guestCount: parseInt(data.guestCount) || null,
+          lastMessageAt: new Date().toISOString(),
+        }),
+      });
 
-📋 **Your Details:**
-• Name: ${data.name}
-• Phone: ${data.phone}
-• Email: ${data.email}
-• Event: ${EVENT_TYPES.find(e => e.value === data.eventType)?.label || data.eventType}
-• Guests: ${data.guestCount}
-• Date: ${data.eventDate}
-• Location: ${data.location}
-• Budget: ${BUDGET_RANGES.find(b => b.value === data.budget)?.label || data.budget}
+      if (!response.ok) throw new Error("Failed to create conversation");
 
-Is this information correct?`);
+      const conversation = await response.json();
+      setConversationId(conversation.id);
+
+      const leadResponse = await fetch(`/api/conversations/${conversation.id}/submit-lead`, {
+        method: "POST",
+      });
+
+      if (!leadResponse.ok) throw new Error("Failed to submit lead");
+
+      setPhase("submitted");
+      addSystemMessage("✅ Your inquiry has been submitted successfully! Our team will contact you soon.");
+      setTimeout(() => {
+        addBotMessage("What would you like to do next?");
+      }, 800);
+
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit your inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleConfirmSubmit = async () => {
@@ -540,46 +578,7 @@ Is this information correct?`);
       );
     }
 
-    if (phase === "collecting" && collectionStep === "confirm") {
-      return (
-        <div className="p-4 border-t bg-white space-y-2">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                setCollectionStep("name");
-                addBotMessage("No problem! Let's start again. What's your name?");
-              }}
-              data-testid="btn-edit-info"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Edit Info
-            </Button>
-            <Button
-              className="flex-1 bg-primary"
-              onClick={handleConfirmSubmit}
-              disabled={isSubmitting}
-              data-testid="btn-confirm-submit"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Submit Inquiry
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    if (phase === "live" || (phase === "collecting" && !["eventType", "budget", "confirm", "welcome"].includes(collectionStep))) {
+    if (phase === "live" || (phase === "collecting" && !["eventType", "budget", "welcome"].includes(collectionStep))) {
       return (
         <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
           <div className="flex gap-2">
