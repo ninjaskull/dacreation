@@ -132,12 +132,21 @@ export function StructuredData() {
           { "@type": "ListItem", "position": 2, "name": "About Us", "item": `${branding.domain.url}/about` }
         ]
       },
+      '/team': {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
+          { "@type": "ListItem", "position": 2, "name": "Our Team", "item": `${branding.domain.url}/team` }
+        ]
+      },
       '/services/weddings': {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
-          { "@type": "ListItem", "position": 2, "name": "Wedding Planning", "item": `${branding.domain.url}/services/weddings` }
+          { "@type": "ListItem", "position": 2, "name": "Services", "item": `${branding.domain.url}/services/weddings` },
+          { "@type": "ListItem", "position": 3, "name": "Wedding Planning", "item": `${branding.domain.url}/services/weddings` }
         ]
       },
       '/services/corporate': {
@@ -145,7 +154,8 @@ export function StructuredData() {
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
-          { "@type": "ListItem", "position": 2, "name": "Corporate Events", "item": `${branding.domain.url}/services/corporate` }
+          { "@type": "ListItem", "position": 2, "name": "Services", "item": `${branding.domain.url}/services/corporate` },
+          { "@type": "ListItem", "position": 3, "name": "Corporate Events", "item": `${branding.domain.url}/services/corporate` }
         ]
       },
       '/services/social': {
@@ -153,7 +163,8 @@ export function StructuredData() {
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
-          { "@type": "ListItem", "position": 2, "name": "Social Events", "item": `${branding.domain.url}/services/social` }
+          { "@type": "ListItem", "position": 2, "name": "Services", "item": `${branding.domain.url}/services/social` },
+          { "@type": "ListItem", "position": 3, "name": "Social Events", "item": `${branding.domain.url}/services/social` }
         ]
       },
       '/services/destination': {
@@ -161,7 +172,8 @@ export function StructuredData() {
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
-          { "@type": "ListItem", "position": 2, "name": "Destination Weddings", "item": `${branding.domain.url}/services/destination` }
+          { "@type": "ListItem", "position": 2, "name": "Services", "item": `${branding.domain.url}/services/destination` },
+          { "@type": "ListItem", "position": 3, "name": "Destination Weddings", "item": `${branding.domain.url}/services/destination` }
         ]
       },
       '/portfolio': {
@@ -172,12 +184,44 @@ export function StructuredData() {
           { "@type": "ListItem", "position": 2, "name": "Portfolio", "item": `${branding.domain.url}/portfolio` }
         ]
       },
+      '/testimonials': {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
+          { "@type": "ListItem", "position": 2, "name": "Testimonials", "item": `${branding.domain.url}/testimonials` }
+        ]
+      },
+      '/careers': {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
+          { "@type": "ListItem", "position": 2, "name": "Careers", "item": `${branding.domain.url}/careers` }
+        ]
+      },
+      '/blog': {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${branding.domain.url}/blog` }
+        ]
+      },
       '/contact': {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
-          { "@type": "ListItem", "position": 2, "name": "Contact", "item": `${branding.domain.url}/contact` }
+          { "@type": "ListItem", "position": 2, "name": "Contact Us", "item": `${branding.domain.url}/contact` }
+        ]
+      },
+      '/inquire': {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": branding.domain.url },
+          { "@type": "ListItem", "position": 2, "name": "Get a Quote", "item": `${branding.domain.url}/inquire` }
         ]
       }
     };

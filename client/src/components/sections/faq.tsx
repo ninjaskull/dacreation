@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { FAQStructuredData } from "@/components/seo/structured-data";
 
 const faqs = [
   {
@@ -43,10 +44,12 @@ const faqs = [
 export function FAQ() {
   return (
     <section id="faq" className="py-20 bg-background">
+      <FAQStructuredData faqs={faqs} />
       <div className="container mx-auto px-6 max-w-4xl">
         <div className="text-center mb-12">
           <span className="text-secondary uppercase tracking-widest text-sm font-medium mb-4 block">Common Questions</span>
-          <h2 className="font-serif text-3xl md:text-4xl text-primary">FAQ</h2>
+          <h2 className="font-serif text-3xl md:text-4xl text-primary">Frequently Asked Questions</h2>
+          <p className="text-muted-foreground mt-4">Everything you need to know about our event management services in Pune</p>
         </div>
 
         <Accordion type="single" collapsible className="w-full">
