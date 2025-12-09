@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useChatWebSocket } from "@/hooks/use-chat-websocket";
+import { useBranding } from "@/contexts/BrandingContext";
 
 type ChatPhase = "collecting" | "submitted" | "live" | "ended";
 type CollectionStep = "welcome" | "name" | "phone" | "email" | "eventType" | "guestCount" | "eventDate" | "location" | "budget" | "confirm";
@@ -78,7 +79,10 @@ export function Chatbot() {
   const [isConnecting, setIsConnecting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { branding } = useBranding();
   const visitorId = getVisitorId();
+  
+  const primaryPhone = branding.contact.phones[0]?.replace(/\s+/g, '') || '';
 
   const handleNewMessage = useCallback((data: any) => {
     if (data.senderType === 'admin' && data.conversationId === conversationId) {
@@ -712,7 +716,7 @@ export function Chatbot() {
               </div>
               <div className="flex items-center gap-1">
                 <a
-                  href="tel:+917972496366"
+                  href={`tel:${primaryPhone}`}
                   className="p-2 rounded-lg text-white hover:bg-white/20 transition-colors"
                   data-testid="btn-call-phone"
                   title="Call us"

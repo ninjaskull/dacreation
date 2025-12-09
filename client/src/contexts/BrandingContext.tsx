@@ -196,7 +196,9 @@ function mergeWithDefaults(apiData: any): BrandingData {
       url: apiData.website || defaults.domain.url,
     },
     contact: {
-      phones: apiData.phone ? [apiData.phone] : defaults.contact.phones,
+      phones: apiData.phone 
+        ? apiData.phone.split(',').map((p: string) => p.trim()).filter((p: string) => p)
+        : defaults.contact.phones,
       email: apiData.email || defaults.contact.email,
       whatsapp: apiData.whatsappNumber || defaults.contact.whatsapp,
     },
