@@ -710,17 +710,27 @@ export function Chatbot() {
                   </div>
                 </div>
               </div>
-              {phase !== "ended" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetChat}
-                  className="text-white hover:bg-white/20"
-                  data-testid="btn-close-chat"
+              <div className="flex items-center gap-1">
+                <a
+                  href="tel:+917972496366"
+                  className="p-2 rounded-lg text-white hover:bg-white/20 transition-colors"
+                  data-testid="btn-call-phone"
+                  title="Call us"
                 >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
+                  <Phone className="w-4 h-4" />
+                </a>
+                {phase !== "ended" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetChat}
+                    className="text-white hover:bg-white/20"
+                    data-testid="btn-close-chat"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
             {phase === "collecting" && (
