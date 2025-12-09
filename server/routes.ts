@@ -2697,8 +2697,9 @@ export async function registerRoutes(
 
   // ==================== SEO: Robots.txt ====================
 
-  app.get("/robots.txt", (req, res) => {
-    const baseUrl = req.protocol + '://' + req.get('host');
+  app.get("/robots.txt", async (req, res) => {
+    const { BRAND } = await import('../shared/branding');
+    const baseUrl = BRAND.domain.url;
     const robotsTxt = `# Robots.txt for ${baseUrl}
 User-agent: *
 Allow: /
@@ -2722,8 +2723,9 @@ Crawl-delay: 1
   app.get("/sitemap.xml", async (req, res) => {
     try {
       const { getPublicPages } = await import('../shared/seo-config');
+      const { BRAND } = await import('../shared/branding');
       const pages = getPublicPages();
-      const baseUrl = req.protocol + '://' + req.get('host');
+      const baseUrl = BRAND.domain.url;
       const lastMod = new Date().toISOString().split('T')[0];
 
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
