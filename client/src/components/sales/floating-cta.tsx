@@ -105,7 +105,7 @@ export function FloatingCTA() {
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: -90, opacity: 0 }}
             >
-              <MessageCircle className="w-6 h-6" />
+              <Phone className="w-6 h-6" />
             </motion.div>
           )}
         </AnimatePresence>
