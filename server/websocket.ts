@@ -11,10 +11,12 @@ interface ChatClient {
   userName?: string;
   sessionValidated?: boolean;
   activeConversationId?: string;
+  isAlive: boolean;
+  lastPing: number;
 }
 
 interface ChatMessage {
-  type: "message" | "typing" | "read" | "join" | "leave" | "status" | "subscribe" | "agent_status" | "typing_stop";
+  type: "message" | "typing" | "read" | "join" | "leave" | "status" | "subscribe" | "agent_status" | "typing_stop" | "ping" | "pong";
   conversationId?: string;
   messageId?: string;
   content?: string;
@@ -30,6 +32,10 @@ interface ChatMessage {
 const clients: Map<string, ChatClient> = new Map();
 const conversationSubscribers: Map<string, Set<string>> = new Map();
 let wss: WebSocketServer | null = null;
+let heartbeatInterval: NodeJS.Timeout | null = null;
+
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const CLIENT_TIMEOUT = 60000; // 60 seconds - consider client dead if no pong
 
 export function setupWebSocket(server: Server) {
   wss = new WebSocketServer({ 
@@ -37,9 +43,50 @@ export function setupWebSocket(server: Server) {
     path: "/ws/chat"
   });
 
+  // Start heartbeat interval to detect dead connections
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+  }
+  
+  heartbeatInterval = setInterval(() => {
+    const now = Date.now();
+    clients.forEach((client, clientId) => {
+      if (!client.isAlive) {
+        // Client didn't respond to last ping, terminate connection
+        console.log(`[WebSocket] Terminating inactive client: ${clientId}`);
+        client.ws.terminate();
+        cleanupClient(clientId);
+        return;
+      }
+      
+      // Check if client has been silent for too long
+      if (now - client.lastPing > CLIENT_TIMEOUT) {
+        console.log(`[WebSocket] Client timeout: ${clientId}`);
+        client.ws.terminate();
+        cleanupClient(clientId);
+        return;
+      }
+      
+      // Mark as not alive and send ping
+      client.isAlive = false;
+      if (client.ws.readyState === WebSocket.OPEN) {
+        try {
+          client.ws.send(JSON.stringify({ type: "ping", timestamp: now }));
+        } catch (error) {
+          console.error(`[WebSocket] Error sending ping to ${clientId}:`, error);
+        }
+      }
+    });
+  }, HEARTBEAT_INTERVAL);
+
   wss.on("connection", async (ws: WebSocket, req: IncomingMessage) => {
     const clientId = generateClientId();
-    const client: ChatClient = { ws, sessionValidated: false };
+    const client: ChatClient = { 
+      ws, 
+      sessionValidated: false, 
+      isAlive: true, 
+      lastPing: Date.now() 
+    };
     clients.set(clientId, client);
 
     // Attempt to validate session from cookies during connection
@@ -60,6 +107,14 @@ export function setupWebSocket(server: Server) {
     ws.on("message", (data) => {
       try {
         const message = JSON.parse(data.toString()) as ChatMessage & { clientType?: string };
+        
+        // Update client's last activity time
+        const clientObj = clients.get(clientId);
+        if (clientObj) {
+          clientObj.lastPing = Date.now();
+          clientObj.isAlive = true;
+        }
+        
         handleMessage(clientId, message);
       } catch (error) {
         console.error("[WebSocket] Error parsing message:", error);
@@ -68,18 +123,20 @@ export function setupWebSocket(server: Server) {
 
     ws.on("close", () => {
       console.log(`[WebSocket] Client disconnected: ${clientId}`);
-      const client = clients.get(clientId);
-      if (client?.activeConversationId) {
-        unsubscribeFromConversation(clientId, client.activeConversationId);
-      }
-      conversationSubscribers.forEach((subscribers) => {
-        subscribers.delete(clientId);
-      });
-      clients.delete(clientId);
+      cleanupClient(clientId);
     });
 
     ws.on("error", (error) => {
       console.error(`[WebSocket] Client error: ${clientId}`, error);
+    });
+
+    // Handle native WebSocket pong frames
+    ws.on("pong", () => {
+      const clientObj = clients.get(clientId);
+      if (clientObj) {
+        clientObj.isAlive = true;
+        clientObj.lastPing = Date.now();
+      }
     });
 
     ws.send(JSON.stringify({ type: "connected", clientId }));
@@ -89,11 +146,35 @@ export function setupWebSocket(server: Server) {
   return wss;
 }
 
+function cleanupClient(clientId: string) {
+  const client = clients.get(clientId);
+  if (client?.activeConversationId) {
+    unsubscribeFromConversation(clientId, client.activeConversationId);
+  }
+  conversationSubscribers.forEach((subscribers) => {
+    subscribers.delete(clientId);
+  });
+  clients.delete(clientId);
+}
+
 function handleMessage(clientId: string, message: ChatMessage & { clientType?: string; adminToken?: string }) {
   const client = clients.get(clientId);
   if (!client) return;
 
   switch (message.type) {
+    case "pong":
+      // Client responded to our ping
+      client.isAlive = true;
+      client.lastPing = Date.now();
+      break;
+
+    case "ping":
+      // Client sent ping, respond with pong
+      if (client.ws.readyState === WebSocket.OPEN) {
+        client.ws.send(JSON.stringify({ type: "pong", timestamp: Date.now() }));
+      }
+      break;
+
     case "join":
       if (message.clientType === "admin") {
         // Admin status is determined by session validation during connection
@@ -124,6 +205,14 @@ function handleMessage(clientId: string, message: ChatMessage & { clientType?: s
         subscribeToConversation(clientId, message.conversationId);
         client.activeConversationId = message.conversationId;
         console.log(`[WebSocket] Client ${clientId} subscribed to conversation ${message.conversationId}`);
+        
+        // Send confirmation back to client
+        if (client.ws.readyState === WebSocket.OPEN) {
+          client.ws.send(JSON.stringify({ 
+            type: "subscribed", 
+            conversationId: message.conversationId 
+          }));
+        }
       }
       break;
 
@@ -218,7 +307,11 @@ function broadcastToConversation(conversationId: string, message: ChatMessage, e
     if (subscriberId !== excludeClientId) {
       const client = clients.get(subscriberId);
       if (client && client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(payload);
+        try {
+          client.ws.send(payload);
+        } catch (error) {
+          console.error(`[WebSocket] Error sending to ${subscriberId}:`, error);
+        }
       }
     }
   });
@@ -232,16 +325,24 @@ function notifyAdminsForConversation(conversationId: string, message: ChatMessag
   subscribers.forEach((subscriberId) => {
     const client = clients.get(subscriberId);
     if (client && client.isAdmin && client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(payload);
+      try {
+        client.ws.send(payload);
+      } catch (error) {
+        console.error(`[WebSocket] Error sending to admin ${subscriberId}:`, error);
+      }
     }
   });
 }
 
 function broadcastAgentStatusToAll(message: ChatMessage) {
   const payload = JSON.stringify(message);
-  clients.forEach((client) => {
+  clients.forEach((client, clientId) => {
     if (client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(payload);
+      try {
+        client.ws.send(payload);
+      } catch (error) {
+        console.error(`[WebSocket] Error broadcasting to ${clientId}:`, error);
+      }
     }
   });
 }
@@ -256,9 +357,13 @@ export function broadcastAgentStatusChange(userId: string, userName: string, sta
     timestamp: new Date().toISOString(),
   });
   
-  clients.forEach((client) => {
+  clients.forEach((client, clientId) => {
     if (client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(payload);
+      try {
+        client.ws.send(payload);
+      } catch (error) {
+        console.error(`[WebSocket] Error sending status to ${clientId}:`, error);
+      }
     }
   });
 }
@@ -276,18 +381,26 @@ export function broadcastNewMessage(conversationId: string, message: any) {
     subscribers.forEach((subscriberId) => {
       const client = clients.get(subscriberId);
       if (client && client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(payload);
+        try {
+          client.ws.send(payload);
+        } catch (error) {
+          console.error(`[WebSocket] Error sending message to ${subscriberId}:`, error);
+        }
       }
     });
   }
   
-  clients.forEach((client) => {
+  clients.forEach((client, clientId) => {
     if (client.isAdmin && client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(JSON.stringify({
-        type: "new_message_notification",
-        conversationId,
-        preview: message.content?.substring(0, 100),
-      }));
+      try {
+        client.ws.send(JSON.stringify({
+          type: "new_message_notification",
+          conversationId,
+          preview: message.content?.substring(0, 100),
+        }));
+      } catch (error) {
+        console.error(`[WebSocket] Error sending notification to ${clientId}:`, error);
+      }
     }
   });
 }
@@ -304,7 +417,11 @@ export function broadcastConversationUpdate(conversationId: string, update: any)
     subscribers.forEach((subscriberId) => {
       const client = clients.get(subscriberId);
       if (client && client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(payload);
+        try {
+          client.ws.send(payload);
+        } catch (error) {
+          console.error(`[WebSocket] Error sending update to ${subscriberId}:`, error);
+        }
       }
     });
   }
@@ -320,15 +437,33 @@ export function broadcastLiveAgentRequest(conversationId: string, visitorInfo: a
     timestamp: new Date().toISOString(),
   });
   
-  clients.forEach((client) => {
+  clients.forEach((client, clientId) => {
     if (client.isAdmin && client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(payload);
+      try {
+        client.ws.send(payload);
+      } catch (error) {
+        console.error(`[WebSocket] Error sending live agent request to ${clientId}:`, error);
+      }
     }
   });
 }
 
 function generateClientId(): string {
   return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Cleanup on server shutdown
+export function cleanupWebSocket() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+  if (wss) {
+    wss.close();
+    wss = null;
+  }
+  clients.clear();
+  conversationSubscribers.clear();
 }
 
 export { wss };
