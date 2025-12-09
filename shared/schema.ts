@@ -1044,6 +1044,9 @@ export type AgentStatus = typeof agentStatus.$inferSelect;
 export const conversationStatuses = ["active", "waiting", "live_agent", "resolved", "closed"] as const;
 export type ConversationStatus = typeof conversationStatuses[number];
 
+export const conversationPhases = ["collecting", "submitted", "live", "ended"] as const;
+export type ConversationPhase = typeof conversationPhases[number];
+
 export const conversationPriorities = ["low", "normal", "high", "urgent"] as const;
 export type ConversationPriority = typeof conversationPriorities[number];
 
@@ -1057,6 +1060,9 @@ export const conversations = pgTable("conversations", {
   eventDate: text("event_date"),
   eventLocation: text("event_location"),
   budgetRange: text("budget_range"),
+  guestCount: integer("guest_count"),
+  leadId: varchar("lead_id").references(() => leads.id),
+  phase: text("phase").notNull().default("collecting"),
   status: text("status").notNull().default("active"),
   priority: text("priority").notNull().default("normal"),
   wantsLiveAgent: boolean("wants_live_agent").notNull().default(false),
@@ -1096,6 +1102,9 @@ export const updateConversationSchema = z.object({
   eventDate: z.string().optional(),
   eventLocation: z.string().optional(),
   budgetRange: z.string().optional(),
+  guestCount: z.number().optional(),
+  leadId: z.string().nullable().optional(),
+  phase: z.enum(conversationPhases).optional(),
   status: z.enum(conversationStatuses).optional(),
   priority: z.enum(conversationPriorities).optional(),
   wantsLiveAgent: z.boolean().optional(),

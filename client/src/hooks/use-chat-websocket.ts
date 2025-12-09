@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface ChatMessage {
-  type: "message" | "typing" | "read" | "connected" | "status" | "subscribe" | "new_message_notification";
+  type: "message" | "typing" | "read" | "connected" | "status" | "subscribe" | "new_message_notification" | "live_agent_request";
   conversationId?: string;
   messageId?: string;
   content?: string;
@@ -15,6 +15,9 @@ interface ChatMessage {
   timestamp?: string;
   clientId?: string;
   preview?: string;
+  visitorName?: string;
+  visitorPhone?: string;
+  visitorEmail?: string;
 }
 
 interface UseChatWebSocketOptions {
@@ -101,6 +104,12 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
             case "new_message_notification":
               queryClient.invalidateQueries({ queryKey: ["conversations"] });
               queryClient.invalidateQueries({ queryKey: ["conversationStats"] });
+              break;
+
+            case "live_agent_request":
+              queryClient.invalidateQueries({ queryKey: ["conversations"] });
+              queryClient.invalidateQueries({ queryKey: ["conversationStats"] });
+              onMessage?.(data);
               break;
 
             case "connected":

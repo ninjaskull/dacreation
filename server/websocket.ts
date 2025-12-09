@@ -310,6 +310,23 @@ export function broadcastConversationUpdate(conversationId: string, update: any)
   }
 }
 
+export function broadcastLiveAgentRequest(conversationId: string, visitorInfo: any) {
+  const payload = JSON.stringify({
+    type: "live_agent_request",
+    conversationId,
+    visitorName: visitorInfo.visitorName,
+    visitorPhone: visitorInfo.visitorPhone,
+    eventType: visitorInfo.eventType,
+    timestamp: new Date().toISOString(),
+  });
+  
+  clients.forEach((client) => {
+    if (client.isAdmin && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(payload);
+    }
+  });
+}
+
 function generateClientId(): string {
   return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }

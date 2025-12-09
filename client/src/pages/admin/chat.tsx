@@ -205,10 +205,19 @@ export default function ChatPage() {
   const { isConnected, typingUsers, sendTyping, subscribeToConversation } = useChatWebSocket({
     isAdmin: true,
     userId: "admin",
-    onMessage: useCallback(() => {
+    onMessage: useCallback((message: any) => {
       scrollToBottom();
       playNotificationSound();
-    }, [playNotificationSound]),
+      
+      if (message.type === "live_agent_request") {
+        toast({
+          title: "🔴 Live Agent Request!",
+          description: `${message.visitorName || "A visitor"} wants to talk to a live agent`,
+          variant: "destructive",
+          duration: 10000,
+        });
+      }
+    }, [playNotificationSound, toast]),
   });
 
   useEffect(() => {

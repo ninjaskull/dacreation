@@ -5,7 +5,7 @@ import PDFDocument from "pdfkit";
 import path from "path";
 import fs from "fs";
 import passport from "passport";
-import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange } from "./websocket";
+import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange, broadcastLiveAgentRequest } from "./websocket";
 import { 
   insertLeadSchema, insertUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
@@ -2217,6 +2217,87 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/conversations/:conversationId/submit-lead", async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const conversation = await storage.getConversationById(conversationId);
+      
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+
+      const lead = await storage.createLead({
+        name: conversation.visitorName || 'Chat Visitor',
+        phone: conversation.visitorPhone || '',
+        email: conversation.visitorEmail || `chatbot_${Date.now()}@chat.lead`,
+        eventType: conversation.eventType || 'other',
+        guestCount: conversation.guestCount || undefined,
+        date: conversation.eventDate ? new Date(conversation.eventDate) : undefined,
+        location: conversation.eventLocation || undefined,
+        budgetRange: conversation.budgetRange || undefined,
+        leadSource: 'chatbot',
+        contactMethod: 'whatsapp',
+        message: `Lead collected via chatbot. Event: ${conversation.eventType || 'Not specified'}`,
+      });
+
+      const updatedConversation = await storage.updateConversation(conversationId, {
+        phase: 'submitted',
+        leadId: lead.id,
+      });
+
+      await storage.createChatMessage({
+        conversationId,
+        senderId: 'system',
+        senderType: 'system',
+        senderName: 'System',
+        content: '✅ Your inquiry has been submitted successfully. Our team will contact you soon!',
+        messageType: 'system',
+      });
+
+      res.json({ 
+        message: "Lead submitted successfully",
+        lead,
+        conversation: updatedConversation 
+      });
+    } catch (error) {
+      console.error("Submit lead error:", error);
+      res.status(500).json({ message: "Failed to submit lead" });
+    }
+  });
+
+  app.post("/api/conversations/:conversationId/end-chat", async (req, res) => {
+    try {
+      const { conversationId } = req.params;
+      const conversation = await storage.getConversationById(conversationId);
+      
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+
+      const updatedConversation = await storage.updateConversation(conversationId, {
+        phase: 'ended',
+        status: 'closed',
+      });
+
+      await storage.createChatMessage({
+        conversationId,
+        senderId: 'system',
+        senderType: 'system',
+        senderName: 'System',
+        content: '👋 Thank you for reaching out! We will get back to you soon.',
+        messageType: 'system',
+      });
+
+      res.json({ 
+        message: "Chat ended successfully",
+        conversation: updatedConversation 
+      });
+    } catch (error) {
+      console.error("End chat error:", error);
+      res.status(500).json({ message: "Failed to end chat" });
+    }
+  });
+
   app.post("/api/conversations/:conversationId/request-live-agent", async (req, res) => {
     try {
       const { conversationId } = req.params;
@@ -2231,6 +2312,7 @@ export async function registerRoutes(
         wantsLiveAgent: true,
         liveAgentRequestedAt: now.toISOString(),
         status: 'live_agent',
+        phase: 'live',
       });
 
       await storage.createChatMessage({
@@ -2246,6 +2328,12 @@ export async function registerRoutes(
         type: 'status',
         conversationId,
         status: 'live_agent',
+      });
+
+      broadcastLiveAgentRequest(conversationId, {
+        visitorName: conversation.visitorName,
+        visitorPhone: conversation.visitorPhone,
+        eventType: conversation.eventType,
       });
 
       const companySettings = await storage.getCompanySettings();
