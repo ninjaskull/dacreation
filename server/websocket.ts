@@ -128,6 +128,8 @@ export function setupWebSocket(server: Server) {
 
     ws.on("error", (error) => {
       console.error(`[WebSocket] Client error: ${clientId}`, error);
+      // Clean up the client on error to prevent resource leaks
+      cleanupClient(clientId);
     });
 
     // Handle native WebSocket pong frames

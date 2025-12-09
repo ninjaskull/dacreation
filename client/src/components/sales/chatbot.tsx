@@ -98,12 +98,25 @@ export function Chatbot() {
     }
   }, [conversationId]);
 
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleTyping = useCallback((data: any) => {
     if (data.senderType === 'admin' && data.conversationId === conversationId) {
       setIsAgentTyping(true);
-      setTimeout(() => setIsAgentTyping(false), 3000);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      typingTimeoutRef.current = setTimeout(() => setIsAgentTyping(false), 3000);
     }
   }, [conversationId]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const { isConnected: wsConnected, sendTyping, subscribeToConversation } = useChatWebSocket({
     isAdmin: false,
@@ -127,15 +140,21 @@ export function Chatbot() {
   }, [messages, isAgentTyping]);
 
   useEffect(() => {
+    const timeouts: NodeJS.Timeout[] = [];
     if (isOpen && messages.length === 0) {
-      setTimeout(() => {
+      const t1 = setTimeout(() => {
         addBotMessage("👋 Welcome to DA Creation! I'm here to help you plan your perfect event.");
-        setTimeout(() => {
+        const t2 = setTimeout(() => {
           addBotMessage("Let me collect a few details to understand your requirements better. What's your name?");
           setCollectionStep("name");
         }, 800);
+        timeouts.push(t2);
       }, 500);
+      timeouts.push(t1);
     }
+    return () => {
+      timeouts.forEach(t => clearTimeout(t));
+    };
   }, [isOpen]);
 
   const addBotMessage = (text: string) => {

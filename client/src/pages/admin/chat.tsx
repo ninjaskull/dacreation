@@ -193,6 +193,12 @@ export default function ChatPage() {
   useEffect(() => {
     audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQQNZ7X/8p5JESNPpvfvkjMQHT+X6vCRNg8iQJnt75E5DyI/l+vwkjcQIz6W6u+ROQ4iP5fq75E4DyM+luvwkjkPIz6W6++RNw8jP5fr8JE5DyI+luvvkTgQIj6X6/CROQ8iPpbr75E4DyM+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI+luvvkTgPIz6X6/CROQ8iPpbr75E4DyM+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI+luvvkTgPIz6X6/CROQ8iPpbr75I4ECI+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI+luvvkTgPIz6X6/CROQ8iPpbr75E4DyM+l+vwkTkPIj6W6++ROA8jPpfr8JE5DyI=");
     audioRef.current.volume = 0.5;
+    
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
   }, []);
 
   const playNotificationSound = useCallback(() => {

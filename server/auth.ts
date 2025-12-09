@@ -181,7 +181,8 @@ export async function getUserFromSessionId(sessionId: string): Promise<Express.U
           email: user.email,
           phone: user.phone,
         });
-      } catch {
+      } catch (error) {
+        console.error('[auth] Error getting user from session:', error instanceof Error ? error.message : 'Unknown error');
         resolve(null);
       }
     });

@@ -63,7 +63,8 @@ export function decryptPassword(encryptedPassword: string): string {
     
     // Not encrypted, return as-is
     return encryptedPassword;
-  } catch {
+  } catch (error) {
+    console.error('[email] Error decrypting password:', error instanceof Error ? error.message : 'Unknown error');
     return encryptedPassword;
   }
 }
