@@ -6,12 +6,25 @@ import { setupAuth } from "./auth";
 import { setupWebSocket } from "./websocket";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import compression from "compression";
 
 const app = express();
 const httpServer = createServer(app);
 
 // Trust proxy for rate limiting (required for X-Forwarded-For header)
 app.set("trust proxy", 1);
+
+// Enable gzip/brotli compression for all responses
+app.use(compression({
+  level: 6,
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
 
 // Security headers with helmet
 app.use(helmet({
