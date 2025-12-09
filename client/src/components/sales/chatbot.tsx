@@ -268,6 +268,7 @@ export function Chatbot() {
     addUserMessage(label);
     const updatedData = { ...collectedData, budget };
     setCollectedData(updatedData);
+    setIsSubmitting(true);
     
     setTimeout(() => {
       addBotMessage("Thank you for providing all the details! Submitting your inquiry...");
@@ -279,7 +280,6 @@ export function Chatbot() {
   };
 
   const handleDirectSubmit = async (data: CollectedData) => {
-    setIsSubmitting(true);
     try {
       const response = await fetch("/api/conversations", {
         method: "POST",
@@ -558,6 +558,16 @@ export function Chatbot() {
     }
 
     if (phase === "collecting" && collectionStep === "budget") {
+      if (isSubmitting) {
+        return (
+          <div className="p-4 border-t bg-white">
+            <div className="flex items-center justify-center gap-2 py-3">
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-muted-foreground">Submitting your inquiry...</span>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="p-4 border-t bg-white">
           <div className="grid grid-cols-2 gap-2">
