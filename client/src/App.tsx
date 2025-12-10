@@ -37,13 +37,13 @@ import VendorsPage from "@/pages/admin/vendors";
 import ReportsPage from "@/pages/admin/reports";
 import SettingsPage from "@/pages/admin/settings";
 import { 
-  NotificationsPage, 
   InquiriesPage, 
   BookingsPage, 
   VenuesPage, 
   TasksPage, 
   HelpPage 
 } from "@/pages/admin/placeholder";
+import NotificationsPage from "@/pages/admin/notifications";
 import AdminTeamPage from "@/pages/admin/team";
 import AdminCareersPage from "@/pages/admin/careers";
 import AdminChatPage from "@/pages/admin/chat";

@@ -2731,6 +2731,113 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/email-logs/filtered", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const filters = {
+        status: req.query.status as string | undefined,
+        type: req.query.type as string | undefined,
+        search: req.query.search as string | undefined,
+        dateFrom: req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined,
+        dateTo: req.query.dateTo ? new Date(req.query.dateTo as string) : undefined,
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 25,
+      };
+      const result = await storage.getEmailLogsFiltered(filters);
+      res.json(result);
+    } catch (error) {
+      console.error("Get filtered email logs error:", error);
+      res.status(500).json({ message: "Failed to fetch email logs" });
+    }
+  });
+
+  app.get("/api/email-logs/stats", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getEmailLogStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get email log stats error:", error);
+      res.status(500).json({ message: "Failed to fetch email log stats" });
+    }
+  });
+
+  app.get("/api/email-logs/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const log = await storage.getEmailLogById(req.params.id);
+      if (!log) {
+        return res.status(404).json({ message: "Email log not found" });
+      }
+      res.json(log);
+    } catch (error) {
+      console.error("Get email log by id error:", error);
+      res.status(500).json({ message: "Failed to fetch email log" });
+    }
+  });
+
+  app.delete("/api/email-logs/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await storage.deleteEmailLog(req.params.id);
+      res.json({ message: "Email log deleted successfully" });
+    } catch (error) {
+      console.error("Delete email log error:", error);
+      res.status(500).json({ message: "Failed to delete email log" });
+    }
+  });
+
+  app.post("/api/email-logs/bulk-delete", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "Invalid ids array" });
+      }
+      const count = await storage.bulkDeleteEmailLogs(ids);
+      res.json({ message: `${count} email logs deleted successfully`, count });
+    } catch (error) {
+      console.error("Bulk delete email logs error:", error);
+      res.status(500).json({ message: "Failed to delete email logs" });
+    }
+  });
+
+  app.post("/api/email-logs/:id/resend", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const log = await storage.getEmailLogById(req.params.id);
+      if (!log) {
+        return res.status(404).json({ message: "Email log not found" });
+      }
+
+      if (log.templateId) {
+        const template = await storage.getEmailTemplateById(log.templateId);
+        if (template) {
+          const { sendTemplatedEmail } = await import('./email');
+          const result = await sendTemplatedEmail(template.templateKey, log.recipientEmail, log.recipientName || undefined, {});
+          if (result.success) {
+            res.json({ message: "Email resent successfully", logId: result.logId });
+          } else {
+            res.status(400).json({ message: result.error || "Failed to resend email" });
+          }
+          return;
+        }
+      }
+
+      const { sendEmail: sendEmailFunc } = await import('./email');
+      const result = await sendEmailFunc({
+        to: log.recipientEmail,
+        toName: log.recipientName || undefined,
+        subject: log.subject,
+        html: `<p>This is a resent notification. Original message details are not available for non-template emails.</p>`,
+        type: log.type as any,
+      });
+
+      if (result.success) {
+        res.json({ message: "Email resent successfully", logId: result.logId });
+      } else {
+        res.status(400).json({ message: result.error || "Failed to resend email" });
+      }
+    } catch (error) {
+      console.error("Resend email error:", error);
+      res.status(500).json({ message: "Failed to resend email" });
+    }
+  });
+
   // ==================== Send Email ====================
 
   app.post("/api/send-email", isAuthenticated, isStaffOrAdmin, async (req, res) => {

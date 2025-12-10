@@ -36,7 +36,7 @@ import {
   smtpSettings, emailTypeSettings, emailTemplates, emailLogs, blogPosts, subscribers
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
+import { eq, desc, and, gte, lte, like, or, sql, asc, inArray } from "drizzle-orm";
 
 // Sanitize user input for LIKE queries to prevent SQL injection
 // Escapes special characters: %, _, \
@@ -262,6 +262,29 @@ export interface SubscriberStats {
   byStatus: Record<string, number>;
 }
 
+export interface EmailLogFilters {
+  status?: string;
+  type?: string;
+  search?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  page?: number;
+  limit?: number;
+}
+
+export interface EmailLogStats {
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
+  today: number;
+  thisWeek: number;
+  thisMonth: number;
+  byType: Record<string, number>;
+  byStatus: Record<string, number>;
+  successRate: number;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -411,6 +434,11 @@ export interface IStorage {
   createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
   updateEmailLogStatus(id: string, status: string, errorMessage?: string): Promise<EmailLog | undefined>;
   getEmailLogs(limit?: number): Promise<EmailLog[]>;
+  getEmailLogById(id: string): Promise<EmailLog | undefined>;
+  getEmailLogsFiltered(filters: EmailLogFilters): Promise<{ logs: EmailLog[]; total: number }>;
+  getEmailLogStats(): Promise<EmailLogStats>;
+  deleteEmailLog(id: string): Promise<boolean>;
+  bulkDeleteEmailLogs(ids: string[]): Promise<number>;
   
   getAgentStatus(userId: string): Promise<AgentStatus | undefined>;
   getAllAgentStatuses(): Promise<(AgentStatus & { user: { id: string; name: string | null; username: string } })[]>;
@@ -2461,6 +2489,151 @@ export class DatabaseStorage implements IStorage {
       .from(emailLogs)
       .orderBy(desc(emailLogs.createdAt))
       .limit(limit);
+  }
+
+  async getEmailLogById(id: string): Promise<EmailLog | undefined> {
+    const [log] = await db.select().from(emailLogs).where(eq(emailLogs.id, id));
+    return log;
+  }
+
+  async getEmailLogsFiltered(filters: EmailLogFilters): Promise<{ logs: EmailLog[]; total: number }> {
+    const conditions: any[] = [];
+    
+    if (filters.status) {
+      conditions.push(eq(emailLogs.status, filters.status));
+    }
+    if (filters.type) {
+      conditions.push(eq(emailLogs.type, filters.type));
+    }
+    if (filters.search) {
+      const sanitizedSearch = sanitizeLikePattern(filters.search);
+      conditions.push(
+        or(
+          like(emailLogs.recipientEmail, `%${sanitizedSearch}%`),
+          like(emailLogs.subject, `%${sanitizedSearch}%`),
+          like(emailLogs.recipientName, `%${sanitizedSearch}%`)
+        )
+      );
+    }
+    if (filters.dateFrom) {
+      conditions.push(gte(emailLogs.createdAt, filters.dateFrom));
+    }
+    if (filters.dateTo) {
+      conditions.push(lte(emailLogs.createdAt, filters.dateTo));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const page = filters.page || 1;
+    const limit = filters.limit || 25;
+    const offset = (page - 1) * limit;
+
+    const [logs, countResult] = await Promise.all([
+      db
+        .select()
+        .from(emailLogs)
+        .where(whereClause)
+        .orderBy(desc(emailLogs.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(emailLogs)
+        .where(whereClause)
+    ]);
+
+    return { logs, total: countResult[0]?.count || 0 };
+  }
+
+  async getEmailLogStats(): Promise<EmailLogStats> {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfToday);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [allLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs);
+    
+    const [sentLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs)
+      .where(eq(emailLogs.status, 'sent'));
+    
+    const [failedLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs)
+      .where(eq(emailLogs.status, 'failed'));
+    
+    const [pendingLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs)
+      .where(eq(emailLogs.status, 'pending'));
+
+    const [todayLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs)
+      .where(gte(emailLogs.createdAt, startOfToday));
+
+    const [weekLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs)
+      .where(gte(emailLogs.createdAt, startOfWeek));
+
+    const [monthLogs] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(emailLogs)
+      .where(gte(emailLogs.createdAt, startOfMonth));
+
+    const byTypeResult = await db
+      .select({
+        type: emailLogs.type,
+        count: sql<number>`count(*)::int`
+      })
+      .from(emailLogs)
+      .groupBy(emailLogs.type);
+
+    const byStatusResult = await db
+      .select({
+        status: emailLogs.status,
+        count: sql<number>`count(*)::int`
+      })
+      .from(emailLogs)
+      .groupBy(emailLogs.status);
+
+    const byType: Record<string, number> = {};
+    byTypeResult.forEach(r => { byType[r.type] = r.count; });
+
+    const byStatus: Record<string, number> = {};
+    byStatusResult.forEach(r => { byStatus[r.status] = r.count; });
+
+    const total = allLogs?.count || 0;
+    const sent = sentLogs?.count || 0;
+    const successRate = total > 0 ? Math.round((sent / total) * 100) : 0;
+
+    return {
+      total,
+      sent,
+      failed: failedLogs?.count || 0,
+      pending: pendingLogs?.count || 0,
+      today: todayLogs?.count || 0,
+      thisWeek: weekLogs?.count || 0,
+      thisMonth: monthLogs?.count || 0,
+      byType,
+      byStatus,
+      successRate
+    };
+  }
+
+  async deleteEmailLog(id: string): Promise<boolean> {
+    await db.delete(emailLogs).where(eq(emailLogs.id, id));
+    return true;
+  }
+
+  async bulkDeleteEmailLogs(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    const result = await db.delete(emailLogs).where(inArray(emailLogs.id, ids));
+    return ids.length;
   }
 
   async getAgentStatus(userId: string): Promise<AgentStatus | undefined> {

@@ -23,10 +23,6 @@ export default function PlaceholderPage({ title, description }: PlaceholderPageP
   );
 }
 
-export function NotificationsPage() {
-  return <PlaceholderPage title="Notifications" description="View your notifications and alerts" />;
-}
-
 export function InquiriesPage() {
   return <PlaceholderPage title="Inquiries" description="Manage customer inquiries" />;
 }
