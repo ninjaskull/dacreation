@@ -271,6 +271,7 @@ export interface IStorage {
   updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined>;
   
   createLead(lead: InsertLead): Promise<Lead>;
+  findLeadByEmailOrPhone(email?: string | null, phone?: string | null): Promise<Lead | undefined>;
   getAllLeads(filters?: LeadFilters): Promise<LeadWithAssignee[]>;
   getLeadById(id: string): Promise<LeadWithAssignee | undefined>;
   updateLead(id: string, data: UpdateLead): Promise<Lead | undefined>;
@@ -491,6 +492,34 @@ export class DatabaseStorage implements IStorage {
       .insert(leads)
       .values(leadData as any)
       .returning();
+    return lead;
+  }
+
+  async findLeadByEmailOrPhone(email?: string | null, phone?: string | null): Promise<Lead | undefined> {
+    const conditions = [];
+    
+    if (email && email.trim()) {
+      conditions.push(eq(leads.email, email.trim()));
+    }
+    
+    if (phone && phone.trim()) {
+      const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+      conditions.push(eq(leads.phone, phone.trim()));
+      if (normalizedPhone !== phone.trim()) {
+        conditions.push(eq(leads.phone, normalizedPhone));
+      }
+    }
+    
+    if (conditions.length === 0) {
+      return undefined;
+    }
+    
+    const [lead] = await db
+      .select()
+      .from(leads)
+      .where(or(...conditions))
+      .orderBy(desc(leads.createdAt))
+      .limit(1);
     return lead;
   }
 

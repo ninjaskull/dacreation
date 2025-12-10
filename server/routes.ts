@@ -2077,6 +2077,15 @@ export async function registerRoutes(
       
       const existing = await storage.getConversationByVisitorId(result.data.visitorId);
       if (existing) {
+        if (result.data.visitorName || result.data.visitorPhone || result.data.visitorEmail) {
+          const updated = await storage.updateConversation(existing.id, {
+            visitorName: result.data.visitorName || existing.visitorName || undefined,
+            visitorPhone: result.data.visitorPhone || existing.visitorPhone || undefined,
+            visitorEmail: result.data.visitorEmail || existing.visitorEmail || undefined,
+            lastMessageAt: new Date().toISOString(),
+          });
+          return res.json(updated || existing);
+        }
         return res.json(existing);
       }
       
@@ -2274,9 +2283,34 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Conversation not found" });
       }
 
+      let leadId = conversation.leadId;
+      
+      if (conversation.visitorEmail || conversation.visitorPhone) {
+        const existingLead = await storage.findLeadByEmailOrPhone(
+          conversation.visitorEmail,
+          conversation.visitorPhone
+        );
+        
+        if (existingLead) {
+          leadId = existingLead.id;
+        } else if (!leadId) {
+          const lead = await storage.createLead({
+            name: conversation.visitorName || 'Chat Visitor',
+            phone: conversation.visitorPhone || '',
+            email: conversation.visitorEmail || `chatbot_${Date.now()}@chat.lead`,
+            eventType: 'other',
+            leadSource: 'chatbot',
+            contactMethod: 'whatsapp',
+            message: 'Lead collected via chatbot. User ended chat.',
+          });
+          leadId = lead.id;
+        }
+      }
+
       const updatedConversation = await storage.updateConversation(conversationId, {
         phase: 'ended',
         status: 'closed',
+        leadId: leadId || undefined,
       });
 
       await storage.createChatMessage({
@@ -2307,12 +2341,37 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Conversation not found" });
       }
 
+      let leadId = conversation.leadId;
+      
+      if (conversation.visitorEmail || conversation.visitorPhone) {
+        const existingLead = await storage.findLeadByEmailOrPhone(
+          conversation.visitorEmail,
+          conversation.visitorPhone
+        );
+        
+        if (existingLead) {
+          leadId = existingLead.id;
+        } else if (!leadId) {
+          const lead = await storage.createLead({
+            name: conversation.visitorName || 'Chat Visitor',
+            phone: conversation.visitorPhone || '',
+            email: conversation.visitorEmail || `chatbot_${Date.now()}@chat.lead`,
+            eventType: 'other',
+            leadSource: 'chatbot',
+            contactMethod: 'whatsapp',
+            message: 'Lead collected via chatbot. User requested live agent.',
+          });
+          leadId = lead.id;
+        }
+      }
+
       const now = new Date();
       const updatedConversation = await storage.updateConversation(conversationId, {
         wantsLiveAgent: true,
         liveAgentRequestedAt: now.toISOString(),
         status: 'live_agent',
         phase: 'live',
+        leadId: leadId || undefined,
       });
 
       await storage.createChatMessage({

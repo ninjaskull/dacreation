@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, MessageCircle, User, Phone, Mail, Calendar, MapPin, Users, IndianRupee, ChevronRight, Check, Headphones, ArrowLeft } from "lucide-react";
+import { X, Send, MessageCircle, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +8,7 @@ import { useChatWebSocket } from "@/hooks/use-chat-websocket";
 import { useBranding } from "@/contexts/BrandingContext";
 
 type ChatPhase = "collecting" | "submitted" | "live" | "ended";
-type CollectionStep = "welcome" | "name" | "phone" | "email" | "eventType" | "guestCount" | "eventDate" | "location" | "budget" | "confirm";
+type CollectionStep = "welcome" | "name" | "phone" | "email";
 
 interface Message {
   id: string;
@@ -21,32 +21,15 @@ interface CollectedData {
   name: string;
   phone: string;
   email: string;
-  eventType: string;
-  guestCount: string;
-  eventDate: string;
-  location: string;
-  budget: string;
 }
 
-const EVENT_TYPES = [
-  { value: "wedding", label: "Wedding" },
-  { value: "corporate", label: "Corporate Event" },
-  { value: "social", label: "Social Event" },
-  { value: "birthday", label: "Birthday Party" },
-  { value: "anniversary", label: "Anniversary" },
-  { value: "destination", label: "Destination Event" },
-  { value: "other", label: "Other" },
-];
+interface ExistingSession {
+  conversationId: string;
+  phase: ChatPhase;
+  collectedData: CollectedData;
+}
 
-const BUDGET_RANGES = [
-  { value: "under-5l", label: "Under ₹5 Lakhs" },
-  { value: "5l-10l", label: "₹5 - 10 Lakhs" },
-  { value: "10l-25l", label: "₹10 - 25 Lakhs" },
-  { value: "25l-50l", label: "₹25 - 50 Lakhs" },
-  { value: "50l-1cr", label: "₹50 Lakhs - 1 Crore" },
-  { value: "above-1cr", label: "Above ₹1 Crore" },
-  { value: "flexible", label: "Flexible / Not Sure" },
-];
+const SESSION_KEY = 'da_chat_session';
 
 function getVisitorId(): string {
   let visitorId = localStorage.getItem('da_visitor_id');
@@ -55,6 +38,26 @@ function getVisitorId(): string {
     localStorage.setItem('da_visitor_id', visitorId);
   }
   return visitorId;
+}
+
+function saveSession(session: ExistingSession | null): void {
+  if (session) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } else {
+    localStorage.removeItem(SESSION_KEY);
+  }
+}
+
+function getSession(): ExistingSession | null {
+  try {
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Failed to parse session:", e);
+  }
+  return null;
 }
 
 export function Chatbot() {
@@ -69,20 +72,14 @@ export function Chatbot() {
     name: "",
     phone: "",
     email: "",
-    eventType: "",
-    guestCount: "",
-    eventDate: "",
-    location: "",
-    budget: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [sessionRestored, setSessionRestored] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { branding } = useBranding();
   const visitorId = getVisitorId();
-  
-  const primaryPhone = branding.contact.phones[0]?.replace(/\s+/g, '') || '';
 
   const handleNewMessage = useCallback((data: any) => {
     if (data.senderType === 'admin' && data.conversationId === conversationId) {
@@ -140,12 +137,71 @@ export function Chatbot() {
   }, [messages, isAgentTyping]);
 
   useEffect(() => {
+    if (conversationId && (phase === "submitted" || phase === "live")) {
+      saveSession({
+        conversationId,
+        phase,
+        collectedData,
+      });
+    }
+  }, [conversationId, phase, collectedData]);
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (sessionRestored) return;
+      setSessionRestored(true);
+
+      const existingSession = getSession();
+      if (existingSession && existingSession.conversationId) {
+        try {
+          const response = await fetch(`/api/conversations/visitor/${visitorId}`);
+          if (response.ok) {
+            const conv = await response.json();
+            if (conv && conv.status !== 'closed' && conv.status !== 'ended') {
+              setConversationId(existingSession.conversationId);
+              setCollectedData(existingSession.collectedData);
+              
+              if (conv.phase === 'live' || conv.status === 'live_agent') {
+                setPhase("live");
+              } else if (conv.leadId || conv.phase === 'submitted') {
+                setPhase("submitted");
+              }
+
+              const messagesResponse = await fetch(`/api/conversations/${existingSession.conversationId}/messages`);
+              if (messagesResponse.ok) {
+                const existingMessages = await messagesResponse.json();
+                const formattedMessages: Message[] = existingMessages.map((msg: any) => ({
+                  id: msg.id,
+                  type: msg.senderType === 'visitor' ? 'user' : 
+                        msg.senderType === 'system' ? 'system' : 
+                        msg.senderType === 'admin' ? 'agent' : 'bot',
+                  text: msg.content,
+                  timestamp: new Date(msg.createdAt),
+                }));
+                setMessages(formattedMessages);
+              }
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Failed to restore session:", error);
+        }
+        saveSession(null);
+      }
+    };
+
+    if (isOpen && !sessionRestored) {
+      restoreSession();
+    }
+  }, [isOpen, visitorId, sessionRestored]);
+
+  useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
-    if (isOpen && messages.length === 0) {
+    if (isOpen && messages.length === 0 && phase === "collecting") {
       const t1 = setTimeout(() => {
         addBotMessage("👋 Welcome to DA Creation! I'm here to help you plan your perfect event.");
         const t2 = setTimeout(() => {
-          addBotMessage("Let me collect a few details to understand your requirements better. What's your name?");
+          addBotMessage("To get started, may I have your name?");
           setCollectionStep("name");
         }, 800);
         timeouts.push(t2);
@@ -155,7 +211,7 @@ export function Chatbot() {
     return () => {
       timeouts.forEach(t => clearTimeout(t));
     };
-  }, [isOpen]);
+  }, [isOpen, messages.length, phase]);
 
   const addBotMessage = (text: string) => {
     setMessages((prev) => [
@@ -236,40 +292,15 @@ export function Chatbot() {
           setTimeout(() => addBotMessage("Please enter a valid email address."), 500);
           return;
         }
-        setCollectedData((prev) => ({ ...prev, email: value.trim() }));
+        const updatedData = { ...collectedData, email: value.trim() };
+        setCollectedData(updatedData);
+        setIsSubmitting(true);
         setTimeout(() => {
-          addBotMessage("Perfect! 🎉 What type of event are you planning?");
-          setCollectionStep("eventType");
-        }, 500);
-        break;
-
-      case "guestCount":
-        const count = parseInt(value);
-        if (isNaN(count) || count < 1) {
-          setTimeout(() => addBotMessage("Please enter a valid number of guests."), 500);
-          return;
-        }
-        setCollectedData((prev) => ({ ...prev, guestCount: value.trim() }));
+          addBotMessage("Thank you for providing your contact details!");
+        }, 300);
         setTimeout(() => {
-          addBotMessage("📅 When are you planning this event? (e.g., March 2025)");
-          setCollectionStep("eventDate");
-        }, 500);
-        break;
-
-      case "eventDate":
-        setCollectedData((prev) => ({ ...prev, eventDate: value.trim() }));
-        setTimeout(() => {
-          addBotMessage("📍 Where would you like to host the event?");
-          setCollectionStep("location");
-        }, 500);
-        break;
-
-      case "location":
-        setCollectedData((prev) => ({ ...prev, location: value.trim() }));
-        setTimeout(() => {
-          addBotMessage("💰 What's your approximate budget range?");
-          setCollectionStep("budget");
-        }, 500);
+          handleSubmitContact(updatedData);
+        }, 800);
         break;
 
       default:
@@ -278,31 +309,7 @@ export function Chatbot() {
     setInputValue("");
   };
 
-  const handleEventTypeSelect = (eventType: string, label: string) => {
-    addUserMessage(label);
-    setCollectedData((prev) => ({ ...prev, eventType }));
-    setTimeout(() => {
-      addBotMessage(`${label} - excellent choice! 👥 How many guests are you expecting?`);
-      setCollectionStep("guestCount");
-    }, 500);
-  };
-
-  const handleBudgetSelect = async (budget: string, label: string) => {
-    addUserMessage(label);
-    const updatedData = { ...collectedData, budget };
-    setCollectedData(updatedData);
-    setIsSubmitting(true);
-    
-    setTimeout(() => {
-      addBotMessage("Thank you for providing all the details! Submitting your inquiry...");
-    }, 300);
-    
-    setTimeout(() => {
-      handleDirectSubmit(updatedData);
-    }, 800);
-  };
-
-  const handleDirectSubmit = async (data: CollectedData) => {
+  const handleSubmitContact = async (data: CollectedData) => {
     try {
       const response = await fetch("/api/conversations", {
         method: "POST",
@@ -312,11 +319,6 @@ export function Chatbot() {
           visitorName: data.name,
           visitorPhone: data.phone,
           visitorEmail: data.email,
-          eventType: data.eventType,
-          eventDate: data.eventDate,
-          eventLocation: data.location,
-          budgetRange: data.budget,
-          guestCount: parseInt(data.guestCount) || null,
           lastMessageAt: new Date().toISOString(),
         }),
       });
@@ -326,72 +328,14 @@ export function Chatbot() {
       const conversation = await response.json();
       setConversationId(conversation.id);
 
-      const leadResponse = await fetch(`/api/conversations/${conversation.id}/submit-lead`, {
-        method: "POST",
-      });
-
-      if (!leadResponse.ok) throw new Error("Failed to submit lead");
-
       setPhase("submitted");
-      addSystemMessage("✅ Your inquiry has been submitted successfully! Our team will contact you soon.");
-      setTimeout(() => {
-        addBotMessage("What would you like to do next?");
-      }, 800);
+      addSystemMessage("✅ Your details have been saved. How would you like to proceed?");
 
     } catch (error) {
       console.error("Submit error:", error);
       toast({
         title: "Error",
-        description: "Failed to submit your inquiry. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleConfirmSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          visitorId,
-          visitorName: collectedData.name,
-          visitorPhone: collectedData.phone,
-          visitorEmail: collectedData.email,
-          eventType: collectedData.eventType,
-          eventDate: collectedData.eventDate,
-          eventLocation: collectedData.location,
-          budgetRange: collectedData.budget,
-          guestCount: parseInt(collectedData.guestCount) || null,
-          lastMessageAt: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create conversation");
-
-      const conversation = await response.json();
-      setConversationId(conversation.id);
-
-      const leadResponse = await fetch(`/api/conversations/${conversation.id}/submit-lead`, {
-        method: "POST",
-      });
-
-      if (!leadResponse.ok) throw new Error("Failed to submit lead");
-
-      setPhase("submitted");
-      addSystemMessage("✅ Your inquiry has been submitted successfully! Our team will contact you soon.");
-      setTimeout(() => {
-        addBotMessage("What would you like to do next?");
-      }, 800);
-
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit your inquiry. Please try again.",
+        description: "Failed to save your details. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -409,6 +353,7 @@ export function Chatbot() {
     }
     setPhase("ended");
     addSystemMessage("👋 Thank you for reaching out! We will get back to you soon. Have a great day!");
+    saveSession(null);
   };
 
   const handleConnectLiveAgent = async () => {
@@ -496,12 +441,9 @@ export function Chatbot() {
       name: "",
       phone: "",
       email: "",
-      eventType: "",
-      guestCount: "",
-      eventDate: "",
-      location: "",
-      budget: "",
     });
+    setSessionRestored(false);
+    saveSession(null);
     setIsOpen(false);
   };
 
@@ -539,7 +481,7 @@ export function Chatbot() {
               ) : (
                 <>
                   <Headphones className="w-4 h-4 mr-2" />
-                  Talk to Agent
+                  Connect to Live Agent
                 </>
               )}
             </Button>
@@ -559,59 +501,17 @@ export function Chatbot() {
       );
     }
 
-    if (phase === "collecting" && collectionStep === "eventType") {
-      return (
-        <div className="p-4 border-t bg-white">
-          <div className="grid grid-cols-2 gap-2">
-            {EVENT_TYPES.map((event) => (
-              <Button
-                key={event.value}
-                variant="outline"
-                size="sm"
-                onClick={() => handleEventTypeSelect(event.value, event.label)}
-                className="text-xs justify-start"
-                data-testid={`btn-event-${event.value}`}
-              >
-                {event.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (phase === "collecting" && collectionStep === "budget") {
+    if (phase === "live" || (phase === "collecting" && collectionStep !== "welcome")) {
       if (isSubmitting) {
         return (
           <div className="p-4 border-t bg-white">
             <div className="flex items-center justify-center gap-2 py-3">
               <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-muted-foreground">Submitting your inquiry...</span>
+              <span className="text-muted-foreground">Saving your details...</span>
             </div>
           </div>
         );
       }
-      return (
-        <div className="p-4 border-t bg-white">
-          <div className="grid grid-cols-2 gap-2">
-            {BUDGET_RANGES.map((budget) => (
-              <Button
-                key={budget.value}
-                variant="outline"
-                size="sm"
-                onClick={() => handleBudgetSelect(budget.value, budget.label)}
-                className="text-xs justify-start"
-                data-testid={`btn-budget-${budget.value}`}
-              >
-                {budget.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (phase === "live" || (phase === "collecting" && !["eventType", "budget", "welcome"].includes(collectionStep))) {
       return (
         <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
           <div className="flex gap-2">
@@ -642,12 +542,6 @@ export function Chatbot() {
         return "Enter your phone number...";
       case "email":
         return "Enter your email...";
-      case "guestCount":
-        return "Number of guests...";
-      case "eventDate":
-        return "E.g., March 2025...";
-      case "location":
-        return "Event location...";
       default:
         return "Type your message...";
     }
@@ -664,7 +558,7 @@ export function Chatbot() {
       return wsConnected ? "Connected" : "Reconnecting...";
     }
     if (phase === "ended") return "Thank you for chatting";
-    if (phase === "submitted") return "Inquiry submitted";
+    if (phase === "submitted") return "Ready to help";
     return "Let us plan your event";
   };
 
@@ -706,130 +600,81 @@ export function Chatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-40 right-4 md:bottom-32 md:left-6 md:right-auto z-50 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-xl shadow-2xl border overflow-hidden flex flex-col"
-            style={{ maxHeight: "70vh" }}
+            className="fixed bottom-40 right-4 md:bottom-32 md:left-6 md:right-auto z-50 w-[340px] md:w-[380px] bg-white rounded-2xl shadow-2xl overflow-hidden border"
             data-testid="chatbot-window"
           >
-            <div className={`p-4 text-white flex items-center justify-between ${phase === "live" ? "bg-emerald-600" : phase === "ended" ? "bg-gray-600" : "bg-primary"}`}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center p-1">
-                  {phase === "live" ? (
-                    <Headphones className="w-6 h-6" />
-                  ) : (
-                    <MessageCircle className="w-6 h-6" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-medium">{getHeaderTitle()}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${
-                      phase === "live" 
-                        ? (wsConnected ? 'bg-green-300' : 'bg-yellow-300 animate-pulse') 
-                        : phase === "ended" 
-                          ? 'bg-gray-300'
-                          : 'bg-green-300'
-                    }`} />
+            <div className="bg-secondary text-white p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <MessageCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{getHeaderTitle()}</h3>
                     <p className="text-xs text-white/80">{getHeaderSubtitle()}</p>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <a
-                  href={`tel:${primaryPhone}`}
-                  className="p-2 rounded-lg text-white hover:bg-white/20 transition-colors"
-                  data-testid="btn-call-phone"
-                  title="Call us"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-white/20"
+                  data-testid="chatbot-close"
                 >
-                  <Phone className="w-4 h-4" />
-                </a>
-                {phase !== "ended" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={resetChat}
-                    className="text-white hover:bg-white/20"
-                    data-testid="btn-close-chat"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
             </div>
 
-            {phase === "collecting" && (
-              <div className="bg-blue-50 px-4 py-2 border-b border-blue-100">
-                <p className="text-xs text-blue-700 text-center">
-                  Step {getStepNumber(collectionStep)} of 8: {getStepLabel(collectionStep)}
-                </p>
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-[300px]">
+            <div className="h-[350px] overflow-y-auto p-4 space-y-3 bg-gray-50">
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex ${
-                    message.type === "user" ? "justify-end" : 
-                    message.type === "system" ? "justify-center" : 
-                    "justify-start"
+                    message.type === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   {message.type === "system" ? (
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-2 max-w-[90%]">
-                      <p className="text-xs text-blue-700 text-center whitespace-pre-line">{message.text}</p>
+                    <div className="bg-blue-50 text-blue-800 px-4 py-2 rounded-lg text-sm max-w-[90%] text-center mx-auto border border-blue-100">
+                      {message.text}
                     </div>
                   ) : (
                     <div
-                      className={`max-w-[80%] ${
+                      className={`max-w-[80%] px-4 py-2 rounded-2xl ${
                         message.type === "user"
-                          ? "bg-primary text-white rounded-tl-xl rounded-tr-xl rounded-bl-xl"
+                          ? "bg-secondary text-white rounded-br-md"
                           : message.type === "agent"
-                            ? "bg-emerald-500 text-white rounded-tl-xl rounded-tr-xl rounded-br-xl"
-                            : "bg-white text-gray-800 rounded-tl-xl rounded-tr-xl rounded-br-xl shadow-sm border"
-                      } p-3`}
+                          ? "bg-emerald-100 text-emerald-900 rounded-bl-md"
+                          : "bg-white text-gray-800 rounded-bl-md shadow-sm border"
+                      }`}
                     >
                       {message.type === "agent" && (
-                        <p className="text-xs font-medium mb-1 text-emerald-100">Support Agent</p>
+                        <div className="text-xs text-emerald-600 font-medium mb-1">Agent</div>
                       )}
-                      <p className="text-sm whitespace-pre-line">{message.text}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                     </div>
                   )}
                 </motion.div>
               ))}
-
-              {isAgentTyping && phase === "live" && (
+              
+              {isAgentTyping && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="flex justify-start"
                 >
-                  <div className="bg-emerald-500 rounded-xl p-3 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-emerald-100">Agent is typing</span>
-                      <div className="flex space-x-1">
-                        <motion.div
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                          className="w-2 h-2 rounded-full bg-emerald-200"
-                        />
-                        <motion.div
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                          className="w-2 h-2 rounded-full bg-emerald-200"
-                        />
-                        <motion.div
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                          className="w-2 h-2 rounded-full bg-emerald-200"
-                        />
-                      </div>
+                  <div className="bg-emerald-100 text-emerald-900 px-4 py-2 rounded-2xl rounded-bl-md">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
                   </div>
                 </motion.div>
               )}
-
+              
               <div ref={messagesEndRef} />
             </div>
 
@@ -839,36 +684,4 @@ export function Chatbot() {
       </AnimatePresence>
     </div>
   );
-}
-
-function getStepNumber(step: CollectionStep): number {
-  const steps: Record<CollectionStep, number> = {
-    welcome: 1,
-    name: 1,
-    phone: 2,
-    email: 3,
-    eventType: 4,
-    guestCount: 5,
-    eventDate: 6,
-    location: 7,
-    budget: 8,
-    confirm: 8,
-  };
-  return steps[step] || 1;
-}
-
-function getStepLabel(step: CollectionStep): string {
-  const labels: Record<CollectionStep, string> = {
-    welcome: "Welcome",
-    name: "Your Name",
-    phone: "Phone Number",
-    email: "Email Address",
-    eventType: "Event Type",
-    guestCount: "Guest Count",
-    eventDate: "Event Date",
-    location: "Location",
-    budget: "Budget",
-    confirm: "Confirm Details",
-  };
-  return labels[step] || "Welcome";
 }
