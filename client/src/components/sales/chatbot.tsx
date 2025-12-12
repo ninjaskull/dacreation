@@ -76,7 +76,7 @@ export function Chatbot() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [sessionRestored, setSessionRestored] = useState(false);
-  const [chatInitialized, setChatInitialized] = useState(false);
+  const chatInitializedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { branding } = useBranding();
@@ -181,7 +181,7 @@ export function Chatbot() {
                 }));
                 setMessages(formattedMessages);
               }
-              setChatInitialized(true);
+              chatInitializedRef.current = true;
               return;
             }
           }
@@ -198,11 +198,11 @@ export function Chatbot() {
   }, [isOpen, visitorId, sessionRestored]);
 
   useEffect(() => {
-    if (!isOpen || chatInitialized || phase !== "collecting" || !sessionRestored) {
+    if (!isOpen || chatInitializedRef.current || phase !== "collecting" || !sessionRestored) {
       return;
     }
     
-    setChatInitialized(true);
+    chatInitializedRef.current = true;
     
     const t1 = setTimeout(() => {
       setMessages([
@@ -232,7 +232,7 @@ export function Chatbot() {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [isOpen, chatInitialized, phase, sessionRestored]);
+  }, [isOpen, phase, sessionRestored]);
 
   const addBotMessage = (text: string) => {
     setMessages((prev) => [
@@ -464,7 +464,7 @@ export function Chatbot() {
       email: "",
     });
     setSessionRestored(false);
-    setChatInitialized(false);
+    chatInitializedRef.current = false;
     saveSession(null);
     setIsOpen(false);
   };
