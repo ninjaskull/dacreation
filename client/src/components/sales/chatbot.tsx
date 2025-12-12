@@ -76,6 +76,7 @@ export function Chatbot() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [sessionRestored, setSessionRestored] = useState(false);
+  const [chatInitialized, setChatInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { branding } = useBranding();
@@ -180,6 +181,7 @@ export function Chatbot() {
                 }));
                 setMessages(formattedMessages);
               }
+              setChatInitialized(true);
               return;
             }
           }
@@ -196,22 +198,40 @@ export function Chatbot() {
   }, [isOpen, visitorId, sessionRestored]);
 
   useEffect(() => {
-    const timeouts: NodeJS.Timeout[] = [];
-    if (isOpen && messages.length === 0 && phase === "collecting") {
+    if (isOpen && !chatInitialized && phase === "collecting" && sessionRestored) {
+      setChatInitialized(true);
+      
       const t1 = setTimeout(() => {
-        addBotMessage("👋 Welcome to DA Creation! I'm here to help you plan your perfect event.");
-        const t2 = setTimeout(() => {
-          addBotMessage("To get started, may I have your name?");
-          setCollectionStep("name");
-        }, 800);
-        timeouts.push(t2);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString() + Math.random(),
+            type: "bot",
+            text: "👋 Welcome to DA Creation! I'm here to help you plan your perfect event.",
+            timestamp: new Date(),
+          },
+        ]);
       }, 500);
-      timeouts.push(t1);
+      
+      const t2 = setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString() + Math.random(),
+            type: "bot",
+            text: "To get started, may I have your name?",
+            timestamp: new Date(),
+          },
+        ]);
+        setCollectionStep("name");
+      }, 1300);
+      
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
-    return () => {
-      timeouts.forEach(t => clearTimeout(t));
-    };
-  }, [isOpen, messages.length, phase]);
+  }, [isOpen, chatInitialized, phase, sessionRestored]);
 
   const addBotMessage = (text: string) => {
     setMessages((prev) => [
@@ -443,6 +463,7 @@ export function Chatbot() {
       email: "",
     });
     setSessionRestored(false);
+    setChatInitialized(false);
     saveSession(null);
     setIsOpen(false);
   };
