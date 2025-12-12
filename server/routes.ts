@@ -1188,6 +1188,120 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/events/:id/payment", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const { amount, method, reference, notes } = req.body;
+      
+      if (!amount || typeof amount !== 'number' || amount <= 0) {
+        return res.status(400).json({ message: "Valid payment amount is required" });
+      }
+      
+      const event = await storage.getEventById(req.params.id);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      const newPaidAmount = (event.paidAmount || 0) + amount;
+      const contractAmount = event.contractAmount || 0;
+      
+      let newPaymentStatus = 'partial';
+      if (newPaidAmount >= contractAmount && contractAmount > 0) {
+        newPaymentStatus = 'paid';
+      } else if (newPaidAmount === 0) {
+        newPaymentStatus = 'pending';
+      }
+      
+      const timeline = (event.timeline as any[]) || [];
+      timeline.push({
+        type: 'payment',
+        date: new Date().toISOString(),
+        description: `Payment received: ₹${amount.toLocaleString('en-IN')}`,
+        amount,
+        method: method || 'cash',
+        reference: reference || null,
+        notes: notes || null,
+        recordedBy: (req.user as Express.User).id,
+      });
+      
+      const updatedEvent = await storage.updateEvent(req.params.id, {
+        paidAmount: newPaidAmount,
+        paymentStatus: newPaymentStatus as any,
+        timeline,
+      });
+      
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Record payment error:", error);
+      res.status(500).json({ message: "Failed to record payment" });
+    }
+  });
+
+  app.post("/api/events/:id/timeline", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const { type, description, date } = req.body;
+      
+      if (!type || !description) {
+        return res.status(400).json({ message: "Type and description are required" });
+      }
+      
+      const event = await storage.getEventById(req.params.id);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      const timeline = (event.timeline as any[]) || [];
+      timeline.push({
+        id: `tl-${Date.now()}`,
+        type,
+        date: date || new Date().toISOString(),
+        description,
+        createdAt: new Date().toISOString(),
+        createdBy: (req.user as Express.User).id,
+      });
+      
+      const updatedEvent = await storage.updateEvent(req.params.id, { timeline });
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Add timeline error:", error);
+      res.status(500).json({ message: "Failed to add timeline entry" });
+    }
+  });
+
+  app.patch("/api/events/:id/status", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const { status } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      const event = await storage.getEventById(req.params.id);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      const timeline = (event.timeline as any[]) || [];
+      timeline.push({
+        id: `tl-${Date.now()}`,
+        type: 'status_change',
+        date: new Date().toISOString(),
+        description: `Status changed from ${event.status} to ${status}`,
+        oldStatus: event.status,
+        newStatus: status,
+        createdBy: (req.user as Express.User).id,
+      });
+      
+      const updatedEvent = await storage.updateEvent(req.params.id, { 
+        status,
+        timeline,
+      });
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Update event status error:", error);
+      res.status(500).json({ message: "Failed to update event status" });
+    }
+  });
+
   app.get("/api/vendors", isAuthenticated, async (req, res) => {
     try {
       const filters: any = {};
