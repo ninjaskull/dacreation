@@ -45,6 +45,22 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const queryClient = useQueryClient();
 
+  const onMessageRef = useRef(onMessage);
+  const onTypingRef = useRef(onTyping);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    onTypingRef.current = onTyping;
+  }, [onTyping]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
   const clearTimers = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -132,7 +148,7 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
               queryClient.invalidateQueries({ queryKey: ["chatMessages", data.conversationId] });
               queryClient.invalidateQueries({ queryKey: ["conversations"] });
               queryClient.invalidateQueries({ queryKey: ["conversationStats"] });
-              onMessage?.(data);
+              onMessageRef.current?.(data);
               break;
 
             case "typing":
@@ -149,7 +165,7 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
                     return next;
                   });
                 }, 3000);
-                onTyping?.({
+                onTypingRef.current?.({
                   conversationId: data.conversationId,
                   senderId: data.senderId,
                   senderType: data.senderType || "visitor",
@@ -178,12 +194,12 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
             case "live_agent_request":
               queryClient.invalidateQueries({ queryKey: ["conversations"] });
               queryClient.invalidateQueries({ queryKey: ["conversationStats"] });
-              onMessage?.(data);
+              onMessageRef.current?.(data);
               break;
 
             case "error":
               console.error("[WebSocket] Server error:", data.message);
-              onError?.(data.message || "Unknown error");
+              onErrorRef.current?.(data.message || "Unknown error");
               break;
 
             case "connected":
@@ -227,7 +243,7 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
       reconnectAttemptRef.current++;
       reconnectTimeoutRef.current = setTimeout(connect, delay);
     }
-  }, [isAdmin, userId, visitorId, onMessage, onTyping, onError, queryClient, clearTimers, startPingInterval]);
+  }, [isAdmin, userId, visitorId, queryClient, clearTimers, startPingInterval]);
 
   const disconnect = useCallback(() => {
     clearTimers();
