@@ -198,39 +198,40 @@ export function Chatbot() {
   }, [isOpen, visitorId, sessionRestored]);
 
   useEffect(() => {
-    if (isOpen && !chatInitialized && phase === "collecting" && sessionRestored) {
-      setChatInitialized(true);
-      
-      const t1 = setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString() + Math.random(),
-            type: "bot",
-            text: "👋 Welcome to DA Creation! I'm here to help you plan your perfect event.",
-            timestamp: new Date(),
-          },
-        ]);
-      }, 500);
-      
-      const t2 = setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString() + Math.random(),
-            type: "bot",
-            text: "To get started, may I have your name?",
-            timestamp: new Date(),
-          },
-        ]);
-        setCollectionStep("name");
-      }, 1300);
-      
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
+    if (!isOpen || chatInitialized || phase !== "collecting" || !sessionRestored) {
+      return;
     }
+    
+    setChatInitialized(true);
+    
+    const t1 = setTimeout(() => {
+      setMessages([
+        {
+          id: "welcome-1",
+          type: "bot",
+          text: "👋 Welcome to DA Creation! I'm here to help you plan your perfect event.",
+          timestamp: new Date(),
+        },
+      ]);
+    }, 500);
+    
+    const t2 = setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: "welcome-2",
+          type: "bot",
+          text: "To get started, may I have your name?",
+          timestamp: new Date(),
+        },
+      ]);
+      setCollectionStep("name");
+    }, 1300);
+    
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [isOpen, chatInitialized, phase, sessionRestored]);
 
   const addBotMessage = (text: string) => {
