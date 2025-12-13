@@ -25,7 +25,10 @@ import {
   insertConversationSchema, updateConversationSchema,
   insertChatMessageSchema,
   insertSmtpSettingsSchema, insertEmailTemplateSchema,
-  insertBlogPostSchema, updateBlogPostSchema
+  insertBlogPostSchema, updateBlogPostSchema,
+  insertVendorRegistrationSchema, updateVendorRegistrationSchema,
+  insertVendorDocumentSchema, updateVendorDocumentSchema,
+  vendorCategoryTypes, vendorDocumentTypes
 } from "@shared/schema";
 import { encryptPassword, isPasswordEncrypted, testSmtpConnection, clearTransporterCache, sendEmail, sendTemplatedEmail } from "./email";
 import { crypto } from "./auth";
@@ -3794,6 +3797,314 @@ Crawl-delay: 1
     } catch (error) {
       console.error("Send email to subscribers error:", error);
       res.status(500).json({ message: "Failed to send emails" });
+    }
+  });
+
+  // ============================================
+  // VENDOR REGISTRATION ROUTES
+  // ============================================
+
+  // Public: Create vendor registration (for vendor self-registration)
+  app.post("/api/vendor-registrations", async (req, res) => {
+    try {
+      const result = insertVendorRegistrationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const registration = await storage.createVendorRegistration(result.data);
+      res.status(201).json(registration);
+    } catch (error) {
+      console.error("Create vendor registration error:", error);
+      res.status(500).json({ message: "Failed to create vendor registration" });
+    }
+  });
+
+  // Public: Get vendor categories for dropdown
+  app.get("/api/vendor-categories", async (req, res) => {
+    try {
+      res.json(vendorCategoryTypes);
+    } catch (error) {
+      console.error("Get vendor categories error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor categories" });
+    }
+  });
+
+  // Public: Get document types for vendor registration
+  app.get("/api/vendor-document-types", async (req, res) => {
+    try {
+      res.json(vendorDocumentTypes);
+    } catch (error) {
+      console.error("Get vendor document types error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor document types" });
+    }
+  });
+
+  // Admin: Get all vendor registrations with filters
+  app.get("/api/admin/vendor-registrations", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const filters: any = {};
+      
+      if (req.query.status) filters.status = req.query.status as string;
+      if (req.query.category) filters.category = req.query.category as string;
+      if (req.query.city) filters.city = req.query.city as string;
+      if (req.query.state) filters.state = req.query.state as string;
+      if (req.query.search) filters.search = req.query.search as string;
+      if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
+      if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
+
+      const registrations = await storage.getAllVendorRegistrations(filters);
+      res.json(registrations);
+    } catch (error) {
+      console.error("Get vendor registrations error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor registrations" });
+    }
+  });
+
+  // Admin: Get vendor registration stats
+  app.get("/api/admin/vendor-registrations/stats", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getVendorRegistrationStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get vendor registration stats error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor registration stats" });
+    }
+  });
+
+  // Admin: Get single vendor registration with documents
+  app.get("/api/admin/vendor-registrations/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const registration = await storage.getVendorRegistrationById(req.params.id);
+      if (!registration) {
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+      res.json(registration);
+    } catch (error) {
+      console.error("Get vendor registration error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor registration" });
+    }
+  });
+
+  // Admin: Update vendor registration
+  app.patch("/api/admin/vendor-registrations/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const result = updateVendorRegistrationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const registration = await storage.updateVendorRegistration(req.params.id, result.data);
+      if (!registration) {
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+      res.json(registration);
+    } catch (error) {
+      console.error("Update vendor registration error:", error);
+      res.status(500).json({ message: "Failed to update vendor registration" });
+    }
+  });
+
+  // Admin: Delete vendor registration
+  app.delete("/api/admin/vendor-registrations/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteVendorRegistration(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+      res.json({ message: "Vendor registration deleted successfully" });
+    } catch (error) {
+      console.error("Delete vendor registration error:", error);
+      res.status(500).json({ message: "Failed to delete vendor registration" });
+    }
+  });
+
+  // Admin: Submit vendor registration for review
+  app.post("/api/admin/vendor-registrations/:id/submit", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const registration = await storage.submitVendorRegistration(req.params.id);
+      if (!registration) {
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+
+      const user = req.user as Express.User;
+      await storage.createVendorApprovalLog({
+        vendorRegistrationId: req.params.id,
+        action: 'submitted',
+        fromStatus: 'draft',
+        toStatus: 'submitted',
+        performedBy: user.id,
+        notes: 'Registration submitted for review',
+      });
+
+      res.json(registration);
+    } catch (error) {
+      console.error("Submit vendor registration error:", error);
+      res.status(500).json({ message: "Failed to submit vendor registration" });
+    }
+  });
+
+  // Admin: Approve vendor registration
+  app.post("/api/admin/vendor-registrations/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const { notes } = req.body;
+
+      const registration = await storage.approveVendorRegistration(req.params.id, user.id, notes);
+      if (!registration) {
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+
+      res.json(registration);
+    } catch (error) {
+      console.error("Approve vendor registration error:", error);
+      res.status(500).json({ message: "Failed to approve vendor registration" });
+    }
+  });
+
+  // Admin: Reject vendor registration
+  app.post("/api/admin/vendor-registrations/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const { reason, notes } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const registration = await storage.rejectVendorRegistration(req.params.id, user.id, reason, notes);
+      if (!registration) {
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+
+      res.json(registration);
+    } catch (error) {
+      console.error("Reject vendor registration error:", error);
+      res.status(500).json({ message: "Failed to reject vendor registration" });
+    }
+  });
+
+  // ============================================
+  // VENDOR DOCUMENT ROUTES
+  // ============================================
+
+  // Public: Upload document during vendor registration
+  app.post("/api/vendor-registrations/:id/documents", async (req, res) => {
+    try {
+      const result = insertVendorDocumentSchema.safeParse({
+        ...req.body,
+        vendorRegistrationId: req.params.id,
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const document = await storage.createVendorDocument(result.data);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Create vendor document error:", error);
+      res.status(500).json({ message: "Failed to create vendor document" });
+    }
+  });
+
+  // Admin: Get documents for a vendor registration
+  app.get("/api/admin/vendor-registrations/:id/documents", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const documents = await storage.getVendorDocuments(req.params.id);
+      res.json(documents);
+    } catch (error) {
+      console.error("Get vendor documents error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor documents" });
+    }
+  });
+
+  // Admin: Create vendor document
+  app.post("/api/admin/vendor-registrations/:id/documents", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const result = insertVendorDocumentSchema.safeParse({
+        ...req.body,
+        vendorRegistrationId: req.params.id,
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const document = await storage.createVendorDocument(result.data);
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Create vendor document error:", error);
+      res.status(500).json({ message: "Failed to create vendor document" });
+    }
+  });
+
+  // Admin: Update vendor document
+  app.patch("/api/admin/vendor-documents/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const result = updateVendorDocumentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const document = await storage.updateVendorDocument(req.params.id, result.data);
+      if (!document) {
+        return res.status(404).json({ message: "Vendor document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Update vendor document error:", error);
+      res.status(500).json({ message: "Failed to update vendor document" });
+    }
+  });
+
+  // Admin: Delete vendor document
+  app.delete("/api/admin/vendor-documents/:id", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteVendorDocument(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Vendor document not found" });
+      }
+      res.json({ message: "Vendor document deleted successfully" });
+    } catch (error) {
+      console.error("Delete vendor document error:", error);
+      res.status(500).json({ message: "Failed to delete vendor document" });
+    }
+  });
+
+  // Admin: Verify vendor document
+  app.post("/api/admin/vendor-documents/:id/verify", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const { status, notes } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ message: "Verification status is required" });
+      }
+
+      const document = await storage.verifyVendorDocument(req.params.id, user.id, status, notes);
+      if (!document) {
+        return res.status(404).json({ message: "Vendor document not found" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Verify vendor document error:", error);
+      res.status(500).json({ message: "Failed to verify vendor document" });
+    }
+  });
+
+  // ============================================
+  // VENDOR APPROVAL LOG ROUTES
+  // ============================================
+
+  // Admin: Get approval logs for a vendor registration
+  app.get("/api/admin/vendor-registrations/:id/logs", isAuthenticated, isStaffOrAdmin, async (req, res) => {
+    try {
+      const logs = await storage.getVendorApprovalLogs(req.params.id);
+      res.json(logs);
+    } catch (error) {
+      console.error("Get vendor approval logs error:", error);
+      res.status(500).json({ message: "Failed to fetch vendor approval logs" });
     }
   });
 
