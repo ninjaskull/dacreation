@@ -2030,6 +2030,124 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/invoices/:id/pdf", isAuthenticated, async (req, res) => {
+    try {
+      const invoice = await storage.getInvoiceById(req.params.id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      const items = await storage.getInvoiceItems(req.params.id);
+      const companySettings = await storage.getCompanySettings();
+      let template = null;
+      if (invoice.templateId) {
+        template = await storage.getInvoiceTemplateById(invoice.templateId);
+      }
+
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+      doc.pipe(res);
+
+      const primaryColor = template?.primaryColor || '#3B82F6';
+
+      doc.fontSize(24).fillColor(primaryColor).text('INVOICE', 400, 50, { align: 'right' });
+      doc.fontSize(12).fillColor('#333').text(invoice.invoiceNumber, 400, 80, { align: 'right' });
+      
+      if (companySettings?.name) {
+        doc.fontSize(16).fillColor('#333').text(companySettings.name, 50, 50);
+        doc.fontSize(10).fillColor('#666');
+        let yPos = 70;
+        if (companySettings.address) { doc.text(companySettings.address, 50, yPos); yPos += 15; }
+        if (companySettings.phone) { doc.text(`Phone: ${companySettings.phone}`, 50, yPos); yPos += 12; }
+        if (companySettings.email) { doc.text(`Email: ${companySettings.email}`, 50, yPos); yPos += 12; }
+        if (companySettings.taxId) { doc.text(`GSTIN: ${companySettings.taxId}`, 50, yPos); }
+      }
+
+      doc.moveTo(50, 130).lineTo(545, 130).strokeColor('#ddd').stroke();
+
+      doc.fontSize(10).fillColor('#666');
+      doc.text(`Issue Date: ${new Date(invoice.issueDate).toLocaleDateString('en-IN')}`, 400, 145, { align: 'right' });
+      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}`, 400, 160, { align: 'right' });
+
+      doc.fontSize(12).fillColor('#333').text('Bill To:', 50, 145);
+      doc.fontSize(11).text(invoice.clientName || 'N/A', 50, 160);
+      doc.fontSize(10).fillColor('#666');
+      let billY = 175;
+      if (invoice.clientEmail) { doc.text(invoice.clientEmail, 50, billY); billY += 12; }
+      if (invoice.clientPhone) { doc.text(invoice.clientPhone, 50, billY); billY += 12; }
+      if (invoice.clientAddress) { doc.text(invoice.clientAddress, 50, billY, { width: 200 }); billY += 25; }
+      if (invoice.clientGst) { doc.text(`GSTIN: ${invoice.clientGst}`, 50, billY); }
+
+      const tableTop = 260;
+      doc.rect(50, tableTop, 495, 25).fill('#f1f5f9');
+      doc.fontSize(10).fillColor('#333');
+      doc.text('Item', 55, tableTop + 7);
+      doc.text('Qty', 280, tableTop + 7, { width: 50, align: 'center' });
+      doc.text('Rate', 340, tableTop + 7, { width: 70, align: 'right' });
+      doc.text('Amount', 420, tableTop + 7, { width: 120, align: 'right' });
+
+      let yPosition = tableTop + 30;
+      const formatCurrency = (amt: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amt);
+
+      for (const item of items) {
+        doc.fontSize(10).fillColor('#333').text(item.name, 55, yPosition, { width: 220 });
+        doc.text(item.quantity.toString(), 280, yPosition, { width: 50, align: 'center' });
+        doc.text(formatCurrency(item.unitPrice), 340, yPosition, { width: 70, align: 'right' });
+        doc.text(formatCurrency(item.amount), 420, yPosition, { width: 120, align: 'right' });
+        yPosition += 20;
+      }
+
+      yPosition += 10;
+      doc.moveTo(300, yPosition).lineTo(545, yPosition).strokeColor('#ddd').stroke();
+      yPosition += 10;
+
+      doc.fontSize(10).fillColor('#666').text('Subtotal:', 340, yPosition).fillColor('#333').text(formatCurrency(invoice.subtotal), 420, yPosition, { width: 120, align: 'right' });
+      yPosition += 15;
+
+      if (invoice.discountAmount && invoice.discountAmount > 0) {
+        doc.fillColor('#16a34a').text('Discount:', 340, yPosition).text(`-${formatCurrency(invoice.discountAmount)}`, 420, yPosition, { width: 120, align: 'right' });
+        yPosition += 15;
+      }
+
+      doc.fillColor('#666');
+      if (invoice.cgstAmount && invoice.cgstAmount > 0) {
+        doc.text(`CGST (${invoice.cgstRate}%):`, 340, yPosition).fillColor('#333').text(formatCurrency(invoice.cgstAmount), 420, yPosition, { width: 120, align: 'right' });
+        yPosition += 15;
+      }
+      if (invoice.sgstAmount && invoice.sgstAmount > 0) {
+        doc.fillColor('#666').text(`SGST (${invoice.sgstRate}%):`, 340, yPosition).fillColor('#333').text(formatCurrency(invoice.sgstAmount), 420, yPosition, { width: 120, align: 'right' });
+        yPosition += 15;
+      }
+      if (invoice.igstAmount && invoice.igstAmount > 0) {
+        doc.fillColor('#666').text(`IGST (${invoice.igstRate}%):`, 340, yPosition).fillColor('#333').text(formatCurrency(invoice.igstAmount), 420, yPosition, { width: 120, align: 'right' });
+        yPosition += 15;
+      }
+
+      yPosition += 5;
+      doc.rect(340, yPosition, 205, 25).fill('#f1f5f9');
+      doc.fontSize(12).fillColor('#333').text('Total:', 350, yPosition + 6).text(formatCurrency(invoice.totalAmount), 420, yPosition + 6, { width: 120, align: 'right' });
+
+      if (invoice.notes) {
+        yPosition += 50;
+        doc.fontSize(10).fillColor('#333').text('Notes:', 50, yPosition);
+        doc.fontSize(9).fillColor('#666').text(invoice.notes, 50, yPosition + 15, { width: 495 });
+      }
+
+      if (invoice.termsAndConditions || template?.termsAndConditions) {
+        yPosition += 60;
+        doc.fontSize(10).fillColor('#333').text('Terms & Conditions:', 50, yPosition);
+        doc.fontSize(9).fillColor('#666').text(invoice.termsAndConditions || template?.termsAndConditions || '', 50, yPosition + 15, { width: 495 });
+      }
+
+      doc.end();
+    } catch (error) {
+      console.error("Generate invoice PDF error:", error);
+      res.status(500).json({ message: "Failed to generate invoice PDF" });
+    }
+  });
+
   app.delete("/api/invoices/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       await storage.deleteInvoice(req.params.id);

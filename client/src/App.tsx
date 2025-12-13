@@ -58,6 +58,7 @@ import AdminBlogPage from "@/pages/admin/blog";
 import AdminSubscribersPage from "@/pages/admin/subscribers";
 import VendorRegistrationsPage from "@/pages/admin/vendor-registrations";
 import VendorRegistrationDetailPage from "@/pages/admin/vendor-registration-detail";
+import InvoicesPage from "@/pages/admin/invoices";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -228,6 +229,9 @@ function Router() {
       </Route>
       <Route path="/admin/blog">
         {() => <RequireAuth requiredRole="staff"><AdminBlogPage /></RequireAuth>}
+      </Route>
+      <Route path="/admin/invoices">
+        {() => <RequireAuth requiredRole="staff"><InvoicesPage /></RequireAuth>}
       </Route>
       
       {/* Admin only pages (full system access) */}
