@@ -135,6 +135,9 @@ export default function VendorsPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const servicesRaw = formData.get("services") as string || "";
+    const services = servicesRaw.split(",").map(s => s.trim()).filter(Boolean);
+    
     const data: any = {
       name: formData.get("name") as string,
       category: formData.get("category") as string,
@@ -151,6 +154,7 @@ export default function VendorsPage() {
       contractTerms: formData.get("contractTerms") as string || null,
       paymentTerms: formData.get("paymentTerms") as string || null,
       notes: formData.get("notes") as string || null,
+      services: services,
     };
 
     if (editingVendor) {
@@ -263,18 +267,7 @@ export default function VendorsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="priceRange">Price Range</Label>
-                      <Select name="priceRange" defaultValue={editingVendor?.priceRange || ""}>
-                        <SelectTrigger data-testid="select-vendor-price">
-                          <SelectValue placeholder="Select range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">Not specified</SelectItem>
-                          <SelectItem value="budget">Budget</SelectItem>
-                          <SelectItem value="moderate">Moderate</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                          <SelectItem value="luxury">Luxury</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Input id="priceRange" name="priceRange" placeholder="e.g., ₹50,000 - ₹2,00,000" defaultValue={editingVendor?.priceRange || ""} data-testid="input-vendor-price" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="status">Status</Label>
@@ -301,6 +294,10 @@ export default function VendorsPage() {
                     <div className="col-span-2 space-y-2">
                       <Label htmlFor="description">Description</Label>
                       <Textarea id="description" name="description" defaultValue={editingVendor?.description || ""} rows={2} data-testid="textarea-vendor-description" />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="services">Services (comma separated)</Label>
+                      <Input id="services" name="services" placeholder="e.g., Bridal Bouquet, Stage Decoration, Centerpieces" defaultValue={editingVendor?.services?.join(", ") || ""} data-testid="input-vendor-services" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="contractTerms">Contract Terms</Label>
@@ -439,6 +436,7 @@ export default function VendorsPage() {
                     <TableHead>Vendor</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Contact</TableHead>
+                    <TableHead>Services</TableHead>
                     <TableHead>Rating</TableHead>
                     <TableHead>Events</TableHead>
                     <TableHead>Status</TableHead>
@@ -483,9 +481,20 @@ export default function VendorsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {vendor.services?.slice(0, 2).map((service, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">{service}</Badge>
+                          ))}
+                          {(vendor.services?.length || 0) > 2 && (
+                            <Badge variant="outline" className="text-xs">+{(vendor.services?.length || 0) - 2}</Badge>
+                          )}
+                          {!vendor.services?.length && <span className="text-muted-foreground text-sm">-</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         {renderRating(vendor.rating || 0)}
                       </TableCell>
-                      <TableCell>{vendor.eventsCompleted || 0} events</TableCell>
+                      <TableCell>{vendor.eventsCompleted || 0}</TableCell>
                       <TableCell>
                         {getStatusBadge(vendor.status)}
                       </TableCell>
