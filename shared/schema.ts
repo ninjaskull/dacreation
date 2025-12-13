@@ -1424,3 +1424,535 @@ export const updateSubscriberSchema = z.object({
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
 export type UpdateSubscriber = z.infer<typeof updateSubscriberSchema>;
 export type Subscriber = typeof subscribers.$inferSelect;
+
+// ==================== VENDOR MANAGEMENT SYSTEM ====================
+
+// Vendor Categories for Indian Event Market
+export const vendorCategoryTypes = [
+  "catering",
+  "decoration",
+  "photography",
+  "videography",
+  "venue",
+  "florist",
+  "mehendi",
+  "makeup",
+  "entertainment",
+  "dj",
+  "band",
+  "choreographer",
+  "lighting",
+  "sound",
+  "tent_house",
+  "invitation_cards",
+  "transportation",
+  "security",
+  "hospitality",
+  "pandit_priest",
+  "wedding_planner",
+  "anchor_emcee",
+  "fireworks",
+  "destination_services",
+  "travel_agent",
+  "hotel_accommodation",
+  "jewellery",
+  "bridal_wear",
+  "groom_wear",
+  "gifting",
+  "other"
+] as const;
+export type VendorCategoryType = typeof vendorCategoryTypes[number];
+
+// Business Entity Types (India)
+export const businessEntityTypes = [
+  "sole_proprietor",
+  "partnership",
+  "llp",
+  "private_limited",
+  "public_limited",
+  "opc",
+  "huf",
+  "trust",
+  "society",
+  "other"
+] as const;
+export type BusinessEntityType = typeof businessEntityTypes[number];
+
+// Vendor Registration Statuses
+export const vendorRegistrationStatuses = [
+  "draft",
+  "submitted",
+  "under_review",
+  "documents_pending",
+  "verification_pending",
+  "approved",
+  "rejected",
+  "suspended",
+  "blacklisted"
+] as const;
+export type VendorRegistrationStatus = typeof vendorRegistrationStatuses[number];
+
+// Vendor Document Types
+export const vendorDocumentTypes = [
+  "pan_card",
+  "gst_certificate",
+  "msme_certificate",
+  "incorporation_certificate",
+  "partnership_deed",
+  "llp_agreement",
+  "trade_license",
+  "fssai_license",
+  "fire_safety_certificate",
+  "pollution_certificate",
+  "shop_establishment",
+  "cancelled_cheque",
+  "bank_letter",
+  "liability_insurance",
+  "company_profile",
+  "portfolio",
+  "price_list",
+  "reference_letter",
+  "other"
+] as const;
+export type VendorDocumentType = typeof vendorDocumentTypes[number];
+
+// Document Verification Statuses
+export const documentVerificationStatuses = [
+  "pending",
+  "verified",
+  "rejected",
+  "expired"
+] as const;
+export type DocumentVerificationStatus = typeof documentVerificationStatuses[number];
+
+// Vendor Registration Table (Comprehensive for Indian Market)
+export const vendorRegistrations = pgTable("vendor_registrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Basic Business Information
+  businessName: text("business_name").notNull(),
+  brandName: text("brand_name"),
+  entityType: text("entity_type").notNull(),
+  yearEstablished: integer("year_established"),
+  employeeCount: text("employee_count"),
+  annualTurnover: text("annual_turnover"),
+  
+  // Indian Statutory Information
+  panNumber: text("pan_number"),
+  gstNumber: text("gst_number"),
+  gstState: text("gst_state"),
+  msmeNumber: text("msme_number"),
+  udyamNumber: text("udyam_number"),
+  cinNumber: text("cin_number"),
+  fssaiNumber: text("fssai_number"),
+  
+  // Primary Contact Information
+  contactPersonName: text("contact_person_name").notNull(),
+  contactPersonDesignation: text("contact_person_designation"),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone").notNull(),
+  contactWhatsapp: text("contact_whatsapp"),
+  
+  // Secondary Contact
+  secondaryContactName: text("secondary_contact_name"),
+  secondaryContactPhone: text("secondary_contact_phone"),
+  secondaryContactEmail: text("secondary_contact_email"),
+  
+  // Escalation Contact
+  escalationContactName: text("escalation_contact_name"),
+  escalationContactPhone: text("escalation_contact_phone"),
+  
+  // Address Information
+  registeredAddress: text("registered_address"),
+  registeredCity: text("registered_city"),
+  registeredState: text("registered_state"),
+  registeredPincode: text("registered_pincode"),
+  operationalAddress: text("operational_address"),
+  operationalCity: text("operational_city"),
+  operationalState: text("operational_state"),
+  operationalPincode: text("operational_pincode"),
+  
+  // Service Information
+  categories: text("categories").array(),
+  primaryCategory: text("primary_category"),
+  serviceDescription: text("service_description"),
+  specializations: text("specializations").array(),
+  serviceAreas: text("service_areas").array(),
+  serviceCities: text("service_cities").array(),
+  serviceStates: text("service_states").array(),
+  panIndiaService: boolean("pan_india_service").default(false),
+  internationalService: boolean("international_service").default(false),
+  internationalLocations: text("international_locations").array(),
+  
+  // Capacity & Capabilities
+  minimumGuestCapacity: integer("minimum_guest_capacity"),
+  maximumGuestCapacity: integer("maximum_guest_capacity"),
+  eventsPerMonth: integer("events_per_month"),
+  staffStrength: integer("staff_strength"),
+  equipmentOwned: boolean("equipment_owned").default(true),
+  equipmentDetails: text("equipment_details"),
+  
+  // Pricing Information
+  minimumBudget: integer("minimum_budget"),
+  averageEventValue: integer("average_event_value"),
+  pricingTier: text("pricing_tier"),
+  paymentTerms: text("payment_terms"),
+  advancePercentage: integer("advance_percentage"),
+  acceptsOnlinePayment: boolean("accepts_online_payment").default(true),
+  acceptedPaymentModes: text("accepted_payment_modes").array(),
+  
+  // Banking Information
+  bankName: text("bank_name"),
+  bankBranch: text("bank_branch"),
+  accountNumber: text("account_number"),
+  ifscCode: text("ifsc_code"),
+  accountHolderName: text("account_holder_name"),
+  upiId: text("upi_id"),
+  
+  // Experience & Portfolio
+  yearsInBusiness: integer("years_in_business"),
+  eventsCompleted: integer("events_completed"),
+  majorClients: text("major_clients").array(),
+  portfolioLinks: text("portfolio_links").array(),
+  websiteUrl: text("website_url"),
+  instagramUrl: text("instagram_url"),
+  facebookUrl: text("facebook_url"),
+  youtubeUrl: text("youtube_url"),
+  
+  // Certifications & Compliance
+  hasLiabilityInsurance: boolean("has_liability_insurance").default(false),
+  insuranceCoverage: integer("insurance_coverage"),
+  insuranceExpiryDate: timestamp("insurance_expiry_date"),
+  hasFireSafetyCertificate: boolean("has_fire_safety_certificate").default(false),
+  hasPollutionCertificate: boolean("has_pollution_certificate").default(false),
+  
+  // Declarations & Agreements
+  hasNoPendingLitigation: boolean("has_no_pending_litigation").default(true),
+  hasNeverBlacklisted: boolean("has_never_blacklisted").default(true),
+  declarationNotes: text("declaration_notes"),
+  agreesToTerms: boolean("agrees_to_terms").default(false),
+  agreesToNda: boolean("agrees_to_nda").default(false),
+  agreesToExclusivity: boolean("agrees_to_exclusivity").default(false),
+  
+  // Registration Status & Workflow
+  status: text("status").notNull().default("draft"),
+  submittedAt: timestamp("submitted_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  approvedBy: varchar("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
+  rejectionNotes: text("rejection_notes"),
+  
+  // Internal Notes & Ratings
+  internalNotes: text("internal_notes"),
+  internalRating: integer("internal_rating"),
+  verificationScore: integer("verification_score"),
+  riskLevel: text("risk_level"),
+  
+  // Converted Vendor Reference
+  vendorId: varchar("vendor_id").references(() => vendors.id),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertVendorRegistrationSchema = createInsertSchema(vendorRegistrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  submittedAt: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  approvedBy: true,
+  approvedAt: true,
+  vendorId: true,
+  verificationScore: true,
+}).extend({
+  businessName: z.string().min(2, "Business name is required"),
+  entityType: z.enum(businessEntityTypes),
+  contactPersonName: z.string().min(2, "Contact person name is required"),
+  contactEmail: z.string().email("Valid email is required"),
+  contactPhone: z.string().min(10, "Valid phone number is required"),
+  panNumber: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format").optional().or(z.literal("")),
+  gstNumber: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GST format").optional().or(z.literal("")),
+  categories: z.array(z.string()).min(1, "At least one category is required"),
+  primaryCategory: z.enum(vendorCategoryTypes).optional(),
+  insuranceExpiryDate: z.date().or(z.string()).optional(),
+});
+
+export const updateVendorRegistrationSchema = z.object({
+  businessName: z.string().optional(),
+  brandName: z.string().optional(),
+  entityType: z.enum(businessEntityTypes).optional(),
+  yearEstablished: z.number().optional(),
+  employeeCount: z.string().optional(),
+  annualTurnover: z.string().optional(),
+  panNumber: z.string().optional(),
+  gstNumber: z.string().optional(),
+  gstState: z.string().optional(),
+  msmeNumber: z.string().optional(),
+  udyamNumber: z.string().optional(),
+  cinNumber: z.string().optional(),
+  fssaiNumber: z.string().optional(),
+  contactPersonName: z.string().optional(),
+  contactPersonDesignation: z.string().optional(),
+  contactEmail: z.string().email().optional(),
+  contactPhone: z.string().optional(),
+  contactWhatsapp: z.string().optional(),
+  secondaryContactName: z.string().optional(),
+  secondaryContactPhone: z.string().optional(),
+  secondaryContactEmail: z.string().optional(),
+  escalationContactName: z.string().optional(),
+  escalationContactPhone: z.string().optional(),
+  registeredAddress: z.string().optional(),
+  registeredCity: z.string().optional(),
+  registeredState: z.string().optional(),
+  registeredPincode: z.string().optional(),
+  operationalAddress: z.string().optional(),
+  operationalCity: z.string().optional(),
+  operationalState: z.string().optional(),
+  operationalPincode: z.string().optional(),
+  categories: z.array(z.string()).optional(),
+  primaryCategory: z.string().optional(),
+  serviceDescription: z.string().optional(),
+  specializations: z.array(z.string()).optional(),
+  serviceAreas: z.array(z.string()).optional(),
+  serviceCities: z.array(z.string()).optional(),
+  serviceStates: z.array(z.string()).optional(),
+  panIndiaService: z.boolean().optional(),
+  internationalService: z.boolean().optional(),
+  internationalLocations: z.array(z.string()).optional(),
+  minimumGuestCapacity: z.number().optional(),
+  maximumGuestCapacity: z.number().optional(),
+  eventsPerMonth: z.number().optional(),
+  staffStrength: z.number().optional(),
+  equipmentOwned: z.boolean().optional(),
+  equipmentDetails: z.string().optional(),
+  minimumBudget: z.number().optional(),
+  averageEventValue: z.number().optional(),
+  pricingTier: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  advancePercentage: z.number().optional(),
+  acceptsOnlinePayment: z.boolean().optional(),
+  acceptedPaymentModes: z.array(z.string()).optional(),
+  bankName: z.string().optional(),
+  bankBranch: z.string().optional(),
+  accountNumber: z.string().optional(),
+  ifscCode: z.string().optional(),
+  accountHolderName: z.string().optional(),
+  upiId: z.string().optional(),
+  yearsInBusiness: z.number().optional(),
+  eventsCompleted: z.number().optional(),
+  majorClients: z.array(z.string()).optional(),
+  portfolioLinks: z.array(z.string()).optional(),
+  websiteUrl: z.string().optional(),
+  instagramUrl: z.string().optional(),
+  facebookUrl: z.string().optional(),
+  youtubeUrl: z.string().optional(),
+  hasLiabilityInsurance: z.boolean().optional(),
+  insuranceCoverage: z.number().optional(),
+  insuranceExpiryDate: z.date().or(z.string()).nullable().optional(),
+  hasFireSafetyCertificate: z.boolean().optional(),
+  hasPollutionCertificate: z.boolean().optional(),
+  hasNoPendingLitigation: z.boolean().optional(),
+  hasNeverBlacklisted: z.boolean().optional(),
+  declarationNotes: z.string().optional(),
+  agreesToTerms: z.boolean().optional(),
+  agreesToNda: z.boolean().optional(),
+  agreesToExclusivity: z.boolean().optional(),
+  status: z.enum(vendorRegistrationStatuses).optional(),
+  internalNotes: z.string().optional(),
+  internalRating: z.number().min(1).max(5).optional(),
+  riskLevel: z.string().optional(),
+  rejectionReason: z.string().optional(),
+  rejectionNotes: z.string().optional(),
+});
+
+export type InsertVendorRegistration = z.infer<typeof insertVendorRegistrationSchema>;
+export type UpdateVendorRegistration = z.infer<typeof updateVendorRegistrationSchema>;
+export type VendorRegistration = typeof vendorRegistrations.$inferSelect;
+
+// Vendor Documents Table
+export const vendorDocuments = pgTable("vendor_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorRegistrationId: varchar("vendor_registration_id").references(() => vendorRegistrations.id).notNull(),
+  vendorId: varchar("vendor_id").references(() => vendors.id),
+  documentType: text("document_type").notNull(),
+  documentName: text("document_name").notNull(),
+  documentNumber: text("document_number"),
+  fileUrl: text("file_url").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  issueDate: timestamp("issue_date"),
+  expiryDate: timestamp("expiry_date"),
+  issuingAuthority: text("issuing_authority"),
+  verificationStatus: text("verification_status").notNull().default("pending"),
+  verifiedBy: varchar("verified_by").references(() => users.id),
+  verifiedAt: timestamp("verified_at"),
+  verificationNotes: text("verification_notes"),
+  rejectionReason: text("rejection_reason"),
+  isRequired: boolean("is_required").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertVendorDocumentSchema = createInsertSchema(vendorDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  verifiedBy: true,
+  verifiedAt: true,
+}).extend({
+  documentType: z.enum(vendorDocumentTypes),
+  issueDate: z.date().or(z.string()).optional(),
+  expiryDate: z.date().or(z.string()).optional(),
+});
+
+export const updateVendorDocumentSchema = z.object({
+  documentName: z.string().optional(),
+  documentNumber: z.string().optional(),
+  fileUrl: z.string().optional(),
+  issueDate: z.date().or(z.string()).optional(),
+  expiryDate: z.date().or(z.string()).optional(),
+  issuingAuthority: z.string().optional(),
+  verificationStatus: z.enum(documentVerificationStatuses).optional(),
+  verificationNotes: z.string().optional(),
+  rejectionReason: z.string().optional(),
+});
+
+export type InsertVendorDocument = z.infer<typeof insertVendorDocumentSchema>;
+export type UpdateVendorDocument = z.infer<typeof updateVendorDocumentSchema>;
+export type VendorDocument = typeof vendorDocuments.$inferSelect;
+
+// Vendor Approval Workflow Logs
+export const vendorApprovalLogs = pgTable("vendor_approval_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorRegistrationId: varchar("vendor_registration_id").references(() => vendorRegistrations.id).notNull(),
+  action: text("action").notNull(),
+  fromStatus: text("from_status"),
+  toStatus: text("to_status"),
+  performedBy: varchar("performed_by").references(() => users.id),
+  performedByName: text("performed_by_name"),
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertVendorApprovalLogSchema = createInsertSchema(vendorApprovalLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertVendorApprovalLog = z.infer<typeof insertVendorApprovalLogSchema>;
+export type VendorApprovalLog = typeof vendorApprovalLogs.$inferSelect;
+
+// Vendor Service Offerings / Rate Cards
+export const vendorServiceOfferings = pgTable("vendor_service_offerings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").references(() => vendors.id).notNull(),
+  serviceName: text("service_name").notNull(),
+  serviceCategory: text("service_category"),
+  description: text("description"),
+  basePrice: integer("base_price"),
+  maxPrice: integer("max_price"),
+  priceUnit: text("price_unit"),
+  minimumOrder: text("minimum_order"),
+  deliveryTime: text("delivery_time"),
+  inclusions: text("inclusions").array(),
+  exclusions: text("exclusions").array(),
+  terms: text("terms"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertVendorServiceOfferingSchema = createInsertSchema(vendorServiceOfferings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertVendorServiceOffering = z.infer<typeof insertVendorServiceOfferingSchema>;
+export type VendorServiceOffering = typeof vendorServiceOfferings.$inferSelect;
+
+// Vendor Performance Reviews
+export const vendorPerformanceReviews = pgTable("vendor_performance_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").references(() => vendors.id).notNull(),
+  eventId: varchar("event_id").references(() => events.id),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  qualityRating: integer("quality_rating"),
+  punctualityRating: integer("punctuality_rating"),
+  communicationRating: integer("communication_rating"),
+  valueRating: integer("value_rating"),
+  overallRating: integer("overall_rating"),
+  strengths: text("strengths"),
+  improvements: text("improvements"),
+  internalNotes: text("internal_notes"),
+  wouldRecommend: boolean("would_recommend").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertVendorPerformanceReviewSchema = createInsertSchema(vendorPerformanceReviews).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertVendorPerformanceReview = z.infer<typeof insertVendorPerformanceReviewSchema>;
+export type VendorPerformanceReview = typeof vendorPerformanceReviews.$inferSelect;
+
+// Helper arrays for UI dropdowns
+export const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry", "Chandigarh",
+  "Andaman and Nicobar Islands", "Dadra and Nagar Haveli and Daman and Diu", "Lakshadweep"
+] as const;
+
+export const pricingTiers = [
+  { value: "budget", label: "Budget (Under ₹50,000)" },
+  { value: "economy", label: "Economy (₹50,000 - ₹2 Lakhs)" },
+  { value: "mid_range", label: "Mid-Range (₹2 - 5 Lakhs)" },
+  { value: "premium", label: "Premium (₹5 - 15 Lakhs)" },
+  { value: "luxury", label: "Luxury (₹15 - 50 Lakhs)" },
+  { value: "ultra_luxury", label: "Ultra Luxury (Above ₹50 Lakhs)" },
+] as const;
+
+export const vendorCategoryLabels: Record<string, string> = {
+  catering: "Catering & Food Services",
+  decoration: "Decoration & Event Styling",
+  photography: "Photography",
+  videography: "Videography & Films",
+  venue: "Venue & Banquet Hall",
+  florist: "Florist & Floral Design",
+  mehendi: "Mehendi Artist",
+  makeup: "Makeup & Hair Styling",
+  entertainment: "Entertainment & Artists",
+  dj: "DJ & Music",
+  band: "Band & Orchestra",
+  choreographer: "Choreographer & Dance",
+  lighting: "Lighting & Effects",
+  sound: "Sound & Audio",
+  tent_house: "Tent House & Furniture",
+  invitation_cards: "Invitation Cards & Printing",
+  transportation: "Transportation & Logistics",
+  security: "Security Services",
+  hospitality: "Hospitality & Guest Management",
+  pandit_priest: "Pandit / Priest Services",
+  wedding_planner: "Wedding Planner",
+  anchor_emcee: "Anchor / Emcee",
+  fireworks: "Fireworks & Pyrotechnics",
+  destination_services: "Destination Event Services",
+  travel_agent: "Travel Agent",
+  hotel_accommodation: "Hotel & Accommodation",
+  jewellery: "Jewellery & Accessories",
+  bridal_wear: "Bridal Wear & Lehenga",
+  groom_wear: "Groom Wear & Sherwani",
+  gifting: "Gifting & Favors",
+  other: "Other Services",
+};
