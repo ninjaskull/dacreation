@@ -28,12 +28,18 @@ import {
   type EmailLog, type InsertEmailLog,
   type BlogPost, type InsertBlogPost, type UpdateBlogPost,
   type Subscriber, type InsertSubscriber, type UpdateSubscriber,
+  type VendorRegistration, type InsertVendorRegistration, type UpdateVendorRegistration,
+  type VendorDocument, type InsertVendorDocument, type UpdateVendorDocument,
+  type VendorApprovalLog, type InsertVendorApprovalLog,
+  type VendorServiceOffering, type InsertVendorServiceOffering,
+  type VendorPerformanceReview, type InsertVendorPerformanceReview,
   users, leads, appointments, activityLogs, leadNotes,
   teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
   invoiceTemplates, invoices, invoiceItems, invoicePayments,
   callbackRequests, conversations, chatMessages, agentStatus,
-  smtpSettings, emailTypeSettings, emailTemplates, emailLogs, blogPosts, subscribers
+  smtpSettings, emailTypeSettings, emailTemplates, emailLogs, blogPosts, subscribers,
+  vendorRegistrations, vendorDocuments, vendorApprovalLogs, vendorServiceOfferings, vendorPerformanceReviews
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc, inArray } from "drizzle-orm";
@@ -285,6 +291,33 @@ export interface EmailLogStats {
   successRate: number;
 }
 
+export interface VendorRegistrationFilters {
+  status?: string;
+  category?: string;
+  city?: string;
+  state?: string;
+  search?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export interface VendorRegistrationWithDetails extends VendorRegistration {
+  reviewer?: { id: string; name: string | null; username: string } | null;
+  approver?: { id: string; name: string | null; username: string } | null;
+  documents?: VendorDocument[];
+}
+
+export interface VendorRegistrationStats {
+  total: number;
+  draft: number;
+  submitted: number;
+  underReview: number;
+  approved: number;
+  rejected: number;
+  byCategory: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -468,6 +501,25 @@ export interface IStorage {
   unsubscribeByEmail(email: string, reason?: string): Promise<Subscriber | undefined>;
   getSubscriberStats(): Promise<SubscriberStats>;
   incrementEmailStats(id: string, field: 'sent' | 'opened' | 'clicked'): Promise<Subscriber | undefined>;
+  
+  getAllVendorRegistrations(filters?: VendorRegistrationFilters): Promise<VendorRegistrationWithDetails[]>;
+  getVendorRegistrationById(id: string): Promise<VendorRegistrationWithDetails | undefined>;
+  createVendorRegistration(registration: InsertVendorRegistration): Promise<VendorRegistration>;
+  updateVendorRegistration(id: string, data: UpdateVendorRegistration): Promise<VendorRegistration | undefined>;
+  deleteVendorRegistration(id: string): Promise<boolean>;
+  submitVendorRegistration(id: string): Promise<VendorRegistration | undefined>;
+  approveVendorRegistration(id: string, userId: string, notes?: string): Promise<VendorRegistration | undefined>;
+  rejectVendorRegistration(id: string, userId: string, reason: string, notes?: string): Promise<VendorRegistration | undefined>;
+  getVendorRegistrationStats(): Promise<VendorRegistrationStats>;
+  
+  getVendorDocuments(vendorRegistrationId: string): Promise<VendorDocument[]>;
+  createVendorDocument(document: InsertVendorDocument): Promise<VendorDocument>;
+  updateVendorDocument(id: string, data: UpdateVendorDocument): Promise<VendorDocument | undefined>;
+  deleteVendorDocument(id: string): Promise<boolean>;
+  verifyVendorDocument(id: string, userId: string, status: string, notes?: string): Promise<VendorDocument | undefined>;
+  
+  getVendorApprovalLogs(vendorRegistrationId: string): Promise<VendorApprovalLog[]>;
+  createVendorApprovalLog(log: InsertVendorApprovalLog): Promise<VendorApprovalLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3001,6 +3053,354 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscribers.id, id))
       .returning();
     return subscriber;
+  }
+
+  async getAllVendorRegistrations(filters?: VendorRegistrationFilters): Promise<VendorRegistrationWithDetails[]> {
+    const conditions = [];
+    
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(vendorRegistrations.status, filters.status));
+    }
+    if (filters?.category && filters.category !== 'all') {
+      conditions.push(sql`${filters.category} = ANY(${vendorRegistrations.categories})`);
+    }
+    if (filters?.city) {
+      conditions.push(
+        or(
+          like(vendorRegistrations.registeredCity, `%${sanitizeLikePattern(filters.city)}%`),
+          like(vendorRegistrations.operationalCity, `%${sanitizeLikePattern(filters.city)}%`)
+        )
+      );
+    }
+    if (filters?.state) {
+      conditions.push(
+        or(
+          like(vendorRegistrations.registeredState, `%${sanitizeLikePattern(filters.state)}%`),
+          like(vendorRegistrations.operationalState, `%${sanitizeLikePattern(filters.state)}%`)
+        )
+      );
+    }
+    if (filters?.search) {
+      const searchTerm = `%${sanitizeLikePattern(filters.search)}%`;
+      conditions.push(
+        or(
+          like(vendorRegistrations.businessName, searchTerm),
+          like(vendorRegistrations.brandName, searchTerm),
+          like(vendorRegistrations.contactPersonName, searchTerm),
+          like(vendorRegistrations.contactEmail, searchTerm),
+          like(vendorRegistrations.contactPhone, searchTerm)
+        )
+      );
+    }
+    if (filters?.dateFrom) {
+      conditions.push(gte(vendorRegistrations.createdAt, filters.dateFrom));
+    }
+    if (filters?.dateTo) {
+      conditions.push(lte(vendorRegistrations.createdAt, filters.dateTo));
+    }
+
+    const reviewerAlias = db.select({
+      id: users.id,
+      name: users.name,
+      username: users.username,
+    }).from(users).as('reviewer');
+
+    const approverAlias = db.select({
+      id: users.id,
+      name: users.name,
+      username: users.username,
+    }).from(users).as('approver');
+
+    const result = await db
+      .select({
+        registration: vendorRegistrations,
+        reviewer: {
+          id: sql<string>`reviewer.id`,
+          name: sql<string | null>`reviewer.name`,
+          username: sql<string>`reviewer.username`,
+        },
+        approver: {
+          id: sql<string>`approver.id`,
+          name: sql<string | null>`approver.name`,
+          username: sql<string>`approver.username`,
+        },
+      })
+      .from(vendorRegistrations)
+      .leftJoin(sql`(SELECT id, name, username FROM users) AS reviewer`, sql`${vendorRegistrations.reviewedBy} = reviewer.id`)
+      .leftJoin(sql`(SELECT id, name, username FROM users) AS approver`, sql`${vendorRegistrations.approvedBy} = approver.id`)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(vendorRegistrations.createdAt));
+
+    return result.map(r => ({
+      ...r.registration,
+      reviewer: r.reviewer?.id ? r.reviewer : null,
+      approver: r.approver?.id ? r.approver : null,
+    }));
+  }
+
+  async getVendorRegistrationById(id: string): Promise<VendorRegistrationWithDetails | undefined> {
+    const result = await db
+      .select({
+        registration: vendorRegistrations,
+        reviewer: {
+          id: sql<string>`reviewer.id`,
+          name: sql<string | null>`reviewer.name`,
+          username: sql<string>`reviewer.username`,
+        },
+        approver: {
+          id: sql<string>`approver.id`,
+          name: sql<string | null>`approver.name`,
+          username: sql<string>`approver.username`,
+        },
+      })
+      .from(vendorRegistrations)
+      .leftJoin(sql`(SELECT id, name, username FROM users) AS reviewer`, sql`${vendorRegistrations.reviewedBy} = reviewer.id`)
+      .leftJoin(sql`(SELECT id, name, username FROM users) AS approver`, sql`${vendorRegistrations.approvedBy} = approver.id`)
+      .where(eq(vendorRegistrations.id, id));
+
+    if (!result[0]) return undefined;
+
+    const documents = await this.getVendorDocuments(id);
+
+    return {
+      ...result[0].registration,
+      reviewer: result[0].reviewer?.id ? result[0].reviewer : null,
+      approver: result[0].approver?.id ? result[0].approver : null,
+      documents,
+    };
+  }
+
+  async createVendorRegistration(registration: InsertVendorRegistration): Promise<VendorRegistration> {
+    const registrationData = {
+      ...registration,
+      insuranceExpiryDate: registration.insuranceExpiryDate ? new Date(registration.insuranceExpiryDate) : null,
+    };
+
+    const [result] = await db
+      .insert(vendorRegistrations)
+      .values(registrationData as any)
+      .returning();
+    return result;
+  }
+
+  async updateVendorRegistration(id: string, data: UpdateVendorRegistration): Promise<VendorRegistration | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.insuranceExpiryDate) {
+      updateData.insuranceExpiryDate = new Date(data.insuranceExpiryDate);
+    }
+
+    const [result] = await db
+      .update(vendorRegistrations)
+      .set(updateData)
+      .where(eq(vendorRegistrations.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteVendorRegistration(id: string): Promise<boolean> {
+    await db.delete(vendorDocuments).where(eq(vendorDocuments.vendorRegistrationId, id));
+    await db.delete(vendorApprovalLogs).where(eq(vendorApprovalLogs.vendorRegistrationId, id));
+    await db.delete(vendorRegistrations).where(eq(vendorRegistrations.id, id));
+    return true;
+  }
+
+  async submitVendorRegistration(id: string): Promise<VendorRegistration | undefined> {
+    const [result] = await db
+      .update(vendorRegistrations)
+      .set({ status: 'submitted', submittedAt: new Date(), updatedAt: new Date() })
+      .where(eq(vendorRegistrations.id, id))
+      .returning();
+
+    if (result) {
+      await this.createVendorApprovalLog({
+        vendorRegistrationId: id,
+        action: 'submitted',
+        fromStatus: 'draft',
+        toStatus: 'submitted',
+        notes: 'Registration submitted for review',
+      });
+    }
+
+    return result;
+  }
+
+  async approveVendorRegistration(id: string, userId: string, notes?: string): Promise<VendorRegistration | undefined> {
+    const existing = await db.select().from(vendorRegistrations).where(eq(vendorRegistrations.id, id));
+    if (!existing[0]) return undefined;
+
+    const [result] = await db
+      .update(vendorRegistrations)
+      .set({
+        status: 'approved',
+        approvedBy: userId,
+        approvedAt: new Date(),
+        updatedAt: new Date(),
+        internalNotes: notes || existing[0].internalNotes,
+      })
+      .where(eq(vendorRegistrations.id, id))
+      .returning();
+
+    if (result) {
+      const user = await this.getUser(userId);
+      await this.createVendorApprovalLog({
+        vendorRegistrationId: id,
+        action: 'approved',
+        fromStatus: existing[0].status,
+        toStatus: 'approved',
+        performedBy: userId,
+        performedByName: user?.name || user?.username,
+        notes,
+      });
+    }
+
+    return result;
+  }
+
+  async rejectVendorRegistration(id: string, userId: string, reason: string, notes?: string): Promise<VendorRegistration | undefined> {
+    const existing = await db.select().from(vendorRegistrations).where(eq(vendorRegistrations.id, id));
+    if (!existing[0]) return undefined;
+
+    const [result] = await db
+      .update(vendorRegistrations)
+      .set({
+        status: 'rejected',
+        rejectionReason: reason,
+        rejectionNotes: notes,
+        reviewedBy: userId,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(vendorRegistrations.id, id))
+      .returning();
+
+    if (result) {
+      const user = await this.getUser(userId);
+      await this.createVendorApprovalLog({
+        vendorRegistrationId: id,
+        action: 'rejected',
+        fromStatus: existing[0].status,
+        toStatus: 'rejected',
+        performedBy: userId,
+        performedByName: user?.name || user?.username,
+        notes: `Reason: ${reason}. ${notes || ''}`,
+      });
+    }
+
+    return result;
+  }
+
+  async getVendorRegistrationStats(): Promise<VendorRegistrationStats> {
+    const allRegistrations = await db.select().from(vendorRegistrations);
+    
+    const byCategory: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+    let draft = 0;
+    let submitted = 0;
+    let underReview = 0;
+    let approved = 0;
+    let rejected = 0;
+    
+    for (const reg of allRegistrations) {
+      byStatus[reg.status] = (byStatus[reg.status] || 0) + 1;
+      
+      if (reg.categories) {
+        for (const cat of reg.categories) {
+          byCategory[cat] = (byCategory[cat] || 0) + 1;
+        }
+      }
+      
+      if (reg.status === 'draft') draft++;
+      else if (reg.status === 'submitted') submitted++;
+      else if (reg.status === 'under_review') underReview++;
+      else if (reg.status === 'approved') approved++;
+      else if (reg.status === 'rejected') rejected++;
+    }
+    
+    return {
+      total: allRegistrations.length,
+      draft,
+      submitted,
+      underReview,
+      approved,
+      rejected,
+      byCategory,
+      byStatus,
+    };
+  }
+
+  async getVendorDocuments(vendorRegistrationId: string): Promise<VendorDocument[]> {
+    return await db
+      .select()
+      .from(vendorDocuments)
+      .where(eq(vendorDocuments.vendorRegistrationId, vendorRegistrationId))
+      .orderBy(asc(vendorDocuments.documentType));
+  }
+
+  async createVendorDocument(document: InsertVendorDocument): Promise<VendorDocument> {
+    const documentData = {
+      ...document,
+      issueDate: document.issueDate ? new Date(document.issueDate) : null,
+      expiryDate: document.expiryDate ? new Date(document.expiryDate) : null,
+    };
+
+    const [result] = await db
+      .insert(vendorDocuments)
+      .values(documentData as any)
+      .returning();
+    return result;
+  }
+
+  async updateVendorDocument(id: string, data: UpdateVendorDocument): Promise<VendorDocument | undefined> {
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (data.issueDate) {
+      updateData.issueDate = new Date(data.issueDate);
+    }
+    if (data.expiryDate) {
+      updateData.expiryDate = new Date(data.expiryDate);
+    }
+
+    const [result] = await db
+      .update(vendorDocuments)
+      .set(updateData)
+      .where(eq(vendorDocuments.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteVendorDocument(id: string): Promise<boolean> {
+    await db.delete(vendorDocuments).where(eq(vendorDocuments.id, id));
+    return true;
+  }
+
+  async verifyVendorDocument(id: string, userId: string, status: string, notes?: string): Promise<VendorDocument | undefined> {
+    const [result] = await db
+      .update(vendorDocuments)
+      .set({
+        verificationStatus: status,
+        verifiedBy: userId,
+        verifiedAt: new Date(),
+        verificationNotes: notes,
+        updatedAt: new Date(),
+      })
+      .where(eq(vendorDocuments.id, id))
+      .returning();
+    return result;
+  }
+
+  async getVendorApprovalLogs(vendorRegistrationId: string): Promise<VendorApprovalLog[]> {
+    return await db
+      .select()
+      .from(vendorApprovalLogs)
+      .where(eq(vendorApprovalLogs.vendorRegistrationId, vendorRegistrationId))
+      .orderBy(desc(vendorApprovalLogs.createdAt));
+  }
+
+  async createVendorApprovalLog(log: InsertVendorApprovalLog): Promise<VendorApprovalLog> {
+    const [result] = await db
+      .insert(vendorApprovalLogs)
+      .values(log)
+      .returning();
+    return result;
   }
 }
 
