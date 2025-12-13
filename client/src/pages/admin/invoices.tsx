@@ -334,8 +334,8 @@ export default function InvoicesPage() {
 
   const calculateLineItemAmount = (item: LineItem): number => {
     const baseAmount = item.quantity * item.unitPrice;
-    const discountAmount = (baseAmount * item.discount) / 100;
-    return baseAmount - discountAmount;
+    const discountAmount = Math.round((baseAmount * item.discount) / 100);
+    return Math.round(baseAmount - discountAmount);
   };
 
   const updateLineItem = (index: number, updates: Partial<LineItem>) => {
@@ -359,28 +359,28 @@ export default function InvoicesPage() {
   };
 
   const calculateTotals = (items: LineItem[] = lineItems) => {
-    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    const subtotal = Math.round(items.reduce((sum, item) => sum + item.amount, 0));
     const taxableAmount = items.filter(item => item.taxable).reduce((sum, item) => sum + item.amount, 0);
     
     let discountAmount = 0;
     if (formData.discountType === "percentage") {
-      discountAmount = (subtotal * formData.discountValue) / 100;
+      discountAmount = Math.round((subtotal * formData.discountValue) / 100);
     } else {
-      discountAmount = formData.discountValue;
+      discountAmount = Math.round(formData.discountValue);
     }
     
     const afterDiscount = subtotal - discountAmount;
     
     let cgstAmount = 0, sgstAmount = 0, igstAmount = 0;
     if (formData.taxType === "gst") {
-      cgstAmount = (taxableAmount * formData.cgstRate) / 100;
-      sgstAmount = (taxableAmount * formData.sgstRate) / 100;
+      cgstAmount = Math.round((taxableAmount * formData.cgstRate) / 100);
+      sgstAmount = Math.round((taxableAmount * formData.sgstRate) / 100);
     } else if (formData.taxType === "igst") {
-      igstAmount = (taxableAmount * formData.igstRate) / 100;
+      igstAmount = Math.round((taxableAmount * formData.igstRate) / 100);
     }
     
-    const totalTax = cgstAmount + sgstAmount + igstAmount;
-    const totalAmount = afterDiscount + totalTax;
+    const totalTax = Math.round(cgstAmount + sgstAmount + igstAmount);
+    const totalAmount = Math.round(afterDiscount + totalTax);
     
     return { subtotal, discountAmount, cgstAmount, sgstAmount, igstAmount, totalTax, totalAmount };
   };
@@ -398,7 +398,11 @@ export default function InvoicesPage() {
       ...formData,
       invoiceNumber: "",
       subtotal: totals.subtotal,
+      discountValue: Math.round(formData.discountValue),
       discountAmount: totals.discountAmount,
+      cgstRate: Math.round(formData.cgstRate),
+      sgstRate: Math.round(formData.sgstRate),
+      igstRate: Math.round(formData.igstRate),
       cgstAmount: totals.cgstAmount,
       sgstAmount: totals.sgstAmount,
       igstAmount: totals.igstAmount,
@@ -436,7 +440,14 @@ export default function InvoicesPage() {
       let itemErrors = 0;
       for (const item of validItems) {
         try {
-          await createItemMutation.mutateAsync({ invoiceId, data: item });
+          const itemData = {
+            ...item,
+            quantity: Math.round(item.quantity),
+            unitPrice: Math.round(item.unitPrice),
+            discount: Math.round(item.discount),
+            amount: Math.round(item.amount),
+          };
+          await createItemMutation.mutateAsync({ invoiceId, data: itemData });
         } catch (err) {
           console.error("Error creating item:", err);
           itemErrors++;
