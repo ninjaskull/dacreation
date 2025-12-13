@@ -51,6 +51,7 @@ import AdminCallbacksPage from "@/pages/admin/callbacks";
 import WebsiteSettingsPage from "@/pages/admin/website-settings";
 import AdminPortfolioPage from "@/pages/admin/portfolio";
 import EmailSettingsPage from "@/pages/admin/email-settings";
+import EmailTemplateDesignerPage from "@/pages/admin/email-template-designer";
 import AdminBlogPage from "@/pages/admin/blog";
 import AdminSubscribersPage from "@/pages/admin/subscribers";
 import { PopupSystem } from "@/components/sales/popup-system";
@@ -224,6 +225,9 @@ function Router() {
       </Route>
       <Route path="/admin/email-settings">
         {() => <RequireAuth requiredRole="admin"><EmailSettingsPage /></RequireAuth>}
+      </Route>
+      <Route path="/admin/email-template-designer">
+        {() => <RequireAuth requiredRole="admin"><EmailTemplateDesignerPage /></RequireAuth>}
       </Route>
       <Route path="/admin/subscribers">
         {() => <RequireAuth requiredRole="staff"><AdminSubscribersPage /></RequireAuth>}

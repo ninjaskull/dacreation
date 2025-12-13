@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Mail, Settings, FileText, History, Save, Loader2, Send, Plus, Pencil, Trash2, Eye, CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
+import { Mail, Settings, FileText, History, Save, Loader2, Send, Plus, Pencil, Trash2, Eye, CheckCircle2, XCircle, AlertCircle, Clock, Wand2 } from "lucide-react";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -610,13 +611,20 @@ export default function EmailSettingsPage() {
                   <CardTitle>Email Templates</CardTitle>
                   <CardDescription>Manage email templates with dynamic variables</CardDescription>
                 </div>
-                <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => setEditingTemplate(null)} data-testid="button-new-template">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Template
+                <div className="flex gap-2">
+                  <Link href="/admin/email-template-designer">
+                    <Button data-testid="button-visual-designer">
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Visual Designer
                     </Button>
-                  </DialogTrigger>
+                  </Link>
+                  <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" onClick={() => setEditingTemplate(null)} data-testid="button-new-template">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Quick Add
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
@@ -630,7 +638,8 @@ export default function EmailSettingsPage() {
                       isPending={saveTemplateMutation.isPending}
                     />
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 {loadingTemplates ? (

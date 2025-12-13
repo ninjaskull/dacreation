@@ -1240,6 +1240,7 @@ export const emailTemplates = pgTable("email_templates", {
   subject: text("subject").notNull(),
   htmlContent: text("html_content").notNull(),
   textContent: text("text_content"),
+  designerData: text("designer_data"),
   variables: text("variables").array(),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -1253,6 +1254,7 @@ export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit
 }).extend({
   type: z.enum(emailTemplateTypes),
   variables: z.array(z.string()).optional(),
+  designerData: z.string().optional(),
 });
 
 export const updateEmailTemplateSchema = z.object({
@@ -1262,6 +1264,7 @@ export const updateEmailTemplateSchema = z.object({
   subject: z.string().optional(),
   htmlContent: z.string().optional(),
   textContent: z.string().optional(),
+  designerData: z.string().optional(),
   variables: z.array(z.string()).optional(),
   isActive: z.boolean().optional(),
 });
