@@ -429,7 +429,7 @@ export default function ChatPage() {
     <AdminLayout title="Live Chat" description="Real-time customer support">
       <TooltipProvider>
         <div className="h-full">
-          <div className="h-[calc(100vh-140px)] flex bg-background rounded-xl border shadow-sm overflow-hidden">
+          <div className="h-[calc(100vh-100px)] flex bg-background rounded-xl border shadow-sm overflow-hidden">
             <div className="w-96 border-r flex flex-col bg-muted/30">
               <div className="p-4 border-b bg-background">
                 <div className="flex items-center justify-between mb-3">
