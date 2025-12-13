@@ -55,6 +55,7 @@ import EmailSettingsPage from "@/pages/admin/email-settings";
 import EmailTemplateDesignerPage from "@/pages/admin/email-template-designer";
 import AdminBlogPage from "@/pages/admin/blog";
 import AdminSubscribersPage from "@/pages/admin/subscribers";
+import VendorRegistrationsPage from "@/pages/admin/vendor-registrations";
 import { PopupSystem } from "@/components/sales/popup-system";
 import { FloatingCTA } from "@/components/sales/floating-cta";
 import { Chatbot } from "@/components/sales/chatbot";
@@ -189,6 +190,9 @@ function Router() {
       </Route>
       <Route path="/admin/vendors">
         {() => <RequireAuth requiredRole="staff"><VendorsPage /></RequireAuth>}
+      </Route>
+      <Route path="/admin/vendor-registrations">
+        {() => <RequireAuth requiredRole="staff"><VendorRegistrationsPage /></RequireAuth>}
       </Route>
       <Route path="/admin/inquiries">
         {() => <RequireAuth requiredRole="staff"><InquiriesPage /></RequireAuth>}
