@@ -428,85 +428,8 @@ export default function ChatPage() {
   return (
     <AdminLayout title="Live Chat" description="Real-time customer support">
       <TooltipProvider>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className={cn(
-              "cursor-pointer transition-all hover:shadow-md",
-              filterStatus === "all" && "ring-2 ring-primary"
-            )} onClick={() => setFilterStatus("all")}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">All Chats</p>
-                    <p className="text-2xl font-bold">{stats?.total || 0}</p>
-                  </div>
-                  <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                    <MessageSquare className="h-5 w-5 text-slate-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={cn(
-              "cursor-pointer transition-all hover:shadow-md border-red-200",
-              filterStatus === "live_agent" && "ring-2 ring-red-500",
-              (stats?.live_agent || 0) > 0 && "bg-red-50"
-            )} onClick={() => setFilterStatus("live_agent")}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-red-600 font-medium">Live Agent</p>
-                    <p className="text-2xl font-bold text-red-700">{stats?.live_agent || 0}</p>
-                  </div>
-                  <div className={cn(
-                    "h-10 w-10 rounded-full bg-red-100 flex items-center justify-center",
-                    (stats?.live_agent || 0) > 0 && "animate-pulse"
-                  )}>
-                    <Headphones className="h-5 w-5 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={cn(
-              "cursor-pointer transition-all hover:shadow-md",
-              filterStatus === "active" && "ring-2 ring-emerald-500"
-            )} onClick={() => setFilterStatus("active")}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active</p>
-                    <p className="text-2xl font-bold text-emerald-600">{stats?.active || 0}</p>
-                  </div>
-                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Radio className="h-5 w-5 text-emerald-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={cn(
-              "cursor-pointer transition-all hover:shadow-md",
-              (stats?.unreadMessages || 0) > 0 && "border-amber-200 bg-amber-50"
-            )}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-amber-600 font-medium">Unread</p>
-                    <p className="text-2xl font-bold text-amber-700">{stats?.unreadMessages || 0}</p>
-                  </div>
-                  <div className={cn(
-                    "h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center",
-                    (stats?.unreadMessages || 0) > 0 && "animate-bounce"
-                  )}>
-                    <BellRing className="h-5 w-5 text-amber-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="h-[calc(100vh-280px)] flex bg-background rounded-xl border shadow-sm overflow-hidden">
+        <div className="h-full">
+          <div className="h-[calc(100vh-140px)] flex bg-background rounded-xl border shadow-sm overflow-hidden">
             <div className="w-96 border-r flex flex-col bg-muted/30">
               <div className="p-4 border-b bg-background">
                 <div className="flex items-center justify-between mb-3">
