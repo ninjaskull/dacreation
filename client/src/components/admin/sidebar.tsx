@@ -24,6 +24,7 @@ import {
   Mail,
   Search,
   BookOpen,
+  Receipt,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,12 @@ const sidebarSections: SidebarSection[] = [
       { name: "Blog", href: "/admin/blog", icon: BookOpen, staffAndAbove: true },
       { name: "Careers", href: "/admin/careers", icon: Briefcase, staffAndAbove: true },
       { name: "Tasks", href: "/admin/tasks", icon: FileText, staffAndAbove: true },
+    ],
+  },
+  {
+    title: "Finance",
+    items: [
+      { name: "Invoices", href: "/admin/invoices", icon: Receipt, staffAndAbove: true },
     ],
   },
   {
