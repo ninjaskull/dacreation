@@ -13,9 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Building2, User, MapPin, Briefcase, CreditCard, FileText, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Building2, User, MapPin, Briefcase, CreditCard, FileText, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Upload, X, File } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Footer from "@/components/layout/footer";
+import { Footer } from "@/components/layout/footer";
 
 const businessEntityTypes = [
   "proprietorship",
@@ -153,10 +153,32 @@ const steps = [
   { id: 7, title: "Review", icon: CheckCircle2, description: "Final check" },
 ];
 
+interface UploadedDocument {
+  documentType: string;
+  documentName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+const documentTypeLabels: Record<string, string> = {
+  pan_card: "PAN Card",
+  gst_certificate: "GST Certificate",
+  msme_certificate: "MSME Certificate",
+  incorporation_certificate: "Incorporation Certificate",
+  partnership_deed: "Partnership Deed",
+  cancelled_cheque: "Cancelled Cheque",
+  company_profile: "Company Profile",
+  portfolio: "Portfolio",
+};
+
 export default function VendorRegistrationPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
@@ -202,6 +224,105 @@ export default function VendorRegistrationPage() {
       });
     },
   });
+
+  const saveDraft = useMutation({
+    mutationFn: async (data: VendorRegistrationForm) => {
+      const response = await apiRequest("POST", "/api/vendor-registrations", {
+        ...data,
+        status: "draft",
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setRegistrationId(data.id);
+      toast({
+        title: "Draft Saved",
+        description: "Your progress has been saved. You can now upload documents.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Save",
+        description: "Could not save progress. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileUpload = async (docType: string, file: File) => {
+    if (!registrationId) {
+      const formData = form.getValues();
+      const result = await saveDraft.mutateAsync(formData);
+      if (!result?.id) return;
+    }
+
+    setUploadingDoc(docType);
+    const formData = new FormData();
+    formData.append("document", file);
+
+    try {
+      const response = await fetch(`/api/vendor-registrations/${registrationId}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const uploadResult = await response.json();
+
+      const docResponse = await fetch(`/api/vendor-registrations/${registrationId}/documents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentType: docType,
+          documentName: file.name,
+          fileUrl: uploadResult.fileUrl,
+          fileSize: uploadResult.fileSize,
+          mimeType: uploadResult.mimeType,
+        }),
+      });
+
+      if (!docResponse.ok) {
+        throw new Error("Failed to save document record");
+      }
+
+      setUploadedDocuments((prev) => [
+        ...prev.filter((d) => d.documentType !== docType),
+        {
+          documentType: docType,
+          documentName: file.name,
+          fileUrl: uploadResult.fileUrl,
+          fileSize: uploadResult.fileSize,
+          mimeType: uploadResult.mimeType,
+        },
+      ]);
+
+      toast({
+        title: "Document Uploaded",
+        description: `${documentTypeLabels[docType] || docType} has been uploaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const handleRemoveDocument = (docType: string) => {
+    setUploadedDocuments((prev) => prev.filter((d) => d.documentType !== docType));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
 
   const handleCategoryToggle = (category: string) => {
     const updated = selectedCategories.includes(category)
@@ -945,6 +1066,83 @@ export default function VendorRegistrationPage() {
                             <p className="text-sm text-slate-500">I declare that the business has never been blacklisted by any organization</p>
                           </div>
                         </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-slate-700 mb-4">Upload Documents</h3>
+                      <p className="text-sm text-slate-500 mb-4">
+                        Upload required documents. Accepted formats: PDF, JPEG, PNG, DOC, DOCX (max 10MB each)
+                      </p>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {Object.entries(documentTypeLabels).map(([docType, label]) => {
+                          const uploadedDoc = uploadedDocuments.find(d => d.documentType === docType);
+                          const isUploading = uploadingDoc === docType;
+                          
+                          return (
+                            <div
+                              key={docType}
+                              className="border rounded-lg p-4 space-y-3"
+                              data-testid={`doc-upload-${docType}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-sm">{label}</span>
+                                {docType === "pan_card" || docType === "gst_certificate" ? (
+                                  <span className="text-xs text-red-500">Required</span>
+                                ) : (
+                                  <span className="text-xs text-slate-400">Optional</span>
+                                )}
+                              </div>
+                              
+                              {uploadedDoc ? (
+                                <div className="flex items-center justify-between bg-green-50 p-2 rounded">
+                                  <div className="flex items-center gap-2">
+                                    <File className="w-4 h-4 text-green-600" />
+                                    <div>
+                                      <p className="text-sm font-medium text-green-700 truncate max-w-[150px]">
+                                        {uploadedDoc.documentName}
+                                      </p>
+                                      <p className="text-xs text-green-600">
+                                        {formatFileSize(uploadedDoc.fileSize)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveDocument(docType)}
+                                    data-testid={`button-remove-${docType}`}
+                                  >
+                                    <X className="w-4 h-4 text-slate-500" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-colors">
+                                  {isUploading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+                                  ) : (
+                                    <Upload className="w-5 h-5 text-slate-400" />
+                                  )}
+                                  <span className="text-sm text-slate-500">
+                                    {isUploading ? "Uploading..." : "Click to upload"}
+                                  </span>
+                                  <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) handleFileUpload(docType, file);
+                                    }}
+                                    disabled={isUploading}
+                                    data-testid={`input-file-${docType}`}
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 

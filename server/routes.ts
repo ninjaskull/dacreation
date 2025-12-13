@@ -1,9 +1,10 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import PDFDocument from "pdfkit";
 import path from "path";
 import fs from "fs";
+import multer from "multer";
 import passport from "passport";
 import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange, broadcastLiveAgentRequest } from "./websocket";
 import { 
@@ -84,10 +85,52 @@ function canAccessLead(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Configure multer for file uploads
+const uploadsDir = path.join(process.cwd(), "uploads", "vendor-documents");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const documentStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const documentUpload = multer({
+  storage: documentStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Allowed: PDF, JPEG, PNG, DOC, DOCX'));
+    }
+  }
+});
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // Serve uploaded files statically
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   
   app.post("/api/auth/login", (req, res, next) => {
     passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
@@ -3988,7 +4031,37 @@ Crawl-delay: 1
   // VENDOR DOCUMENT ROUTES
   // ============================================
 
-  // Public: Upload document during vendor registration
+  // Public: Upload file for vendor document
+  app.post("/api/vendor-registrations/:id/upload", documentUpload.single('document'), async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Verify registration exists
+      const registration = await storage.getVendorRegistrationById(req.params.id);
+      if (!registration) {
+        // Delete uploaded file
+        fs.unlinkSync(file.path);
+        return res.status(404).json({ message: "Vendor registration not found" });
+      }
+
+      const fileUrl = `/uploads/vendor-documents/${file.filename}`;
+      
+      res.status(201).json({
+        fileUrl,
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+      });
+    } catch (error) {
+      console.error("Upload vendor document error:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  // Public: Create document record after file upload
   app.post("/api/vendor-registrations/:id/documents", async (req, res) => {
     try {
       const result = insertVendorDocumentSchema.safeParse({
