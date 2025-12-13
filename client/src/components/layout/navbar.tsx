@@ -332,12 +332,12 @@ export function Navbar() {
                                         {service.description}
                                       </p>
                                       <div className="flex flex-wrap gap-1.5">
-                                        {service.features.map((feature) => (
+                                        {service.features.map((feature, idx) => (
                                           <span 
                                             key={feature}
-                                            className="text-xs px-2 py-0.5 rounded-full bg-secondary/50 text-muted-foreground"
+                                            className="text-xs text-primary/70 font-medium"
                                           >
-                                            {feature}
+                                            {feature}{idx < service.features.length - 1 && <span className="mx-1 text-muted-foreground/50">•</span>}
                                           </span>
                                         ))}
                                       </div>
