@@ -41,28 +41,44 @@ const servicesData = [
     href: "/services/weddings",
     icon: Heart,
     description: "Luxury Indian & fusion wedding experiences",
-    features: ["Traditional Ceremonies", "Modern Celebrations", "Destination Weddings"]
+    features: [
+      { text: "Traditional Ceremonies", icon: "🕉️" },
+      { text: "Modern Celebrations", icon: "✨" },
+      { text: "Destination Weddings", icon: "🏰" }
+    ]
   },
   {
     name: "Corporate",
     href: "/services/corporate",
     icon: Building2,
     description: "Professional events & conferences",
-    features: ["Conferences", "Product Launches", "Team Building"]
+    features: [
+      { text: "Conferences", icon: "🎤" },
+      { text: "Product Launches", icon: "🚀" },
+      { text: "Team Building", icon: "🤝" }
+    ]
   },
   {
     name: "Social",
     href: "/services/social",
     icon: PartyPopper,
     description: "Memorable celebrations & gatherings",
-    features: ["Birthday Parties", "Anniversaries", "Private Dinners"]
+    features: [
+      { text: "Birthday Parties", icon: "🎂" },
+      { text: "Anniversaries", icon: "💍" },
+      { text: "Private Dinners", icon: "🍽️" }
+    ]
   },
   {
     name: "Destination",
     href: "/services/destination",
     icon: Plane,
     description: "Exotic locations worldwide",
-    features: ["International Venues", "Travel Coordination", "Local Expertise"]
+    features: [
+      { text: "International Venues", icon: "🌍" },
+      { text: "Travel Coordination", icon: "✈️" },
+      { text: "Local Expertise", icon: "📍" }
+    ]
   }
 ];
 
@@ -331,13 +347,14 @@ export function Navbar() {
                                       <p className="text-sm text-muted-foreground mt-0.5 mb-2">
                                         {service.description}
                                       </p>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {service.features.map((feature, idx) => (
+                                      <div className="flex flex-wrap gap-2">
+                                        {service.features.map((feature) => (
                                           <span 
-                                            key={feature}
-                                            className="text-xs text-primary/70 font-medium"
+                                            key={feature.text}
+                                            className="text-xs text-primary/80 font-medium flex items-center gap-1"
                                           >
-                                            {feature}{idx < service.features.length - 1 && <span className="mx-1 text-muted-foreground/50">•</span>}
+                                            <span className="text-sm">{feature.icon}</span>
+                                            {feature.text}
                                           </span>
                                         ))}
                                       </div>
