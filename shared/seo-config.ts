@@ -42,8 +42,8 @@ export const EVENT_SERVICE_KEYWORDS = [
 export const seoConfig: PageSEO[] = [
   {
     path: '/',
-    title: 'Da Creation | Best Event Management Company in Pune | Wedding & Corporate Event Planners',
-    description: 'Da Creation is the #1 rated event management company in Pune. We specialize in luxury weddings, corporate events, birthday parties, destination weddings across Maharashtra. Call +91 7972496366 for free consultation.',
+    title: 'Da Creation Events and Decor | Best Event Management Company in Pune | Wedding & Corporate Event Planners',
+    description: 'Da Creation Events and Decor is the #1 rated event management company in Pune. We specialize in luxury weddings, corporate events, birthday parties, destination weddings across Maharashtra. Call +91 7972496366 for free consultation.',
     keywords: ['best event management company in Pune', 'wedding planners Pune', 'corporate event management Pune', 'luxury weddings Pune', 'event organizers Pune', 'birthday party planners Pune', 'destination wedding planners Maharashtra', 'event decorators Pune', 'party planners Dhankawadi', 'wedding decorators Kothrud', 'event management near me'],
     priority: 1.0,
     changefreq: 'daily',

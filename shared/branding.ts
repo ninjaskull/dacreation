@@ -1,9 +1,10 @@
 export const BRAND = {
   company: {
-    name: "Da Creation",
+    name: "Da Creation Events and Decor",
+    shortName: "Da Creation",
     tagline: "Crafting Extraordinary Events",
     shortDescription: "Best Event Management Company in Pune",
-    fullDescription: "Da Creation is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings. Transform your vision into unforgettable experiences.",
+    fullDescription: "Da Creation Events and Decor is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings. Transform your vision into unforgettable experiences.",
     foundedYear: 2020,
   },
 
@@ -58,9 +59,9 @@ export const BRAND = {
   },
 
   seo: {
-    defaultTitle: "Da Creation | Best Event Management Company in Pune",
-    titleSuffix: " | Da Creation",
-    defaultDescription: "Da Creation is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings.",
+    defaultTitle: "Da Creation Events and Decor | Best Event Management Company in Pune",
+    titleSuffix: " | Da Creation Events and Decor",
+    defaultDescription: "Da Creation Events and Decor is the best event management company in Pune, specializing in luxury weddings, corporate events, social celebrations & destination weddings.",
     keywords: [
       "best event management company in Pune",
       "event planners Pune",
