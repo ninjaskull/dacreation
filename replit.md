@@ -1,7 +1,7 @@
-# DA Creation - Event Management Platform
+# Da Creation - Event Management Platform
 
 ## Overview
-DA Creation is a full-service event management company website, built as a modern full-stack web application. The platform showcases event planning services (Indian weddings, corporate events, social celebrations, and destination events) and provides robust lead capture and administrative capabilities. The application features a minimal, elegant design aesthetic combining modern luxury with subtle Indian cultural motifs, aiming to streamline event planning operations and enhance client interaction.
+Da Creation is a full-service event management company website, built as a modern full-stack web application. The platform showcases event planning services (Indian weddings, corporate events, social celebrations, and destination events) and provides robust lead capture and administrative capabilities. The application features a minimal, elegant design aesthetic combining modern luxury with subtle Indian cultural motifs, aiming to streamline event planning operations and enhance client interaction.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

@@ -35,14 +35,14 @@ This 475-year-old palace near Jaipur blends Rajput and Mughal architecture, offe
 - **Local Vendors:** Partner with experienced local vendors for decor and catering
 - **Permits:** Some heritage properties require special event permits
 
-Planning a destination wedding requires meticulous attention to detail. At DA Creation, we specialize in creating seamless experiences that honor tradition while incorporating contemporary elements.`,
+Planning a destination wedding requires meticulous attention to detail. At Da Creation, we specialize in creating seamless experiences that honor tradition while incorporating contemporary elements.`,
     featuredImage: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
-    author: "DA Creation Team",
+    author: "Da Creation Team",
     category: "destination",
     tags: ["destination wedding", "Rajasthan", "palace wedding", "luxury wedding", "wedding venues"],
     status: "published",
     isFeatured: true,
-    metaTitle: "Top 10 Destination Wedding Venues in Rajasthan 2025 | DA Creation",
+    metaTitle: "Top 10 Destination Wedding Venues in Rajasthan 2025 | Da Creation",
     metaDescription: "Explore the best destination wedding venues in Rajasthan including Umaid Bhawan Palace, Taj Lake Palace, and more. Plan your dream royal wedding.",
     publishedAt: new Date("2024-11-15"),
   },
@@ -86,14 +86,14 @@ Leading companies are prioritizing eco-friendly practices:
 3. **Team Building Retreats:** Experiential programs fostering collaboration
 4. **Conferences:** Knowledge-sharing platforms with engaging formats
 
-At DA Creation, we help businesses create impactful corporate events that align with modern expectations while achieving strategic objectives.`,
+At Da Creation, we help businesses create impactful corporate events that align with modern expectations while achieving strategic objectives.`,
     featuredImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200",
-    author: "DA Creation Team",
+    author: "Da Creation Team",
     category: "corporate",
     tags: ["corporate events", "hybrid events", "AI events", "sustainability", "business events"],
     status: "published",
     isFeatured: false,
-    metaTitle: "Corporate Event Trends India 2024: Hybrid Events & AI | DA Creation",
+    metaTitle: "Corporate Event Trends India 2024: Hybrid Events & AI | Da Creation",
     metaDescription: "Discover the latest corporate event trends in India including hybrid formats, AI integration, and sustainable practices for impactful business gatherings.",
     publishedAt: new Date("2024-10-28"),
   },
@@ -160,7 +160,7 @@ At DA Creation, we help businesses create impactful corporate events that align 
 
 **Pro Tip:** Hiring a professional wedding planner can reduce your stress by 80% and often saves money through vendor relationships.`,
     featuredImage: "https://images.unsplash.com/photo-1519741497674-611481863552?w=1200",
-    author: "DA Creation Team",
+    author: "Da Creation Team",
     category: "planning",
     tags: ["wedding planning", "wedding checklist", "Indian wedding", "wedding timeline", "bride to be"],
     status: "published",
@@ -220,12 +220,12 @@ Eco-conscious couples are choosing:
 
 Your wedding decor should tell your story. Work with experienced designers who understand both your vision and practical execution.`,
     featuredImage: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200",
-    author: "DA Creation Team",
+    author: "Da Creation Team",
     category: "decor",
     tags: ["wedding decor", "luxury wedding", "wedding trends", "minimalist wedding", "decor ideas"],
     status: "published",
     isFeatured: false,
-    metaTitle: "Luxury Wedding Decor Trends 2024: Minimalist to Maximalist | DA Creation",
+    metaTitle: "Luxury Wedding Decor Trends 2024: Minimalist to Maximalist | Da Creation",
     metaDescription: "Discover 2024's top wedding decor trends from elegant minimalism to lavish maximalism. Get inspired for your dream wedding decoration.",
     publishedAt: new Date("2024-08-15"),
   },
@@ -317,7 +317,7 @@ Your wedding decor should tell your story. Work with experienced designers who u
 
 Let our team help you discover the perfect venue that matches your vision and budget.`,
     featuredImage: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200",
-    author: "DA Creation Team",
+    author: "Da Creation Team",
     category: "weddings",
     tags: ["Mumbai wedding", "wedding venue", "wedding planning", "banquet hall", "luxury venue"],
     status: "published",
@@ -402,7 +402,7 @@ Elevate your sangeet with:
 
 **Pro Tip:** Hire a professional choreographer who can work with family members of all skill levels and create cohesive, entertaining performances.`,
     featuredImage: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200",
-    author: "DA Creation Team",
+    author: "Da Creation Team",
     category: "weddings",
     tags: ["sangeet", "wedding entertainment", "Indian wedding", "dance performance", "wedding music"],
     status: "published",

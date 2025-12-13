@@ -44,7 +44,7 @@ const QUICK_REPLIES = [
   { label: "Availability", text: "Let me check our availability for your preferred date. Could you please confirm the date you have in mind?" },
   { label: "Callback", text: "I'd be happy to have our event specialist call you. What's the best time to reach you?" },
   { label: "Follow-up", text: "Is there anything else I can help you with today?" },
-  { label: "Thanks", text: "Thank you for choosing DA Creation! We look forward to making your event memorable." },
+  { label: "Thanks", text: "Thank you for choosing Da Creation! We look forward to making your event memorable." },
 ];
 import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";

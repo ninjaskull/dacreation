@@ -209,7 +209,7 @@ export function Chatbot() {
         {
           id: "welcome-1",
           type: "bot",
-          text: "👋 Welcome to DA Creation! I'm here to help you plan your perfect event.",
+          text: "👋 Welcome to Da Creation! I'm here to help you plan your perfect event.",
           timestamp: new Date(),
         },
       ]);
@@ -572,7 +572,7 @@ export function Chatbot() {
   const getHeaderTitle = () => {
     if (phase === "live") return "Live Chat Support";
     if (phase === "ended") return "Chat Ended";
-    return "DA Creation Assistant";
+    return "Da Creation Assistant";
   };
 
   const getHeaderSubtitle = () => {
