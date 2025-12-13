@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useChatWebSocket } from "@/hooks/use-chat-websocket";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   MessageSquare, 
   Search,
@@ -20,22 +21,29 @@ import {
   CheckCircle2,
   Archive,
   MoreVertical,
-  Paperclip,
   Smile,
   Wifi,
   WifiOff,
   User,
   Clock,
-  ChevronDown,
   X,
   Headphones,
   MapPin,
   IndianRupee,
-  AlertCircle,
   ExternalLink,
   Zap,
   Volume2,
   VolumeX,
+  Eye,
+  EyeOff,
+  MessageCircle,
+  Users,
+  CheckCheck,
+  Check,
+  Bell,
+  BellRing,
+  Radio,
+  RefreshCw,
 } from "lucide-react";
 
 const QUICK_REPLIES = [
@@ -46,7 +54,7 @@ const QUICK_REPLIES = [
   { label: "Follow-up", text: "Is there anything else I can help you with today?" },
   { label: "Thanks", text: "Thank you for choosing Da Creation! We look forward to making your event memorable." },
 ];
-import { format, formatDistanceToNow, isToday, isYesterday } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -103,21 +111,21 @@ type ConversationStats = {
   unreadMessages: number;
 };
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; dotColor: string; urgent?: boolean }> = {
-  live_agent: { label: "Live Agent", color: "text-red-600", bgColor: "bg-red-50", dotColor: "bg-red-500", urgent: true },
-  active: { label: "Active", color: "text-emerald-600", bgColor: "bg-emerald-50", dotColor: "bg-emerald-500" },
-  waiting: { label: "Waiting", color: "text-amber-600", bgColor: "bg-amber-50", dotColor: "bg-amber-500" },
-  resolved: { label: "Resolved", color: "text-blue-600", bgColor: "bg-blue-50", dotColor: "bg-blue-500" },
-  archived: { label: "Archived", color: "text-slate-600", bgColor: "bg-slate-50", dotColor: "bg-slate-400" },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; dotColor: string; borderColor: string; icon: any; urgent?: boolean }> = {
+  live_agent: { label: "Live Agent", color: "text-red-700", bgColor: "bg-red-50", dotColor: "bg-red-500", borderColor: "border-red-200", icon: Headphones, urgent: true },
+  active: { label: "Active", color: "text-emerald-700", bgColor: "bg-emerald-50", dotColor: "bg-emerald-500", borderColor: "border-emerald-200", icon: Radio },
+  waiting: { label: "Waiting", color: "text-amber-700", bgColor: "bg-amber-50", dotColor: "bg-amber-500", borderColor: "border-amber-200", icon: Clock },
+  resolved: { label: "Resolved", color: "text-blue-700", bgColor: "bg-blue-50", dotColor: "bg-blue-500", borderColor: "border-blue-200", icon: CheckCircle2 },
+  archived: { label: "Archived", color: "text-slate-600", bgColor: "bg-slate-50", dotColor: "bg-slate-400", borderColor: "border-slate-200", icon: Archive },
 };
 
-const EVENT_TYPE_COLORS: Record<string, string> = {
-  wedding: "bg-pink-100 text-pink-700",
-  corporate: "bg-blue-100 text-blue-700",
-  social: "bg-purple-100 text-purple-700",
-  destination: "bg-teal-100 text-teal-700",
-  birthday: "bg-orange-100 text-orange-700",
-  anniversary: "bg-rose-100 text-rose-700",
+const EVENT_TYPE_CONFIG: Record<string, { color: string; bgColor: string }> = {
+  wedding: { color: "text-pink-700", bgColor: "bg-pink-50" },
+  corporate: { color: "text-blue-700", bgColor: "bg-blue-50" },
+  social: { color: "text-purple-700", bgColor: "bg-purple-50" },
+  destination: { color: "text-teal-700", bgColor: "bg-teal-50" },
+  birthday: { color: "text-orange-700", bgColor: "bg-orange-50" },
+  anniversary: { color: "text-rose-700", bgColor: "bg-rose-50" },
 };
 
 function formatMessageTime(date: string): string {
@@ -174,6 +182,26 @@ function formatBudget(budget: string | null): string {
   return BUDGET_LABELS[budget] || budget;
 }
 
+function getOnlineStatus(lastMessageAt: string | null): { isOnline: boolean; label: string; color: string } {
+  if (!lastMessageAt) {
+    return { isOnline: false, label: "Offline", color: "text-slate-400" };
+  }
+  const minutesAgo = differenceInMinutes(new Date(), new Date(lastMessageAt));
+  if (minutesAgo <= 2) {
+    return { isOnline: true, label: "Online now", color: "text-emerald-600" };
+  }
+  if (minutesAgo <= 5) {
+    return { isOnline: true, label: "Active", color: "text-emerald-500" };
+  }
+  if (minutesAgo <= 15) {
+    return { isOnline: false, label: "Away", color: "text-amber-500" };
+  }
+  if (minutesAgo <= 60) {
+    return { isOnline: false, label: `${minutesAgo}m ago`, color: "text-slate-500" };
+  }
+  return { isOnline: false, label: "Offline", color: "text-slate-400" };
+}
+
 export default function ChatPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -182,7 +210,7 @@ export default function ChatPage() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -217,7 +245,7 @@ export default function ChatPage() {
       
       if (message.type === "live_agent_request") {
         toast({
-          title: "🔴 Live Agent Request!",
+          title: "Live Agent Request!",
           description: `${message.visitorName || "A visitor"} wants to talk to a live agent`,
           variant: "destructive",
           duration: 10000,
@@ -238,7 +266,7 @@ export default function ChatPage() {
     }, 100);
   }, []);
 
-  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+  const { data: conversations = [], isLoading: conversationsLoading, refetch: refetchConversations } = useQuery({
     queryKey: ["conversations", filterStatus, search],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -248,15 +276,17 @@ export default function ChatPage() {
       if (!response.ok) throw new Error("Failed to fetch conversations");
       return response.json() as Promise<Conversation[]>;
     },
+    refetchInterval: 10000,
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ["conversationStats"],
     queryFn: async () => {
       const response = await fetch("/api/conversations/stats");
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json() as Promise<ConversationStats>;
     },
+    refetchInterval: 10000,
   });
 
   const { data: messages = [] } = useQuery({
@@ -268,6 +298,7 @@ export default function ChatPage() {
       return response.json() as Promise<ChatMessage[]>;
     },
     enabled: !!selectedConversation,
+    refetchInterval: 5000,
   });
 
   const updateConversationMutation = useMutation({
@@ -305,10 +336,16 @@ export default function ChatPage() {
     onSuccess: () => {
       setMessageInput("");
       queryClient.invalidateQueries({ queryKey: ["chatMessages", selectedConversation?.id] });
-      if (selectedConversation && selectedConversation.status !== "active") {
+      if (selectedConversation) {
+        const updateData: { status?: string; lastMessageAt: string } = { 
+          lastMessageAt: new Date().toISOString() 
+        };
+        if (selectedConversation.status !== "active") {
+          updateData.status = "active";
+        }
         updateConversationMutation.mutate({
           id: selectedConversation.id,
-          data: { status: "active", lastMessageAt: new Date().toISOString() },
+          data: updateData,
         });
       }
       scrollToBottom();
@@ -326,6 +363,8 @@ export default function ChatPage() {
   useEffect(() => {
     if (selectedConversation) {
       fetch(`/api/conversations/${selectedConversation.id}/mark-read`, { method: "POST" });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversationStats"] });
     }
   }, [selectedConversation?.id]);
 
@@ -375,393 +414,609 @@ export default function ChatPage() {
     }
   };
 
+  const handleRefresh = () => {
+    refetchConversations();
+    refetchStats();
+    toast({ title: "Refreshed", description: "Conversations updated" });
+  };
+
   const messageGroups = groupMessagesByDate(messages);
   const isTyping = selectedConversation && typingUsers.has(selectedConversation.id);
+  const unreadConversations = conversations.filter(c => (c.unreadCount || 0) > 0);
+  const liveAgentRequests = conversations.filter(c => c.status === 'live_agent');
 
   return (
     <AdminLayout title="Live Chat" description="Real-time customer support">
       <TooltipProvider>
-        <div className="h-[calc(100vh-140px)] flex bg-background rounded-xl border shadow-sm overflow-hidden">
-          <div className="w-80 border-r flex flex-col bg-muted/30">
-            <div className="p-4 border-b bg-background">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-lg">Conversations</h2>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className={cn(
-                        "w-2 h-2 rounded-full",
-                        isConnected ? "bg-emerald-500" : "bg-red-500"
-                      )} />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {isConnected ? "Connected" : "Disconnected"}
-                    </TooltipContent>
-                  </Tooltip>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className={cn(
+              "cursor-pointer transition-all hover:shadow-md",
+              filterStatus === "all" && "ring-2 ring-primary"
+            )} onClick={() => setFilterStatus("all")}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">All Chats</p>
+                    <p className="text-2xl font-bold">{stats?.total || 0}</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                    <MessageSquare className="h-5 w-5 text-slate-600" />
+                  </div>
                 </div>
-                {stats?.unreadMessages && stats.unreadMessages > 0 && (
-                  <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
-                    {stats.unreadMessages}
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search conversations..." 
-                  className="pl-9 h-9 bg-muted/50" 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  data-testid="input-search-conversations"
-                />
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="flex gap-1 mt-3 overflow-x-auto pb-1">
-                {[
-                  { key: "all", label: "All", count: stats?.total },
-                  { key: "live_agent", label: "🔴 Live Agent", count: stats?.live_agent, urgent: true },
-                  { key: "active", label: "Active", count: stats?.active },
-                  { key: "waiting", label: "Waiting", count: stats?.waiting },
-                ].map((filter) => (
-                  <Button
-                    key={filter.key}
-                    variant={filterStatus === filter.key ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setFilterStatus(filter.key)}
-                    className={cn(
-                      "h-7 text-xs px-2.5 shrink-0",
-                      filterStatus === filter.key && "font-medium"
-                    )}
-                    data-testid={`filter-${filter.key}`}
-                  >
-                    {filter.label}
-                    {filter.count !== undefined && filter.count > 0 && (
-                      <span className="ml-1.5 opacity-60">({filter.count})</span>
-                    )}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <Card className={cn(
+              "cursor-pointer transition-all hover:shadow-md border-red-200",
+              filterStatus === "live_agent" && "ring-2 ring-red-500",
+              (stats?.live_agent || 0) > 0 && "bg-red-50"
+            )} onClick={() => setFilterStatus("live_agent")}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-red-600 font-medium">Live Agent</p>
+                    <p className="text-2xl font-bold text-red-700">{stats?.live_agent || 0}</p>
+                  </div>
+                  <div className={cn(
+                    "h-10 w-10 rounded-full bg-red-100 flex items-center justify-center",
+                    (stats?.live_agent || 0) > 0 && "animate-pulse"
+                  )}>
+                    <Headphones className="h-5 w-5 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <ScrollArea className="flex-1">
-              <div className="p-2">
-                {conversationsLoading ? (
-                  <div className="flex items-center justify-center py-12 text-muted-foreground">
-                    <div className="animate-pulse">Loading...</div>
+            <Card className={cn(
+              "cursor-pointer transition-all hover:shadow-md",
+              filterStatus === "active" && "ring-2 ring-emerald-500"
+            )} onClick={() => setFilterStatus("active")}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active</p>
+                    <p className="text-2xl font-bold text-emerald-600">{stats?.active || 0}</p>
                   </div>
-                ) : conversations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <MessageSquare className="w-10 h-10 mb-2 opacity-30" />
-                    <p className="text-sm">No conversations</p>
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Radio className="h-5 w-5 text-emerald-600" />
                   </div>
-                ) : (
-                  conversations.map((conversation) => {
-                    const statusConfig = STATUS_CONFIG[conversation.status] || STATUS_CONFIG.active;
-                    const isSelected = selectedConversation?.id === conversation.id;
-                    
-                    return (
-                      <div
-                        key={conversation.id}
-                        onClick={() => setSelectedConversation(conversation)}
-                        className={cn(
-                          "p-3 rounded-lg cursor-pointer transition-all mb-1",
-                          isSelected 
-                            ? "bg-primary/10 border border-primary/20" 
-                            : "hover:bg-muted/80"
-                        )}
-                        data-testid={`conversation-${conversation.id}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="relative">
-                            <Avatar className="w-10 h-10 border">
-                              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium text-sm">
-                                {getInitials(conversation.visitorName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className={cn(
-                              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
-                              statusConfig.dotColor
-                            )} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="font-medium text-sm truncate">
-                                {conversation.visitorName || `Visitor ${conversation.visitorId.slice(-6)}`}
-                              </p>
-                              {conversation.lastMessageAt && (
-                                <span className="text-[11px] text-muted-foreground shrink-0">
-                                  {formatMessageTime(conversation.lastMessageAt)}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              {conversation.status === 'live_agent' && (
-                                <Badge 
-                                  variant="destructive" 
-                                  className="text-[10px] px-1.5 py-0 h-4 font-medium animate-pulse"
-                                >
-                                  <Headphones className="w-3 h-3 mr-0.5" />
-                                  Live
-                                </Badge>
-                              )}
-                              {conversation.eventType && (
-                                <Badge 
-                                  variant="secondary" 
-                                  className={cn(
-                                    "text-[10px] px-1.5 py-0 h-4 font-normal",
-                                    EVENT_TYPE_COLORS[conversation.eventType] || "bg-slate-100 text-slate-700"
-                                  )}
-                                >
-                                  {conversation.eventType}
-                                </Badge>
-                              )}
-                              <span className="text-xs text-muted-foreground truncate">
-                                {conversation.visitorPhone || conversation.visitorEmail || "No contact"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={cn(
+              "cursor-pointer transition-all hover:shadow-md",
+              (stats?.unreadMessages || 0) > 0 && "border-amber-200 bg-amber-50"
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-amber-600 font-medium">Unread</p>
+                    <p className="text-2xl font-bold text-amber-700">{stats?.unreadMessages || 0}</p>
+                  </div>
+                  <div className={cn(
+                    "h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center",
+                    (stats?.unreadMessages || 0) > 0 && "animate-bounce"
+                  )}>
+                    <BellRing className="h-5 w-5 text-amber-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="flex-1 flex flex-col">
-            {selectedConversation ? (
-              <>
-                <div className="h-16 px-4 border-b flex items-center justify-between bg-background">
+          <div className="h-[calc(100vh-280px)] flex bg-background rounded-xl border shadow-sm overflow-hidden">
+            <div className="w-96 border-r flex flex-col bg-muted/30">
+              <div className="p-4 border-b bg-background">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10 border">
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                        {getInitials(selectedConversation.visitorName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">
-                          {selectedConversation.visitorName || `Visitor ${selectedConversation.visitorId.slice(-6)}`}
-                        </h3>
-                        {selectedConversation.status === 'live_agent' ? (
-                          <Badge 
-                            variant="destructive" 
-                            className="text-[10px] h-5 animate-pulse"
-                          >
-                            <Headphones className="w-3 h-3 mr-1" />
-                            Live Agent
-                          </Badge>
-                        ) : (
-                          <Badge 
-                            variant="outline" 
-                            className={cn("text-[10px] h-5", STATUS_CONFIG[selectedConversation.status]?.color)}
-                          >
-                            {STATUS_CONFIG[selectedConversation.status]?.label}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-3">
-                        {selectedConversation.eventType && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {selectedConversation.eventType}
-                          </span>
-                        )}
-                        {selectedConversation.visitorPhone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            {selectedConversation.visitorPhone}
-                          </span>
-                        )}
-                      </p>
-                    </div>
+                    <h2 className="font-semibold text-lg">Conversations</h2>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className={cn(
+                          "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium",
+                          isConnected 
+                            ? "bg-emerald-100 text-emerald-700" 
+                            : "bg-red-100 text-red-700"
+                        )}>
+                          {isConnected ? (
+                            <>
+                              <Wifi className="w-3 h-3" />
+                              Live
+                            </>
+                          ) : (
+                            <>
+                              <WifiOff className="w-3 h-3" />
+                              Offline
+                            </>
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isConnected ? "Connected to real-time updates" : "Reconnecting..."}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
-                  
-                  <div className="flex items-center gap-1">
-                    {selectedConversation.status !== "resolved" && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleStatusChange(selectedConversation.id, "resolved")}
-                        className="h-8"
-                        data-testid="btn-resolve"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                        Resolve
-                      </Button>
-                    )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleStatusChange(selectedConversation.id, "active")}>
-                          <Circle className="w-4 h-4 mr-2 text-emerald-500 fill-current" />
-                          Mark as Active
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(selectedConversation.id, "waiting")}>
-                          <Clock className="w-4 h-4 mr-2 text-amber-500" />
-                          Mark as Waiting
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => handleStatusChange(selectedConversation.id, "archived")}
-                          className="text-destructive"
+                  <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={handleRefresh}
                         >
-                          <Archive className="w-4 h-4 mr-2" />
-                          Archive
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => setShowDetails(!showDetails)}
-                    >
-                      <User className="w-4 h-4" />
-                    </Button>
+                          <RefreshCw className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Refresh</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => setSoundEnabled(!soundEnabled)}
+                        >
+                          {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{soundEnabled ? "Mute notifications" : "Enable notifications"}</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
+                
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search by name, phone, email..." 
+                    className="pl-9 h-10 bg-muted/50" 
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    data-testid="input-search-conversations"
+                  />
+                </div>
 
-                <ScrollArea className="flex-1 bg-muted/20">
-                  <div className="p-4 space-y-6 min-h-full">
-                    {Array.from(messageGroups.entries()).map(([dateKey, dateMessages]) => (
-                      <div key={dateKey}>
-                        <div className="flex items-center justify-center mb-4">
-                          <div className="bg-muted px-3 py-1 rounded-full">
-                            <span className="text-xs text-muted-foreground font-medium">
-                              {formatMessageGroupDate(dateMessages[0].createdAt)}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-3">
-                          {dateMessages.map((message, idx) => {
-                            const isAdmin = message.senderType === "admin";
-                            const isSystem = message.senderType === "system";
-                            const showAvatar = idx === 0 || dateMessages[idx - 1]?.senderType !== message.senderType;
-                            
-                            return (
-                              <div
-                                key={message.id}
-                                className={cn(
-                                  "flex gap-2",
-                                  isAdmin ? "justify-end" : "justify-start"
-                                )}
-                              >
-                                {!isAdmin && showAvatar && (
-                                  <Avatar className="w-8 h-8 mt-1">
-                                    <AvatarFallback className={cn(
-                                      "text-xs",
-                                      isSystem ? "bg-slate-200" : "bg-primary/10 text-primary"
-                                    )}>
-                                      {isSystem ? "🤖" : getInitials(message.senderName)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                )}
-                                {!isAdmin && !showAvatar && <div className="w-8" />}
-                                
-                                <div className={cn(
-                                  "max-w-[65%] group",
-                                  isAdmin && "order-first"
+                <div className="flex gap-1.5 mt-3 flex-wrap">
+                  {[
+                    { key: "all", label: "All", count: stats?.total, icon: MessageSquare },
+                    { key: "waiting", label: "Waiting", count: stats?.waiting, icon: Clock },
+                    { key: "resolved", label: "Resolved", count: stats?.resolved, icon: CheckCircle2 },
+                    { key: "archived", label: "Archived", count: stats?.archived, icon: Archive },
+                  ].map((filter) => (
+                    <Button
+                      key={filter.key}
+                      variant={filterStatus === filter.key ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setFilterStatus(filter.key)}
+                      className={cn(
+                        "h-8 text-xs px-3",
+                        filterStatus === filter.key && "font-medium"
+                      )}
+                      data-testid={`filter-${filter.key}`}
+                    >
+                      <filter.icon className="w-3.5 h-3.5 mr-1.5" />
+                      {filter.label}
+                      {filter.count !== undefined && filter.count > 0 && (
+                        <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-[10px]">
+                          {filter.count}
+                        </Badge>
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <ScrollArea className="flex-1">
+                <div className="p-2">
+                  {conversationsLoading ? (
+                    <div className="flex items-center justify-center py-12 text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Loading...
+                      </div>
+                    </div>
+                  ) : conversations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <MessageSquare className="w-12 h-12 mb-3 opacity-20" />
+                      <p className="text-sm font-medium">No conversations</p>
+                      <p className="text-xs">New chats will appear here</p>
+                    </div>
+                  ) : (
+                    conversations.map((conversation) => {
+                      const statusConfig = STATUS_CONFIG[conversation.status] || STATUS_CONFIG.active;
+                      const isSelected = selectedConversation?.id === conversation.id;
+                      const hasUnread = (conversation.unreadCount || 0) > 0;
+                      const onlineStatus = getOnlineStatus(conversation.lastMessageAt);
+                      const StatusIcon = statusConfig.icon;
+                      
+                      return (
+                        <div
+                          key={conversation.id}
+                          onClick={() => setSelectedConversation(conversation)}
+                          className={cn(
+                            "p-3 rounded-xl cursor-pointer transition-all mb-1.5 border",
+                            isSelected 
+                              ? "bg-primary/5 border-primary/30 shadow-sm" 
+                              : hasUnread
+                              ? "bg-amber-50/50 border-amber-200 hover:bg-amber-50"
+                              : "border-transparent hover:bg-muted/80 hover:border-muted",
+                            conversation.status === 'live_agent' && !isSelected && "bg-red-50/50 border-red-200"
+                          )}
+                          data-testid={`conversation-${conversation.id}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="relative">
+                              <Avatar className={cn(
+                                "w-11 h-11 border-2",
+                                hasUnread ? "border-amber-400" : "border-muted"
+                              )}>
+                                <AvatarFallback className={cn(
+                                  "font-medium text-sm",
+                                  hasUnread 
+                                    ? "bg-amber-100 text-amber-700" 
+                                    : "bg-gradient-to-br from-primary/20 to-primary/10 text-primary"
                                 )}>
-                                  {showAvatar && !isAdmin && (
-                                    <p className="text-xs text-muted-foreground mb-1 ml-1">
-                                      {isSystem ? "Bot" : message.senderName || "Visitor"}
-                                    </p>
+                                  {getInitials(conversation.visitorName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className={cn(
+                                "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background",
+                                onlineStatus.isOnline ? "bg-emerald-500" : "bg-slate-300"
+                              )} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className={cn(
+                                  "text-sm truncate",
+                                  hasUnread ? "font-bold text-foreground" : "font-medium"
+                                )}>
+                                  {conversation.visitorName || `Visitor ${conversation.visitorId.slice(-6)}`}
+                                </p>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {hasUnread && (
+                                    <Badge 
+                                      className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-amber-500 hover:bg-amber-500"
+                                    >
+                                      {conversation.unreadCount}
+                                    </Badge>
                                   )}
-                                  <div
-                                    className={cn(
-                                      "px-4 py-2.5 rounded-2xl shadow-sm",
-                                      isAdmin
-                                        ? "bg-primary text-primary-foreground rounded-br-md"
-                                        : isSystem
-                                        ? "bg-slate-100 border rounded-bl-md"
-                                        : "bg-white border rounded-bl-md"
-                                    )}
-                                  >
-                                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                                  </div>
-                                  <p className={cn(
-                                    "text-[10px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity",
-                                    isAdmin ? "text-right mr-1" : "ml-1",
-                                    "text-muted-foreground"
-                                  )}>
-                                    {format(new Date(message.createdAt), "h:mm a")}
-                                  </p>
+                                  {conversation.lastMessageAt && (
+                                    <span className={cn(
+                                      "text-[11px]",
+                                      hasUnread ? "text-amber-600 font-medium" : "text-muted-foreground"
+                                    )}>
+                                      {formatMessageTime(conversation.lastMessageAt)}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                            );
-                          })}
+                              
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {conversation.status === 'live_agent' ? (
+                                  <Badge 
+                                    variant="destructive" 
+                                    className="text-[10px] px-1.5 py-0 h-5 font-semibold animate-pulse"
+                                  >
+                                    <Headphones className="w-3 h-3 mr-1" />
+                                    LIVE AGENT
+                                  </Badge>
+                                ) : (
+                                  <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                      "text-[10px] px-1.5 py-0 h-5 font-medium",
+                                      statusConfig.bgColor,
+                                      statusConfig.color,
+                                      statusConfig.borderColor
+                                    )}
+                                  >
+                                    <StatusIcon className="w-3 h-3 mr-1" />
+                                    {statusConfig.label}
+                                  </Badge>
+                                )}
+                                {conversation.eventType && (
+                                  <Badge 
+                                    variant="secondary" 
+                                    className={cn(
+                                      "text-[10px] px-1.5 py-0 h-5 font-normal capitalize",
+                                      EVENT_TYPE_CONFIG[conversation.eventType]?.bgColor || "bg-slate-100",
+                                      EVENT_TYPE_CONFIG[conversation.eventType]?.color || "text-slate-700"
+                                    )}
+                                  >
+                                    {conversation.eventType}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span className={cn("text-[11px] flex items-center gap-1", onlineStatus.color)}>
+                                  <Circle className={cn(
+                                    "w-1.5 h-1.5 fill-current",
+                                    onlineStatus.isOnline && "animate-pulse"
+                                  )} />
+                                  {onlineStatus.label}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground truncate">
+                                  {conversation.visitorPhone || conversation.visitorEmail || "No contact info"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    
-                    {isTyping && (
-                      <div className="flex gap-2 items-center">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      );
+                    })
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+
+            <div className="flex-1 flex flex-col">
+              {selectedConversation ? (
+                <>
+                  <div className="h-16 px-4 border-b flex items-center justify-between bg-background">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="w-10 h-10 border">
+                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
                             {getInitials(selectedConversation.visitorName)}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="bg-white border px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm">
-                          <div className="flex gap-1">
-                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        <div className={cn(
+                          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
+                          getOnlineStatus(selectedConversation.lastMessageAt).isOnline ? "bg-emerald-500" : "bg-slate-300"
+                        )} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">
+                            {selectedConversation.visitorName || `Visitor ${selectedConversation.visitorId.slice(-6)}`}
+                          </h3>
+                          {selectedConversation.status === 'live_agent' ? (
+                            <Badge 
+                              variant="destructive" 
+                              className="text-[10px] h-5 animate-pulse"
+                            >
+                              <Headphones className="w-3 h-3 mr-1" />
+                              Live Agent
+                            </Badge>
+                          ) : (
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                "text-[10px] h-5",
+                                STATUS_CONFIG[selectedConversation.status]?.bgColor,
+                                STATUS_CONFIG[selectedConversation.status]?.color
+                              )}
+                            >
+                              {STATUS_CONFIG[selectedConversation.status]?.label}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground flex items-center gap-3">
+                          <span className={cn(
+                            "flex items-center gap-1",
+                            getOnlineStatus(selectedConversation.lastMessageAt).color
+                          )}>
+                            <Circle className={cn(
+                              "w-1.5 h-1.5 fill-current",
+                              getOnlineStatus(selectedConversation.lastMessageAt).isOnline && "animate-pulse"
+                            )} />
+                            {getOnlineStatus(selectedConversation.lastMessageAt).label}
+                          </span>
+                          {selectedConversation.visitorPhone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {selectedConversation.visitorPhone}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {selectedConversation.status !== "resolved" && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleStatusChange(selectedConversation.id, "resolved")}
+                          className="h-8"
+                          data-testid="btn-resolve"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                          Resolve
+                        </Button>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleStatusChange(selectedConversation.id, "active")}>
+                            <Radio className="w-4 h-4 mr-2 text-emerald-500" />
+                            Mark as Active
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(selectedConversation.id, "waiting")}>
+                            <Clock className="w-4 h-4 mr-2 text-amber-500" />
+                            Mark as Waiting
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(selectedConversation.id, "archived")}
+                            className="text-destructive"
+                          >
+                            <Archive className="w-4 h-4 mr-2" />
+                            Archive
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant={showDetails ? "secondary" : "ghost"}
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => setShowDetails(!showDetails)}
+                          >
+                            <User className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Contact Details</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+
+                  <ScrollArea className="flex-1 bg-gradient-to-b from-muted/20 to-muted/5">
+                    <div className="p-4 space-y-6 min-h-full">
+                      {Array.from(messageGroups.entries()).map(([dateKey, dateMessages]) => (
+                        <div key={dateKey}>
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="bg-muted/80 px-4 py-1.5 rounded-full shadow-sm">
+                              <span className="text-xs text-muted-foreground font-medium">
+                                {formatMessageGroupDate(dateMessages[0].createdAt)}
+                              </span>
+                            </div>
                           </div>
+                          
+                          <div className="space-y-3">
+                            {dateMessages.map((message, idx) => {
+                              const isAdmin = message.senderType === "admin";
+                              const isSystem = message.senderType === "system";
+                              const showAvatar = idx === 0 || dateMessages[idx - 1]?.senderType !== message.senderType;
+                              
+                              return (
+                                <div
+                                  key={message.id}
+                                  className={cn(
+                                    "flex gap-2",
+                                    isAdmin ? "justify-end" : "justify-start"
+                                  )}
+                                >
+                                  {!isAdmin && showAvatar && (
+                                    <Avatar className="w-8 h-8 mt-1 border">
+                                      <AvatarFallback className={cn(
+                                        "text-xs",
+                                        isSystem ? "bg-slate-200" : "bg-primary/10 text-primary"
+                                      )}>
+                                        {isSystem ? "AI" : getInitials(message.senderName)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  )}
+                                  {!isAdmin && !showAvatar && <div className="w-8" />}
+                                  
+                                  <div className={cn(
+                                    "max-w-[65%] group",
+                                    isAdmin && "order-first"
+                                  )}>
+                                    {showAvatar && !isAdmin && (
+                                      <p className="text-xs text-muted-foreground mb-1 ml-1">
+                                        {isSystem ? "Bot Assistant" : message.senderName || "Visitor"}
+                                      </p>
+                                    )}
+                                    <div
+                                      className={cn(
+                                        "px-4 py-2.5 rounded-2xl shadow-sm",
+                                        isAdmin
+                                          ? "bg-primary text-primary-foreground rounded-br-md"
+                                          : isSystem
+                                          ? "bg-slate-100 border rounded-bl-md"
+                                          : "bg-white border rounded-bl-md"
+                                      )}
+                                    >
+                                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                                    </div>
+                                    <div className={cn(
+                                      "flex items-center gap-1.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                                      isAdmin ? "justify-end mr-1" : "ml-1"
+                                    )}>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {format(new Date(message.createdAt), "h:mm a")}
+                                      </span>
+                                      {isAdmin && (
+                                        <span className="text-muted-foreground">
+                                          {message.isRead ? (
+                                            <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                                          ) : (
+                                            <Check className="w-3.5 h-3.5" />
+                                          )}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {isTyping && (
+                        <div className="flex gap-2 items-center">
+                          <Avatar className="w-8 h-8 border">
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {getInitials(selectedConversation.visitorName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="bg-white border px-4 py-2.5 rounded-2xl rounded-bl-md shadow-sm">
+                            <div className="flex gap-1">
+                              <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                              <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">typing...</span>
+                        </div>
+                      )}
+                      
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </ScrollArea>
+
+                  <div className="border-t bg-background">
+                    {showQuickReplies && (
+                      <div className="p-3 border-b bg-muted/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5" />
+                            Quick Replies
+                          </span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowQuickReplies(false)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {QUICK_REPLIES.map((reply, idx) => (
+                            <Button
+                              key={idx}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                              onClick={() => {
+                                setMessageInput(reply.text);
+                                setShowQuickReplies(false);
+                                inputRef.current?.focus();
+                              }}
+                              data-testid={`quick-reply-${idx}`}
+                            >
+                              {reply.label}
+                            </Button>
+                          ))}
                         </div>
                       </div>
                     )}
-                    
-                    <div ref={messagesEndRef} />
-                  </div>
-                </ScrollArea>
-
-                <div className="border-t bg-background">
-                  {showQuickReplies && (
-                    <div className="p-3 border-b bg-muted/30">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-muted-foreground">Quick Replies</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowQuickReplies(false)}>
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {QUICK_REPLIES.map((reply, idx) => (
-                          <Button
-                            key={idx}
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => {
-                              setMessageInput(reply.text);
-                              setShowQuickReplies(false);
-                              inputRef.current?.focus();
-                            }}
-                            data-testid={`quick-reply-${idx}`}
-                          >
-                            {reply.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-                      <div className="flex gap-1">
+                    <div className="p-4">
+                      <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button 
                               type="button" 
                               variant={showQuickReplies ? "secondary" : "ghost"} 
                               size="icon" 
-                              className="h-12 w-12 rounded-xl shrink-0"
+                              className="h-11 w-11 rounded-xl shrink-0"
                               onClick={() => setShowQuickReplies(!showQuickReplies)}
                             >
                               <Zap className="w-5 h-5" />
@@ -769,245 +1024,262 @@ export default function ChatPage() {
                           </TooltipTrigger>
                           <TooltipContent>Quick Replies</TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-12 w-12 rounded-xl shrink-0"
-                              onClick={() => setSoundEnabled(!soundEnabled)}
-                            >
-                              {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-muted-foreground" />}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{soundEnabled ? "Mute notifications" : "Enable notifications"}</TooltipContent>
-                        </Tooltip>
+                        <div className="flex-1 relative">
+                          <Input
+                            ref={inputRef}
+                            value={messageInput}
+                            onChange={handleInputChange}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type a message..."
+                            className="pr-10 py-6 text-base rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
+                            data-testid="input-chat-message"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Smile className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        </div>
+                        <Button 
+                          type="submit" 
+                          size="icon"
+                          disabled={!messageInput.trim() || isSending}
+                          className="h-11 w-11 rounded-xl shrink-0"
+                          data-testid="button-send-message"
+                        >
+                          <Send className="w-5 h-5" />
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-muted/20 to-muted/5">
+                  <div className="text-center max-w-md">
+                    <div className="w-24 h-24 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                      <MessageCircle className="w-12 h-12 text-muted-foreground/40" />
+                    </div>
+                    <h3 className="font-semibold text-xl mb-2">Select a conversation</h3>
+                    <p className="text-muted-foreground">
+                      Choose from your existing conversations on the left or wait for new visitors to start chatting
+                    </p>
+                    {liveAgentRequests.length > 0 && (
+                      <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                        <div className="flex items-center justify-center gap-2 text-red-600 font-medium mb-2">
+                          <Headphones className="w-5 h-5 animate-pulse" />
+                          <span>{liveAgentRequests.length} Live Agent Request{liveAgentRequests.length > 1 ? 's' : ''}</span>
+                        </div>
+                        <p className="text-xs text-red-500">Visitors are waiting for human assistance</p>
                       </div>
-                      <div className="flex-1 relative">
-                        <Input
-                          ref={inputRef}
-                          value={messageInput}
-                          onChange={handleInputChange}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Type a message..."
-                          className="pr-10 py-6 text-base rounded-xl bg-muted/50 border-0 focus-visible:ring-1"
-                          data-testid="input-chat-message"
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                            <Smile className="w-4 h-4" />
-                          </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {selectedConversation && showDetails && (
+              <div className="w-80 border-l bg-background flex flex-col">
+                <div className="p-4 border-b flex items-center justify-between">
+                  <h3 className="font-semibold">Contact Details</h3>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowDetails(false)}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <ScrollArea className="flex-1">
+                  <div className="p-4 space-y-6">
+                    {selectedConversation.status === 'live_agent' && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                        <div className="flex items-center justify-center gap-2 text-red-600 font-semibold mb-1">
+                          <Headphones className="w-5 h-5 animate-pulse" />
+                          <span>Live Agent Requested</span>
+                        </div>
+                        {selectedConversation.liveAgentRequestedAt && (
+                          <p className="text-xs text-red-500">
+                            Requested {formatDistanceToNow(new Date(selectedConversation.liveAgentRequestedAt), { addSuffix: true })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col items-center text-center">
+                      <div className="relative">
+                        <Avatar className="w-20 h-20 border-2">
+                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-2xl font-medium">
+                            {getInitials(selectedConversation.visitorName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className={cn(
+                          "absolute bottom-0 right-0 w-5 h-5 rounded-full border-3 border-background",
+                          getOnlineStatus(selectedConversation.lastMessageAt).isOnline ? "bg-emerald-500" : "bg-slate-300"
+                        )} />
+                      </div>
+                      <h4 className="font-semibold text-lg mt-3">
+                        {selectedConversation.visitorName || `Visitor ${selectedConversation.visitorId.slice(-6)}`}
+                      </h4>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={cn(
+                          "text-sm flex items-center gap-1",
+                          getOnlineStatus(selectedConversation.lastMessageAt).color
+                        )}>
+                          <Circle className={cn(
+                            "w-2 h-2 fill-current",
+                            getOnlineStatus(selectedConversation.lastMessageAt).isOnline && "animate-pulse"
+                          )} />
+                          {getOnlineStatus(selectedConversation.lastMessageAt).label}
+                        </span>
+                      </div>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn(
+                          "mt-2",
+                          STATUS_CONFIG[selectedConversation.status]?.bgColor, 
+                          STATUS_CONFIG[selectedConversation.status]?.color
+                        )}
+                      >
+                        {STATUS_CONFIG[selectedConversation.status]?.label}
+                      </Badge>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</p>
+                      
+                      {selectedConversation.visitorPhone && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Phone</p>
+                            <p className="text-sm font-medium">{selectedConversation.visitorPhone}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {selectedConversation.visitorEmail && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Email</p>
+                            <p className="text-sm font-medium break-all">{selectedConversation.visitorEmail}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Event Details</p>
+                      
+                      {selectedConversation.eventType && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Event Type</p>
+                            <p className="text-sm font-medium capitalize">{selectedConversation.eventType}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedConversation.eventDate && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Preferred Date</p>
+                            <p className="text-sm font-medium">{selectedConversation.eventDate}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedConversation.eventLocation && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Location</p>
+                            <p className="text-sm font-medium">{selectedConversation.eventLocation}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedConversation.budgetRange && (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                            <IndianRupee className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Budget Range</p>
+                            <p className="text-sm font-medium">{formatBudget(selectedConversation.budgetRange)}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                        <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center shadow-sm">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Chat Started</p>
+                          <p className="text-sm font-medium">
+                            {format(new Date(selectedConversation.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                          </p>
                         </div>
                       </div>
-                      <Button 
-                        type="submit" 
-                        size="icon"
-                        disabled={!messageInput.trim() || isSending}
-                        className="h-12 w-12 rounded-xl shrink-0"
-                        data-testid="button-send-message"
-                      >
-                        <Send className="w-5 h-5" />
-                      </Button>
-                    </form>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Quick Actions</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {selectedConversation.visitorPhone && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-10 justify-start"
+                              onClick={() => window.open(`tel:${selectedConversation.visitorPhone}`)}
+                            >
+                              <Phone className="w-4 h-4 mr-2" />
+                              Call {selectedConversation.visitorPhone}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-10 justify-start bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                              onClick={() => window.open(`https://wa.me/${selectedConversation.visitorPhone?.replace(/\D/g, '')}`)}
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Open in WhatsApp
+                            </Button>
+                          </>
+                        )}
+                        {selectedConversation.visitorEmail && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-10 justify-start"
+                            onClick={() => window.open(`mailto:${selectedConversation.visitorEmail}`)}
+                          >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Email
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center bg-muted/20">
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-10 h-10 text-muted-foreground/50" />
-                  </div>
-                  <h3 className="font-medium text-lg mb-1">Select a conversation</h3>
-                  <p className="text-muted-foreground text-sm">Choose from your existing conversations or wait for new ones</p>
-                </div>
+                </ScrollArea>
               </div>
             )}
           </div>
-
-          {selectedConversation && showDetails && (
-            <div className="w-72 border-l bg-background flex flex-col">
-              <div className="p-4 border-b flex items-center justify-between">
-                <h3 className="font-semibold">Contact Details</h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowDetails(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-6">
-                  {selectedConversation.status === 'live_agent' && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                      <div className="flex items-center justify-center gap-2 text-red-600 font-medium">
-                        <Headphones className="w-4 h-4 animate-pulse" />
-                        <span>Live Agent Requested</span>
-                      </div>
-                      {selectedConversation.liveAgentRequestedAt && (
-                        <p className="text-xs text-red-500 mt-1">
-                          {formatDistanceToNow(new Date(selectedConversation.liveAgentRequestedAt), { addSuffix: true })}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col items-center text-center">
-                    <Avatar className="w-16 h-16 border-2">
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xl font-medium">
-                        {getInitials(selectedConversation.visitorName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h4 className="font-medium mt-3">
-                      {selectedConversation.visitorName || `Visitor ${selectedConversation.visitorId.slice(-6)}`}
-                    </h4>
-                    <Badge 
-                      variant="secondary" 
-                      className={cn("mt-1", STATUS_CONFIG[selectedConversation.status]?.bgColor, STATUS_CONFIG[selectedConversation.status]?.color)}
-                    >
-                      {STATUS_CONFIG[selectedConversation.status]?.label}
-                    </Badge>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact Info</p>
-                    
-                    {selectedConversation.visitorPhone && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                          <Phone className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Phone</p>
-                          <p className="text-sm font-medium">{selectedConversation.visitorPhone}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {selectedConversation.visitorEmail && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                          <Mail className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Email</p>
-                          <p className="text-sm font-medium">{selectedConversation.visitorEmail}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Event Details</p>
-                    
-                    {selectedConversation.eventType && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Event Type</p>
-                          <p className="text-sm font-medium capitalize">{selectedConversation.eventType}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedConversation.eventDate && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Preferred Date</p>
-                          <p className="text-sm font-medium">{selectedConversation.eventDate}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedConversation.eventLocation && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Location</p>
-                          <p className="text-sm font-medium">{selectedConversation.eventLocation}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedConversation.budgetRange && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                          <IndianRupee className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Budget Range</p>
-                          <p className="text-sm font-medium">{formatBudget(selectedConversation.budgetRange)}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Chat Started</p>
-                        <p className="text-sm font-medium">
-                          {format(new Date(selectedConversation.createdAt), "MMM d, yyyy 'at' h:mm a")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quick Actions</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {selectedConversation.visitorPhone && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-9"
-                            onClick={() => window.open(`tel:${selectedConversation.visitorPhone}`)}
-                          >
-                            <Phone className="w-4 h-4 mr-1.5" />
-                            Call
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-9 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-                            onClick={() => window.open(`https://wa.me/${selectedConversation.visitorPhone?.replace(/\D/g, '')}`)}
-                          >
-                            <ExternalLink className="w-4 h-4 mr-1.5" />
-                            WhatsApp
-                          </Button>
-                        </>
-                      )}
-                      {selectedConversation.visitorEmail && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-9"
-                          onClick={() => window.open(`mailto:${selectedConversation.visitorEmail}`)}
-                        >
-                          <Mail className="w-4 h-4 mr-1.5" />
-                          Email
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </ScrollArea>
-            </div>
-          )}
         </div>
       </TooltipProvider>
     </AdminLayout>
