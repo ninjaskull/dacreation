@@ -16,7 +16,19 @@ import {
   PartyPopper,
   Plane,
   Clock,
-  Star
+  Star,
+  Flower2,
+  Gem,
+  Castle,
+  Mic2,
+  Rocket,
+  Users,
+  Cake,
+  HeartHandshake,
+  UtensilsCrossed,
+  Globe,
+  PlaneTakeoff,
+  MapPinned
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,9 +54,9 @@ const servicesData = [
     icon: Heart,
     description: "Luxury Indian & fusion wedding experiences",
     features: [
-      { text: "Traditional Ceremonies", icon: "🕉️" },
-      { text: "Modern Celebrations", icon: "✨" },
-      { text: "Destination Weddings", icon: "🏰" }
+      { text: "Traditional Ceremonies", Icon: Flower2 },
+      { text: "Modern Celebrations", Icon: Gem },
+      { text: "Destination Weddings", Icon: Castle }
     ]
   },
   {
@@ -53,9 +65,9 @@ const servicesData = [
     icon: Building2,
     description: "Professional events & conferences",
     features: [
-      { text: "Conferences", icon: "🎤" },
-      { text: "Product Launches", icon: "🚀" },
-      { text: "Team Building", icon: "🤝" }
+      { text: "Conferences", Icon: Mic2 },
+      { text: "Product Launches", Icon: Rocket },
+      { text: "Team Building", Icon: Users }
     ]
   },
   {
@@ -64,9 +76,9 @@ const servicesData = [
     icon: PartyPopper,
     description: "Memorable celebrations & gatherings",
     features: [
-      { text: "Birthday Parties", icon: "🎂" },
-      { text: "Anniversaries", icon: "💍" },
-      { text: "Private Dinners", icon: "🍽️" }
+      { text: "Birthday Parties", Icon: Cake },
+      { text: "Anniversaries", Icon: HeartHandshake },
+      { text: "Private Dinners", Icon: UtensilsCrossed }
     ]
   },
   {
@@ -75,9 +87,9 @@ const servicesData = [
     icon: Plane,
     description: "Exotic locations worldwide",
     features: [
-      { text: "International Venues", icon: "🌍" },
-      { text: "Travel Coordination", icon: "✈️" },
-      { text: "Local Expertise", icon: "📍" }
+      { text: "International Venues", Icon: Globe },
+      { text: "Travel Coordination", Icon: PlaneTakeoff },
+      { text: "Local Expertise", Icon: MapPinned }
     ]
   }
 ];
@@ -351,9 +363,9 @@ export function Navbar() {
                                         {service.features.map((feature) => (
                                           <span 
                                             key={feature.text}
-                                            className="text-xs text-primary/80 font-medium flex items-center gap-1"
+                                            className="text-xs text-primary/80 font-medium flex items-center gap-1.5"
                                           >
-                                            <span className="text-sm">{feature.icon}</span>
+                                            <feature.Icon className="w-3.5 h-3.5 text-secondary" />
                                             {feature.text}
                                           </span>
                                         ))}
