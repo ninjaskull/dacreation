@@ -358,9 +358,9 @@ export default function InvoicesPage() {
     }
   };
 
-  const calculateTotals = () => {
-    const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-    const taxableAmount = lineItems.filter(item => item.taxable).reduce((sum, item) => sum + item.amount, 0);
+  const calculateTotals = (items: LineItem[] = lineItems) => {
+    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    const taxableAmount = items.filter(item => item.taxable).reduce((sum, item) => sum + item.amount, 0);
     
     let discountAmount = 0;
     if (formData.discountType === "percentage") {
@@ -386,7 +386,13 @@ export default function InvoicesPage() {
   };
 
   const handleSaveInvoice = async () => {
-    const totals = calculateTotals();
+    const validItems = lineItems.filter(item => item.name.trim() !== "");
+    if (validItems.length === 0) {
+      toast({ title: "Please add at least one line item", variant: "destructive" });
+      return;
+    }
+    
+    const totals = calculateTotals(validItems);
     
     const invoiceData = {
       ...formData,
@@ -403,25 +409,48 @@ export default function InvoicesPage() {
     };
 
     try {
+      let invoiceId: string;
+      
       if (editingInvoice) {
-        await deleteItemsMutation.mutateAsync(editingInvoice.id);
-        await updateInvoiceMutation.mutateAsync({ id: editingInvoice.id, data: invoiceData });
-        for (const item of lineItems) {
-          if (item.name) {
-            await createItemMutation.mutateAsync({ invoiceId: editingInvoice.id, data: item });
-          }
+        invoiceId = editingInvoice.id;
+        try {
+          await deleteItemsMutation.mutateAsync(editingInvoice.id);
+        } catch (err) {
+          console.error("Error deleting items:", err);
+          toast({ title: "Failed to update invoice items", variant: "destructive" });
+          return;
         }
+        await updateInvoiceMutation.mutateAsync({ id: editingInvoice.id, data: invoiceData });
       } else {
         const numberRes = await fetch("/api/invoices/generate-number", { credentials: "include" });
+        if (!numberRes.ok) {
+          throw new Error("Failed to generate invoice number");
+        }
         const { invoiceNumber } = await numberRes.json();
         invoiceData.invoiceNumber = invoiceNumber;
         
         const invoice = await createInvoiceMutation.mutateAsync(invoiceData);
-        for (const item of lineItems) {
-          if (item.name) {
-            await createItemMutation.mutateAsync({ invoiceId: invoice.id, data: item });
-          }
+        invoiceId = invoice.id;
+      }
+      
+      let itemErrors = 0;
+      for (const item of validItems) {
+        try {
+          await createItemMutation.mutateAsync({ invoiceId, data: item });
+        } catch (err) {
+          console.error("Error creating item:", err);
+          itemErrors++;
         }
+      }
+      
+      if (itemErrors > 0) {
+        toast({ 
+          title: `Invoice saved with ${itemErrors} item(s) failed`, 
+          description: "Some line items could not be saved",
+          variant: "destructive" 
+        });
+      } else {
+        toast({ title: editingInvoice ? "Invoice updated successfully" : "Invoice created successfully" });
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
@@ -429,6 +458,7 @@ export default function InvoicesPage() {
       resetForm();
     } catch (error) {
       console.error("Save invoice error:", error);
+      toast({ title: "Failed to save invoice", description: error instanceof Error ? error.message : "Unknown error", variant: "destructive" });
     }
   };
 
