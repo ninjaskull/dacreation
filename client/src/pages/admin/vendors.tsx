@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Mail, Phone, MoreHorizontal, Star, Edit, Trash2, Download, Building2, Users, CheckCircle } from "lucide-react";
+import { Plus, Search, Mail, Phone, MoreHorizontal, Star, Edit, Trash2, Download, Building2, Users, CheckCircle, Eye } from "lucide-react";
+import { Link } from "wouter";
 import type { Vendor } from "@shared/schema";
 
 interface VendorStats {
@@ -504,6 +505,12 @@ export default function VendorsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <Link href={`/admin/vendors/${vendor.id}`}>
+                              <DropdownMenuItem>
+                                <Eye className="w-4 h-4 mr-2" />
+                                View
+                              </DropdownMenuItem>
+                            </Link>
                             <DropdownMenuItem onClick={() => openEditDialog(vendor)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Edit

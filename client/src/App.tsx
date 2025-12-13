@@ -35,6 +35,7 @@ import ClientsPage from "@/pages/admin/clients";
 import EventsPage from "@/pages/admin/events";
 import CalendarPage from "@/pages/admin/calendar";
 import VendorsPage from "@/pages/admin/vendors";
+import VendorDetailPage from "@/pages/admin/vendor-detail";
 import ReportsPage from "@/pages/admin/reports";
 import SettingsPage from "@/pages/admin/settings";
 import { 
@@ -191,6 +192,9 @@ function Router() {
       </Route>
       <Route path="/admin/vendors">
         {() => <RequireAuth requiredRole="staff"><VendorsPage /></RequireAuth>}
+      </Route>
+      <Route path="/admin/vendors/:id">
+        {() => <RequireAuth requiredRole="staff"><VendorDetailPage /></RequireAuth>}
       </Route>
       <Route path="/admin/vendor-registrations">
         {() => <RequireAuth requiredRole="staff"><VendorRegistrationsPage /></RequireAuth>}
