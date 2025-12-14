@@ -124,10 +124,10 @@ const testimonials = [
 ];
 
 const stats = [
-  { value: "200+", label: "Partner Vendors" },
-  { value: "500+", label: "Events Annually" },
+  { value: "50+", label: "Partner Vendors" },
+  { value: "75+", label: "Events Annually" },
   { value: "98%", label: "Vendor Satisfaction" },
-  { value: "15+", label: "Cities Covered" }
+  { value: "10+", label: "Cities Covered" }
 ];
 
 export default function VendorOnboardingPage() {
