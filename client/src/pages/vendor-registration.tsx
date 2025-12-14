@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,55 +14,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Building2, User, MapPin, Briefcase, CreditCard, FileText, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Upload, X, File } from "lucide-react";
+import { 
+  Building2, User, MapPin, Briefcase, CreditCard, FileText, CheckCircle2, 
+  ChevronLeft, ChevronRight, Loader2, Upload, X, File, Shield, Sparkles,
+  Phone, Mail, Globe, Instagram, Facebook, Youtube, ArrowRight
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const businessEntityTypes = [
-  "proprietorship",
-  "partnership", 
-  "llp",
-  "private_limited",
-  "public_limited",
-  "trust",
-  "society",
-  "huf",
-  "individual"
+  "proprietorship", "partnership", "llp", "private_limited", "public_limited",
+  "trust", "society", "huf", "individual"
 ] as const;
 
-const employeeCountOptions = [
-  "1-5",
-  "6-10", 
-  "11-25",
-  "26-50",
-  "51-100",
-  "100+"
-];
-
-const annualTurnoverOptions = [
-  "under_10l",
-  "10l_25l",
-  "25l_50l",
-  "50l_1cr",
-  "1cr_5cr",
-  "5cr_10cr",
-  "above_10cr"
-];
-
-const pricingTierOptions = [
-  "budget",
-  "mid_range",
-  "premium",
-  "luxury"
-];
-
-const paymentTermsOptions = [
-  "advance_full",
-  "50_50",
-  "30_40_30",
-  "on_completion",
-  "custom"
-];
+const employeeCountOptions = ["1-5", "6-10", "11-25", "26-50", "51-100", "100+"];
 
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -144,13 +112,10 @@ const vendorRegistrationSchema = z.object({
 type VendorRegistrationForm = z.infer<typeof vendorRegistrationSchema>;
 
 const steps = [
-  { id: 1, title: "Business Info", icon: Building2, description: "Company details" },
-  { id: 2, title: "Contact", icon: User, description: "Contact information" },
-  { id: 3, title: "Address", icon: MapPin, description: "Location details" },
-  { id: 4, title: "Services", icon: Briefcase, description: "Your offerings" },
-  { id: 5, title: "Payment", icon: CreditCard, description: "Banking details" },
-  { id: 6, title: "Documents", icon: FileText, description: "Compliance" },
-  { id: 7, title: "Review", icon: CheckCircle2, description: "Final check" },
+  { id: 1, title: "Business Profile", icon: Building2, description: "Tell us about your company" },
+  { id: 2, title: "Contact Details", icon: User, description: "How can we reach you?" },
+  { id: 3, title: "Services & Coverage", icon: Briefcase, description: "What do you offer?" },
+  { id: 4, title: "Complete Registration", icon: CheckCircle2, description: "Final details & submit" },
 ];
 
 interface UploadedDocument {
@@ -164,10 +129,6 @@ interface UploadedDocument {
 const documentTypeLabels: Record<string, string> = {
   pan_card: "PAN Card",
   gst_certificate: "GST Certificate",
-  msme_certificate: "MSME Certificate",
-  incorporation_certificate: "Incorporation Certificate",
-  partnership_deed: "Partnership Deed",
-  cancelled_cheque: "Cancelled Cheque",
   company_profile: "Company Profile",
   portfolio: "Portfolio",
 };
@@ -181,6 +142,7 @@ export default function VendorRegistrationPage() {
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { branding } = useBranding();
 
   const { data: vendorCategories = [] } = useQuery<string[]>({
     queryKey: ["/api/vendor-categories"],
@@ -211,15 +173,15 @@ export default function VendorRegistrationPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Registration Submitted",
-        description: "Your vendor registration has been submitted successfully. We will review and get back to you soon.",
+        title: "Registration Submitted!",
+        description: "Thank you for registering. Our team will review your application and contact you soon.",
       });
       navigate("/");
     },
     onError: (error: any) => {
       toast({
         title: "Registration Failed",
-        description: error.message || "Failed to submit registration. Please try again.",
+        description: error.message || "Please check your details and try again.",
         variant: "destructive",
       });
     },
@@ -235,17 +197,10 @@ export default function VendorRegistrationPage() {
     },
     onSuccess: (data) => {
       setRegistrationId(data.id);
-      toast({
-        title: "Draft Saved",
-        description: "Your progress has been saved. You can now upload documents.",
-      });
+      toast({ title: "Progress Saved", description: "Your information has been saved." });
     },
     onError: () => {
-      toast({
-        title: "Failed to Save",
-        description: "Could not save progress. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Save Failed", description: "Could not save progress.", variant: "destructive" });
     },
   });
 
@@ -266,10 +221,7 @@ export default function VendorRegistrationPage() {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
+      if (!response.ok) throw new Error("Upload failed");
       const uploadResult = await response.json();
 
       const docResponse = await fetch(`/api/vendor-registrations/${registrationId}/documents`, {
@@ -284,31 +236,15 @@ export default function VendorRegistrationPage() {
         }),
       });
 
-      if (!docResponse.ok) {
-        throw new Error("Failed to save document record");
-      }
+      if (!docResponse.ok) throw new Error("Failed to save document");
 
       setUploadedDocuments((prev) => [
         ...prev.filter((d) => d.documentType !== docType),
-        {
-          documentType: docType,
-          documentName: file.name,
-          fileUrl: uploadResult.fileUrl,
-          fileSize: uploadResult.fileSize,
-          mimeType: uploadResult.mimeType,
-        },
+        { documentType: docType, documentName: file.name, fileUrl: uploadResult.fileUrl, fileSize: uploadResult.fileSize, mimeType: uploadResult.mimeType },
       ]);
-
-      toast({
-        title: "Document Uploaded",
-        description: `${documentTypeLabels[docType] || docType} has been uploaded successfully.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload document. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Uploaded", description: `${documentTypeLabels[docType]} uploaded successfully.` });
+    } catch {
+      toast({ title: "Upload Failed", description: "Please try again.", variant: "destructive" });
     } finally {
       setUploadingDoc(null);
     }
@@ -340,1030 +276,653 @@ export default function VendorRegistrationPage() {
     form.setValue("serviceStates", updated);
   };
 
-  const nextStep = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const onSubmit = (data: VendorRegistrationForm) => {
-    createRegistration.mutate(data);
-  };
+  const nextStep = () => currentStep < steps.length && setCurrentStep(currentStep + 1);
+  const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+  const onSubmit = (data: VendorRegistrationForm) => createRegistration.mutate(data);
 
   const formatCategoryLabel = (category: string) => {
-    return category
-      .split("_")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+    return category.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2" data-testid="text-page-title">
-              Vendor Registration
-            </h1>
-            <p className="text-slate-600">
-              Partner with us to serve premium events across India
-            </p>
-          </div>
+  const progressPercentage = (currentStep / steps.length) * 100;
 
-          <div className="mb-8">
-            <div className="flex items-center justify-between overflow-x-auto pb-4">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      {/* Hero Section */}
+      <section className="relative pt-28 pb-8 bg-gradient-to-br from-[#601a29] via-[#7a2233] to-[#4a1320] overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(212,175,55,0.3),transparent_70%)]" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-3xl mx-auto text-center"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4">
+              <Shield className="w-4 h-4 text-[#d4af37]" />
+              Secure & Verified Registration
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3" data-testid="text-page-title">
+              Become a {branding.company.name} Partner
+            </h1>
+            <p className="text-white/80 text-lg">
+              Join our network of trusted vendors and access premium event opportunities
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Progress Bar */}
+      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="py-4">
+            <div className="flex items-center justify-between mb-3">
               {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
-                  <div
-                    className={cn(
-                      "flex flex-col items-center cursor-pointer",
-                      currentStep === step.id && "scale-105"
-                    )}
-                    onClick={() => setCurrentStep(step.id)}
-                    data-testid={`step-${step.id}`}
-                  >
-                    <div
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                        currentStep === step.id
-                          ? "bg-amber-500 text-white shadow-lg"
-                          : currentStep > step.id
-                          ? "bg-green-500 text-white"
-                          : "bg-slate-200 text-slate-500"
-                      )}
-                    >
-                      <step.icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs mt-1 font-medium text-slate-600 hidden md:block">
+                <div
+                  key={step.id}
+                  className={cn(
+                    "flex items-center gap-2 cursor-pointer transition-all",
+                    currentStep >= step.id ? "opacity-100" : "opacity-50"
+                  )}
+                  onClick={() => setCurrentStep(step.id)}
+                  data-testid={`step-${step.id}`}
+                >
+                  <div className={cn(
+                    "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+                    currentStep === step.id
+                      ? "bg-[#601a29] text-white shadow-lg ring-4 ring-[#601a29]/20"
+                      : currentStep > step.id
+                      ? "bg-[#d4af37] text-white"
+                      : "bg-gray-200 text-gray-500"
+                  )}>
+                    {currentStep > step.id ? <CheckCircle2 className="w-5 h-5" /> : <step.icon className="w-4 h-4 md:w-5 md:h-5" />}
+                  </div>
+                  <div className="hidden md:block">
+                    <p className={cn("text-sm font-medium", currentStep === step.id ? "text-[#601a29]" : "text-gray-600")}>
                       {step.title}
-                    </span>
+                    </p>
                   </div>
                   {index < steps.length - 1 && (
-                    <div
-                      className={cn(
-                        "w-12 h-0.5 mx-2",
-                        currentStep > step.id ? "bg-green-500" : "bg-slate-200"
-                      )}
-                    />
+                    <div className={cn(
+                      "hidden lg:block w-16 xl:w-24 h-0.5 mx-2",
+                      currentStep > step.id ? "bg-[#d4af37]" : "bg-gray-200"
+                    )} />
                   )}
                 </div>
               ))}
             </div>
+            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#601a29] to-[#d4af37] rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercentage}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
           </div>
+        </div>
+      </div>
 
+      {/* Form Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <Card className="shadow-xl">
-              <CardHeader>
-                <CardTitle>{steps[currentStep - 1].title}</CardTitle>
-                <CardDescription>{steps[currentStep - 1].description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {currentStep === 1 && (
-                  <div className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="businessName">Business Name *</Label>
-                        <Input
-                          id="businessName"
-                          {...form.register("businessName")}
-                          placeholder="Your registered business name"
-                          data-testid="input-business-name"
-                        />
-                        {form.formState.errors.businessName && (
-                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.businessName.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="brandName">Brand Name (if different)</Label>
-                        <Input
-                          id="brandName"
-                          {...form.register("brandName")}
-                          placeholder="Trading or brand name"
-                          data-testid="input-brand-name"
-                        />
-                      </div>
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="shadow-xl border-0 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#601a29]/5 to-[#d4af37]/5 px-6 py-5 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#601a29] to-[#7a2233] flex items-center justify-center shadow-lg">
+                      {(() => {
+                        const StepIcon = steps[currentStep - 1].icon;
+                        return <StepIcon className="w-6 h-6 text-white" />;
+                      })()}
                     </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="entityType">Entity Type *</Label>
-                        <Select
-                          onValueChange={(value) => form.setValue("entityType", value as any)}
-                          defaultValue={form.getValues("entityType")}
-                        >
-                          <SelectTrigger data-testid="select-entity-type">
-                            <SelectValue placeholder="Select entity type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="proprietorship">Proprietorship</SelectItem>
-                            <SelectItem value="partnership">Partnership</SelectItem>
-                            <SelectItem value="llp">LLP</SelectItem>
-                            <SelectItem value="private_limited">Private Limited</SelectItem>
-                            <SelectItem value="public_limited">Public Limited</SelectItem>
-                            <SelectItem value="trust">Trust</SelectItem>
-                            <SelectItem value="society">Society</SelectItem>
-                            <SelectItem value="huf">HUF</SelectItem>
-                            <SelectItem value="individual">Individual</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="yearEstablished">Year Established</Label>
-                        <Input
-                          id="yearEstablished"
-                          type="number"
-                          {...form.register("yearEstablished", { valueAsNumber: true })}
-                          placeholder="e.g., 2015"
-                          data-testid="input-year-established"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="employeeCount">Employee Count</Label>
-                        <Select onValueChange={(value) => form.setValue("employeeCount", value)}>
-                          <SelectTrigger data-testid="select-employee-count">
-                            <SelectValue placeholder="Select range" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {employeeCountOptions.map(option => (
-                              <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="annualTurnover">Annual Turnover</Label>
-                        <Select onValueChange={(value) => form.setValue("annualTurnover", value)}>
-                          <SelectTrigger data-testid="select-annual-turnover">
-                            <SelectValue placeholder="Select range" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="under_10l">Under ₹10 Lakhs</SelectItem>
-                            <SelectItem value="10l_25l">₹10-25 Lakhs</SelectItem>
-                            <SelectItem value="25l_50l">₹25-50 Lakhs</SelectItem>
-                            <SelectItem value="50l_1cr">₹50L - 1 Crore</SelectItem>
-                            <SelectItem value="1cr_5cr">₹1-5 Crore</SelectItem>
-                            <SelectItem value="5cr_10cr">₹5-10 Crore</SelectItem>
-                            <SelectItem value="above_10cr">Above ₹10 Crore</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="panNumber">PAN Number</Label>
-                        <Input
-                          id="panNumber"
-                          {...form.register("panNumber")}
-                          placeholder="ABCDE1234F"
-                          className="uppercase"
-                          data-testid="input-pan-number"
-                        />
-                        {form.formState.errors.panNumber && (
-                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.panNumber.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="gstNumber">GST Number</Label>
-                        <Input
-                          id="gstNumber"
-                          {...form.register("gstNumber")}
-                          placeholder="22ABCDE1234F1Z5"
-                          className="uppercase"
-                          data-testid="input-gst-number"
-                        />
-                        {form.formState.errors.gstNumber && (
-                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.gstNumber.message}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="msmeNumber">MSME/Udyam Number</Label>
-                        <Input
-                          id="msmeNumber"
-                          {...form.register("msmeNumber")}
-                          placeholder="UDYAM-XX-00-0000000"
-                          data-testid="input-msme-number"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="fssaiNumber">FSSAI License (for caterers)</Label>
-                        <Input
-                          id="fssaiNumber"
-                          {...form.register("fssaiNumber")}
-                          placeholder="FSSAI license number"
-                          data-testid="input-fssai-number"
-                        />
-                      </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">{steps[currentStep - 1].title}</h2>
+                      <p className="text-gray-500 text-sm">{steps[currentStep - 1].description}</p>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {currentStep === 2 && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-slate-700">Primary Contact</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="contactPersonName">Contact Person Name *</Label>
-                        <Input
-                          id="contactPersonName"
-                          {...form.register("contactPersonName")}
-                          placeholder="Full name"
-                          data-testid="input-contact-name"
-                        />
-                        {form.formState.errors.contactPersonName && (
-                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.contactPersonName.message}</p>
-                        )}
+                <CardContent className="p-6 md:p-8">
+                  {/* Step 1: Business Profile */}
+                  {currentStep === 1 && (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="businessName" className="text-gray-700">Business Name <span className="text-red-500">*</span></Label>
+                          <Input
+                            id="businessName"
+                            {...form.register("businessName")}
+                            placeholder="Your registered business name"
+                            className="h-11 border-gray-200 focus:border-[#601a29] focus:ring-[#601a29]"
+                            data-testid="input-business-name"
+                          />
+                          {form.formState.errors.businessName && (
+                            <p className="text-sm text-red-500">{form.formState.errors.businessName.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="brandName" className="text-gray-700">Brand/Trading Name</Label>
+                          <Input
+                            id="brandName"
+                            {...form.register("brandName")}
+                            placeholder="If different from business name"
+                            className="h-11 border-gray-200"
+                            data-testid="input-brand-name"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="contactPersonDesignation">Designation</Label>
-                        <Input
-                          id="contactPersonDesignation"
-                          {...form.register("contactPersonDesignation")}
-                          placeholder="e.g., Owner, Manager"
-                          data-testid="input-contact-designation"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="contactEmail">Email *</Label>
-                        <Input
-                          id="contactEmail"
-                          type="email"
-                          {...form.register("contactEmail")}
-                          placeholder="business@example.com"
-                          data-testid="input-contact-email"
-                        />
-                        {form.formState.errors.contactEmail && (
-                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.contactEmail.message}</p>
-                        )}
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label className="text-gray-700">Entity Type <span className="text-red-500">*</span></Label>
+                          <Select onValueChange={(value) => form.setValue("entityType", value as any)} defaultValue="proprietorship">
+                            <SelectTrigger className="h-11" data-testid="select-entity-type">
+                              <SelectValue placeholder="Select entity type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="proprietorship">Proprietorship</SelectItem>
+                              <SelectItem value="partnership">Partnership</SelectItem>
+                              <SelectItem value="llp">LLP</SelectItem>
+                              <SelectItem value="private_limited">Private Limited</SelectItem>
+                              <SelectItem value="public_limited">Public Limited</SelectItem>
+                              <SelectItem value="trust">Trust</SelectItem>
+                              <SelectItem value="society">Society</SelectItem>
+                              <SelectItem value="huf">HUF</SelectItem>
+                              <SelectItem value="individual">Individual</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="yearEstablished" className="text-gray-700">Year Established</Label>
+                          <Input
+                            id="yearEstablished"
+                            type="number"
+                            {...form.register("yearEstablished", { valueAsNumber: true })}
+                            placeholder="e.g., 2015"
+                            className="h-11"
+                            data-testid="input-year-established"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="contactPhone">Phone *</Label>
-                        <Input
-                          id="contactPhone"
-                          {...form.register("contactPhone")}
-                          placeholder="+91 98765 43210"
-                          data-testid="input-contact-phone"
-                        />
-                        {form.formState.errors.contactPhone && (
-                          <p className="text-sm text-red-500 mt-1">{form.formState.errors.contactPhone.message}</p>
-                        )}
-                      </div>
-                    </div>
 
-                    <div>
-                      <Label htmlFor="contactWhatsapp">WhatsApp Number</Label>
-                      <Input
-                        id="contactWhatsapp"
-                        {...form.register("contactWhatsapp")}
-                        placeholder="+91 98765 43210"
-                        data-testid="input-contact-whatsapp"
-                      />
-                    </div>
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label className="text-gray-700">Team Size</Label>
+                          <Select onValueChange={(value) => form.setValue("employeeCount", value)}>
+                            <SelectTrigger className="h-11" data-testid="select-employee-count">
+                              <SelectValue placeholder="Select team size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {employeeCountOptions.map(option => (
+                                <SelectItem key={option} value={option}>{option} employees</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-gray-700">Annual Turnover</Label>
+                          <Select onValueChange={(value) => form.setValue("annualTurnover", value)}>
+                            <SelectTrigger className="h-11" data-testid="select-annual-turnover">
+                              <SelectValue placeholder="Select range" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="under_10l">Under ₹10 Lakhs</SelectItem>
+                              <SelectItem value="10l_25l">₹10-25 Lakhs</SelectItem>
+                              <SelectItem value="25l_50l">₹25-50 Lakhs</SelectItem>
+                              <SelectItem value="50l_1cr">₹50L - 1 Crore</SelectItem>
+                              <SelectItem value="1cr_5cr">₹1-5 Crore</SelectItem>
+                              <SelectItem value="above_10cr">Above ₹10 Crore</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
 
-                    <h3 className="font-semibold text-slate-700 pt-4">Secondary Contact (Optional)</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="secondaryContactName">Name</Label>
-                        <Input
-                          id="secondaryContactName"
-                          {...form.register("secondaryContactName")}
-                          placeholder="Alternate contact name"
-                          data-testid="input-secondary-contact-name"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="secondaryContactPhone">Phone</Label>
-                        <Input
-                          id="secondaryContactPhone"
-                          {...form.register("secondaryContactPhone")}
-                          placeholder="+91 98765 43210"
-                          data-testid="input-secondary-contact-phone"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 3 && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-slate-700">Registered Address</h3>
-                    <div>
-                      <Label htmlFor="registeredAddress">Address</Label>
-                      <Textarea
-                        id="registeredAddress"
-                        {...form.register("registeredAddress")}
-                        placeholder="Full registered address"
-                        data-testid="input-registered-address"
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="registeredCity">City</Label>
-                        <Input
-                          id="registeredCity"
-                          {...form.register("registeredCity")}
-                          placeholder="City"
-                          data-testid="input-registered-city"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="registeredState">State</Label>
-                        <Select onValueChange={(value) => form.setValue("registeredState", value)}>
-                          <SelectTrigger data-testid="select-registered-state">
-                            <SelectValue placeholder="Select state" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {indianStates.map(state => (
-                              <SelectItem key={state} value={state}>{state}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="registeredPincode">Pincode</Label>
-                        <Input
-                          id="registeredPincode"
-                          {...form.register("registeredPincode")}
-                          placeholder="6-digit pincode"
-                          maxLength={6}
-                          data-testid="input-registered-pincode"
-                        />
-                      </div>
-                    </div>
-
-                    <h3 className="font-semibold text-slate-700 pt-4">Operational Address (if different)</h3>
-                    <div>
-                      <Label htmlFor="operationalAddress">Address</Label>
-                      <Textarea
-                        id="operationalAddress"
-                        {...form.register("operationalAddress")}
-                        placeholder="Full operational address"
-                        data-testid="input-operational-address"
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="operationalCity">City</Label>
-                        <Input
-                          id="operationalCity"
-                          {...form.register("operationalCity")}
-                          placeholder="City"
-                          data-testid="input-operational-city"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="operationalState">State</Label>
-                        <Select onValueChange={(value) => form.setValue("operationalState", value)}>
-                          <SelectTrigger data-testid="select-operational-state">
-                            <SelectValue placeholder="Select state" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {indianStates.map(state => (
-                              <SelectItem key={state} value={state}>{state}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="operationalPincode">Pincode</Label>
-                        <Input
-                          id="operationalPincode"
-                          {...form.register("operationalPincode")}
-                          placeholder="6-digit pincode"
-                          maxLength={6}
-                          data-testid="input-operational-pincode"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 4 && (
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-base font-semibold">Service Categories *</Label>
-                      <p className="text-sm text-slate-500 mb-3">Select all categories that apply to your services</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {vendorCategories.map(category => (
-                          <div
-                            key={category}
-                            className={cn(
-                              "flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all",
-                              selectedCategories.includes(category)
-                                ? "border-amber-500 bg-amber-50"
-                                : "border-slate-200 hover:border-slate-300"
+                      <div className="pt-4 border-t">
+                        <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-[#601a29]" />
+                          Tax & Registration Details
+                        </h3>
+                        <div className="grid md:grid-cols-2 gap-5">
+                          <div className="space-y-2">
+                            <Label htmlFor="panNumber" className="text-gray-700">PAN Number</Label>
+                            <Input
+                              id="panNumber"
+                              {...form.register("panNumber")}
+                              placeholder="ABCDE1234F"
+                              className="h-11 uppercase"
+                              data-testid="input-pan-number"
+                            />
+                            {form.formState.errors.panNumber && (
+                              <p className="text-sm text-red-500">{form.formState.errors.panNumber.message}</p>
                             )}
-                            onClick={() => handleCategoryToggle(category)}
-                            data-testid={`category-${category}`}
-                          >
-                            <Checkbox checked={selectedCategories.includes(category)} />
-                            <span className="text-sm">{formatCategoryLabel(category)}</span>
                           </div>
-                        ))}
-                      </div>
-                      {form.formState.errors.categories && (
-                        <p className="text-sm text-red-500 mt-2">{form.formState.errors.categories.message}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="serviceDescription">Service Description</Label>
-                      <Textarea
-                        id="serviceDescription"
-                        {...form.register("serviceDescription")}
-                        placeholder="Describe your services in detail..."
-                        className="min-h-[100px]"
-                        data-testid="input-service-description"
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="minimumGuestCapacity">Minimum Guest Capacity</Label>
-                        <Input
-                          id="minimumGuestCapacity"
-                          type="number"
-                          {...form.register("minimumGuestCapacity", { valueAsNumber: true })}
-                          placeholder="e.g., 50"
-                          data-testid="input-min-guest-capacity"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="maximumGuestCapacity">Maximum Guest Capacity</Label>
-                        <Input
-                          id="maximumGuestCapacity"
-                          type="number"
-                          {...form.register("maximumGuestCapacity", { valueAsNumber: true })}
-                          placeholder="e.g., 5000"
-                          data-testid="input-max-guest-capacity"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="eventsPerMonth">Events Per Month</Label>
-                        <Input
-                          id="eventsPerMonth"
-                          type="number"
-                          {...form.register("eventsPerMonth", { valueAsNumber: true })}
-                          placeholder="Average monthly events"
-                          data-testid="input-events-per-month"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="staffStrength">Staff Strength</Label>
-                        <Input
-                          id="staffStrength"
-                          type="number"
-                          {...form.register("staffStrength", { valueAsNumber: true })}
-                          placeholder="Number of staff"
-                          data-testid="input-staff-strength"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-base font-semibold">Service States</Label>
-                      <p className="text-sm text-slate-500 mb-3">Select states where you provide services</p>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Checkbox
-                          checked={form.watch("panIndiaService")}
-                          onCheckedChange={(checked) => form.setValue("panIndiaService", checked as boolean)}
-                        />
-                        <span className="text-sm font-medium">Pan-India Service Available</span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
-                        {indianStates.map(state => (
-                          <div
-                            key={state}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded cursor-pointer text-sm",
-                              selectedStates.includes(state)
-                                ? "bg-amber-100 text-amber-800"
-                                : "hover:bg-slate-100"
+                          <div className="space-y-2">
+                            <Label htmlFor="gstNumber" className="text-gray-700">GST Number</Label>
+                            <Input
+                              id="gstNumber"
+                              {...form.register("gstNumber")}
+                              placeholder="22ABCDE1234F1Z5"
+                              className="h-11 uppercase"
+                              data-testid="input-gst-number"
+                            />
+                            {form.formState.errors.gstNumber && (
+                              <p className="text-sm text-red-500">{form.formState.errors.gstNumber.message}</p>
                             )}
-                            onClick={() => handleStateToggle(state)}
-                          >
-                            <Checkbox checked={selectedStates.includes(state)} />
-                            <span>{state}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 5 && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-slate-700">Pricing Information</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="minimumBudget">Minimum Budget (₹)</Label>
-                        <Input
-                          id="minimumBudget"
-                          type="number"
-                          {...form.register("minimumBudget", { valueAsNumber: true })}
-                          placeholder="Minimum project value"
-                          data-testid="input-minimum-budget"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="averageEventValue">Average Event Value (₹)</Label>
-                        <Input
-                          id="averageEventValue"
-                          type="number"
-                          {...form.register("averageEventValue", { valueAsNumber: true })}
-                          placeholder="Average project value"
-                          data-testid="input-average-event-value"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="pricingTier">Pricing Tier</Label>
-                        <Select onValueChange={(value) => form.setValue("pricingTier", value)}>
-                          <SelectTrigger data-testid="select-pricing-tier">
-                            <SelectValue placeholder="Select tier" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="budget">Budget-Friendly</SelectItem>
-                            <SelectItem value="mid_range">Mid-Range</SelectItem>
-                            <SelectItem value="premium">Premium</SelectItem>
-                            <SelectItem value="luxury">Luxury</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="paymentTerms">Payment Terms</Label>
-                        <Select onValueChange={(value) => form.setValue("paymentTerms", value)}>
-                          <SelectTrigger data-testid="select-payment-terms">
-                            <SelectValue placeholder="Select terms" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="advance_full">100% Advance</SelectItem>
-                            <SelectItem value="50_50">50% Advance, 50% Before Event</SelectItem>
-                            <SelectItem value="30_40_30">30-40-30 Split</SelectItem>
-                            <SelectItem value="on_completion">On Completion</SelectItem>
-                            <SelectItem value="custom">Custom Terms</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={form.watch("acceptsOnlinePayment")}
-                        onCheckedChange={(checked) => form.setValue("acceptsOnlinePayment", checked as boolean)}
-                      />
-                      <span className="text-sm">Accepts Online Payments (UPI/NEFT/Cards)</span>
-                    </div>
-
-                    <h3 className="font-semibold text-slate-700 pt-4">Bank Details (for payments)</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="bankName">Bank Name</Label>
-                        <Input
-                          id="bankName"
-                          {...form.register("bankName")}
-                          placeholder="e.g., HDFC Bank"
-                          data-testid="input-bank-name"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="bankBranch">Branch</Label>
-                        <Input
-                          id="bankBranch"
-                          {...form.register("bankBranch")}
-                          placeholder="Branch name"
-                          data-testid="input-bank-branch"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="accountNumber">Account Number</Label>
-                        <Input
-                          id="accountNumber"
-                          {...form.register("accountNumber")}
-                          placeholder="Account number"
-                          data-testid="input-account-number"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="ifscCode">IFSC Code</Label>
-                        <Input
-                          id="ifscCode"
-                          {...form.register("ifscCode")}
-                          placeholder="e.g., HDFC0001234"
-                          className="uppercase"
-                          data-testid="input-ifsc-code"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="accountHolderName">Account Holder Name</Label>
-                        <Input
-                          id="accountHolderName"
-                          {...form.register("accountHolderName")}
-                          placeholder="As per bank records"
-                          data-testid="input-account-holder-name"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="upiId">UPI ID</Label>
-                        <Input
-                          id="upiId"
-                          {...form.register("upiId")}
-                          placeholder="yourname@upi"
-                          data-testid="input-upi-id"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 6 && (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="font-semibold text-slate-700 mb-4">Compliance & Certifications</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={form.watch("hasLiabilityInsurance")}
-                            onCheckedChange={(checked) => form.setValue("hasLiabilityInsurance", checked as boolean)}
-                          />
-                          <div>
-                            <span className="font-medium">Liability Insurance</span>
-                            <p className="text-sm text-slate-500">Do you have professional liability insurance coverage?</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={form.watch("hasFireSafetyCertificate")}
-                            onCheckedChange={(checked) => form.setValue("hasFireSafetyCertificate", checked as boolean)}
-                          />
-                          <div>
-                            <span className="font-medium">Fire Safety Certificate</span>
-                            <p className="text-sm text-slate-500">Valid fire safety compliance certificate</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={form.watch("hasPollutionCertificate")}
-                            onCheckedChange={(checked) => form.setValue("hasPollutionCertificate", checked as boolean)}
-                          />
-                          <div>
-                            <span className="font-medium">Pollution Control Certificate</span>
-                            <p className="text-sm text-slate-500">If applicable to your business</p>
                           </div>
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    <div>
-                      <h3 className="font-semibold text-slate-700 mb-4">Declarations</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-3 border rounded-lg bg-slate-50">
-                          <Checkbox
-                            checked={form.watch("hasNoPendingLitigation")}
-                            onCheckedChange={(checked) => form.setValue("hasNoPendingLitigation", checked as boolean)}
+                  {/* Step 2: Contact Details */}
+                  {currentStep === 2 && (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="contactPersonName" className="text-gray-700">Contact Person <span className="text-red-500">*</span></Label>
+                          <Input
+                            id="contactPersonName"
+                            {...form.register("contactPersonName")}
+                            placeholder="Full name"
+                            className="h-11"
+                            data-testid="input-contact-name"
                           />
-                          <div>
-                            <span className="font-medium">No Pending Litigation</span>
-                            <p className="text-sm text-slate-500">I declare that there are no pending legal cases against the business</p>
+                          {form.formState.errors.contactPersonName && (
+                            <p className="text-sm text-red-500">{form.formState.errors.contactPersonName.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contactPersonDesignation" className="text-gray-700">Designation</Label>
+                          <Input
+                            id="contactPersonDesignation"
+                            {...form.register("contactPersonDesignation")}
+                            placeholder="e.g., Owner, Manager"
+                            className="h-11"
+                            data-testid="input-designation"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="contactEmail" className="text-gray-700 flex items-center gap-2">
+                            <Mail className="w-4 h-4" /> Email <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="contactEmail"
+                            type="email"
+                            {...form.register("contactEmail")}
+                            placeholder="your@email.com"
+                            className="h-11"
+                            data-testid="input-email"
+                          />
+                          {form.formState.errors.contactEmail && (
+                            <p className="text-sm text-red-500">{form.formState.errors.contactEmail.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contactPhone" className="text-gray-700 flex items-center gap-2">
+                            <Phone className="w-4 h-4" /> Phone <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="contactPhone"
+                            {...form.register("contactPhone")}
+                            placeholder="+91 98765 43210"
+                            className="h-11"
+                            data-testid="input-phone"
+                          />
+                          {form.formState.errors.contactPhone && (
+                            <p className="text-sm text-red-500">{form.formState.errors.contactPhone.message}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-[#601a29]" />
+                          Business Address
+                        </h3>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="registeredAddress" className="text-gray-700">Address</Label>
+                            <Textarea
+                              id="registeredAddress"
+                              {...form.register("registeredAddress")}
+                              placeholder="Full business address"
+                              className="min-h-[80px]"
+                              data-testid="input-address"
+                            />
+                          </div>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="registeredCity" className="text-gray-700">City</Label>
+                              <Input id="registeredCity" {...form.register("registeredCity")} placeholder="City" className="h-11" data-testid="input-city" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-gray-700">State</Label>
+                              <Select onValueChange={(value) => form.setValue("registeredState", value)}>
+                                <SelectTrigger className="h-11" data-testid="select-state">
+                                  <SelectValue placeholder="Select state" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {indianStates.map(state => (
+                                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="registeredPincode" className="text-gray-700">Pincode</Label>
+                              <Input id="registeredPincode" {...form.register("registeredPincode")} placeholder="6-digit" maxLength={6} className="h-11" data-testid="input-pincode" />
+                            </div>
                           </div>
                         </div>
+                      </div>
 
-                        <div className="flex items-start gap-3 p-3 border rounded-lg bg-slate-50">
-                          <Checkbox
-                            checked={form.watch("hasNeverBlacklisted")}
-                            onCheckedChange={(checked) => form.setValue("hasNeverBlacklisted", checked as boolean)}
-                          />
-                          <div>
-                            <span className="font-medium">Never Blacklisted</span>
-                            <p className="text-sm text-slate-500">I declare that the business has never been blacklisted by any organization</p>
+                      <div className="pt-4 border-t">
+                        <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-[#601a29]" />
+                          Online Presence <span className="text-gray-400 text-sm font-normal">(Optional)</span>
+                        </h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="websiteUrl" className="text-gray-700 flex items-center gap-2"><Globe className="w-3 h-3" /> Website</Label>
+                            <Input id="websiteUrl" {...form.register("websiteUrl")} placeholder="https://yourwebsite.com" className="h-11" data-testid="input-website" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="instagramUrl" className="text-gray-700 flex items-center gap-2"><Instagram className="w-3 h-3" /> Instagram</Label>
+                            <Input id="instagramUrl" {...form.register("instagramUrl")} placeholder="@yourhandle" className="h-11" data-testid="input-instagram" />
                           </div>
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    <div>
-                      <h3 className="font-semibold text-slate-700 mb-4">Upload Documents</h3>
-                      <p className="text-sm text-slate-500 mb-4">
-                        Upload required documents. Accepted formats: PDF, JPEG, PNG, DOC, DOCX (max 10MB each)
-                      </p>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        {Object.entries(documentTypeLabels).map(([docType, label]) => {
-                          const uploadedDoc = uploadedDocuments.find(d => d.documentType === docType);
-                          const isUploading = uploadingDoc === docType;
-                          
-                          return (
+                  {/* Step 3: Services & Coverage */}
+                  {currentStep === 3 && (
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-gray-700 text-base font-semibold">Service Categories <span className="text-red-500">*</span></Label>
+                        <p className="text-sm text-gray-500 mb-4">Select all categories that apply to your services</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {vendorCategories.map(category => (
                             <div
-                              key={docType}
-                              className="border rounded-lg p-4 space-y-3"
-                              data-testid={`doc-upload-${docType}`}
+                              key={category}
+                              className={cn(
+                                "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                                selectedCategories.includes(category)
+                                  ? "border-[#601a29] bg-[#601a29]/5 shadow-sm"
+                                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                              )}
+                              onClick={() => handleCategoryToggle(category)}
+                              data-testid={`category-${category}`}
                             >
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium text-sm">{label}</span>
-                                {docType === "pan_card" || docType === "gst_certificate" ? (
-                                  <span className="text-xs text-red-500">Required</span>
+                              <Checkbox checked={selectedCategories.includes(category)} className="data-[state=checked]:bg-[#601a29] data-[state=checked]:border-[#601a29]" />
+                              <span className="text-sm font-medium text-gray-700">{formatCategoryLabel(category)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {form.formState.errors.categories && (
+                          <p className="text-sm text-red-500 mt-2">{form.formState.errors.categories.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="serviceDescription" className="text-gray-700">Describe Your Services</Label>
+                        <Textarea
+                          id="serviceDescription"
+                          {...form.register("serviceDescription")}
+                          placeholder="Tell us about what makes your services special..."
+                          className="min-h-[120px]"
+                          data-testid="input-service-description"
+                        />
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <h3 className="font-semibold text-gray-800 mb-4">Service Coverage</h3>
+                        <div className="flex items-center gap-3 p-4 bg-[#d4af37]/10 rounded-xl border border-[#d4af37]/30 mb-4">
+                          <Checkbox
+                            checked={form.watch("panIndiaService")}
+                            onCheckedChange={(checked) => form.setValue("panIndiaService", checked as boolean)}
+                            className="data-[state=checked]:bg-[#d4af37] data-[state=checked]:border-[#d4af37]"
+                            data-testid="checkbox-pan-india-service"
+                          />
+                          <div>
+                            <span className="font-medium text-gray-800">Pan-India Service</span>
+                            <p className="text-sm text-gray-600">We can serve clients anywhere in India</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-3">Or select specific states:</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-3 border rounded-xl bg-gray-50">
+                          {indianStates.map(state => (
+                            <div
+                              key={state}
+                              className={cn(
+                                "flex items-center gap-2 p-2 rounded-lg cursor-pointer text-sm transition-all",
+                                selectedStates.includes(state)
+                                  ? "bg-[#601a29] text-white"
+                                  : "hover:bg-gray-200"
+                              )}
+                              onClick={() => handleStateToggle(state)}
+                              data-testid={`chip-state-${state.toLowerCase().replace(/\s+/g, '-')}`}
+                            >
+                              <span>{state}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-5 pt-4 border-t">
+                        <div className="space-y-2">
+                          <Label className="text-gray-700">Pricing Tier</Label>
+                          <Select onValueChange={(value) => form.setValue("pricingTier", value)}>
+                            <SelectTrigger className="h-11" data-testid="select-pricing-tier">
+                              <SelectValue placeholder="Select your pricing tier" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="budget">Budget-Friendly</SelectItem>
+                              <SelectItem value="mid_range">Mid-Range</SelectItem>
+                              <SelectItem value="premium">Premium</SelectItem>
+                              <SelectItem value="luxury">Luxury</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="minimumBudget" className="text-gray-700">Minimum Project Value (₹)</Label>
+                          <Input
+                            id="minimumBudget"
+                            type="number"
+                            {...form.register("minimumBudget", { valueAsNumber: true })}
+                            placeholder="e.g., 50000"
+                            className="h-11"
+                            data-testid="input-minimum-budget"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 4: Complete Registration */}
+                  {currentStep === 4 && (
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-r from-[#601a29]/5 to-[#d4af37]/5 rounded-xl p-6 border border-[#601a29]/10">
+                        <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <Upload className="w-5 h-5 text-[#601a29]" />
+                          Upload Documents <span className="text-gray-400 text-sm font-normal">(Optional but recommended)</span>
+                        </h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {Object.entries(documentTypeLabels).map(([docType, label]) => {
+                            const uploadedDoc = uploadedDocuments.find(d => d.documentType === docType);
+                            const isUploading = uploadingDoc === docType;
+                            return (
+                              <div key={docType} className="bg-white border rounded-xl p-4" data-testid={`doc-upload-${docType}`}>
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="font-medium text-sm text-gray-700">{label}</span>
+                                </div>
+                                {uploadedDoc ? (
+                                  <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                      <File className="w-4 h-4 text-green-600" />
+                                      <div>
+                                        <p className="text-sm font-medium text-green-700 truncate max-w-[120px]">{uploadedDoc.documentName}</p>
+                                        <p className="text-xs text-green-600">{formatFileSize(uploadedDoc.fileSize)}</p>
+                                      </div>
+                                    </div>
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveDocument(docType)} data-testid={`button-remove-${docType}`}>
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                 ) : (
-                                  <span className="text-xs text-slate-400">Optional</span>
+                                  <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#601a29] hover:bg-[#601a29]/5 transition-all">
+                                    {isUploading ? <Loader2 className="w-5 h-5 animate-spin text-[#601a29]" /> : <Upload className="w-5 h-5 text-gray-400" />}
+                                    <span className="text-sm text-gray-500">{isUploading ? "Uploading..." : "Click to upload"}</span>
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                      onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFileUpload(docType, file); }}
+                                      disabled={isUploading}
+                                    />
+                                  </label>
                                 )}
                               </div>
-                              
-                              {uploadedDoc ? (
-                                <div className="flex items-center justify-between bg-green-50 p-2 rounded">
-                                  <div className="flex items-center gap-2">
-                                    <File className="w-4 h-4 text-green-600" />
-                                    <div>
-                                      <p className="text-sm font-medium text-green-700 truncate max-w-[150px]">
-                                        {uploadedDoc.documentName}
-                                      </p>
-                                      <p className="text-xs text-green-600">
-                                        {formatFileSize(uploadedDoc.fileSize)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveDocument(docType)}
-                                    data-testid={`button-remove-${docType}`}
-                                  >
-                                    <X className="w-4 h-4 text-slate-500" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-colors">
-                                  {isUploading ? (
-                                    <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
-                                  ) : (
-                                    <Upload className="w-5 h-5 text-slate-400" />
-                                  )}
-                                  <span className="text-sm text-slate-500">
-                                    {isUploading ? "Uploading..." : "Click to upload"}
-                                  </span>
-                                  <input
-                                    type="file"
-                                    className="hidden"
-                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) handleFileUpload(docType, file);
-                                    }}
-                                    disabled={isUploading}
-                                    data-testid={`input-file-${docType}`}
-                                  />
-                                </label>
-                              )}
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                          <Shield className="w-5 h-5 text-[#601a29]" />
+                          Declarations
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3 p-4 border rounded-xl bg-gray-50">
+                            <Checkbox
+                              checked={form.watch("hasNoPendingLitigation")}
+                              onCheckedChange={(checked) => form.setValue("hasNoPendingLitigation", checked as boolean)}
+                              className="mt-0.5"
+                            />
+                            <div>
+                              <span className="font-medium text-gray-700">No Pending Litigation</span>
+                              <p className="text-sm text-gray-500">I confirm there are no pending legal cases against the business</p>
                             </div>
-                          );
-                        })}
+                          </div>
+                          <div className="flex items-start gap-3 p-4 border rounded-xl bg-gray-50">
+                            <Checkbox
+                              checked={form.watch("hasNeverBlacklisted")}
+                              onCheckedChange={(checked) => form.setValue("hasNeverBlacklisted", checked as boolean)}
+                              className="mt-0.5"
+                            />
+                            <div>
+                              <span className="font-medium text-gray-700">Never Blacklisted</span>
+                              <p className="text-sm text-gray-500">I confirm the business has never been blacklisted by any organization</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <div className="flex items-start gap-3 p-4 border-2 border-[#601a29]/20 rounded-xl bg-[#601a29]/5">
+                          <Checkbox
+                            checked={form.watch("agreesToTerms")}
+                            onCheckedChange={(checked) => form.setValue("agreesToTerms", checked as boolean)}
+                            className="mt-0.5 data-[state=checked]:bg-[#601a29] data-[state=checked]:border-[#601a29]"
+                            data-testid="checkbox-terms"
+                          />
+                          <div>
+                            <span className="font-medium text-gray-800">I agree to the Terms & Conditions <span className="text-red-500">*</span></span>
+                            <p className="text-sm text-gray-600">By submitting, I agree to the vendor partnership terms and privacy policy</p>
+                          </div>
+                        </div>
+                        {form.formState.errors.agreesToTerms && (
+                          <p className="text-sm text-red-500 mt-2">{form.formState.errors.agreesToTerms.message}</p>
+                        )}
                       </div>
                     </div>
+                  )}
+                </CardContent>
 
-                    <div>
-                      <h3 className="font-semibold text-slate-700 mb-4">Online Presence</h3>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="websiteUrl">Website</Label>
-                          <Input
-                            id="websiteUrl"
-                            {...form.register("websiteUrl")}
-                            placeholder="https://yourwebsite.com"
-                            data-testid="input-website-url"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="instagramUrl">Instagram</Label>
-                          <Input
-                            id="instagramUrl"
-                            {...form.register("instagramUrl")}
-                            placeholder="https://instagram.com/yourbusiness"
-                            data-testid="input-instagram-url"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="facebookUrl">Facebook</Label>
-                          <Input
-                            id="facebookUrl"
-                            {...form.register("facebookUrl")}
-                            placeholder="https://facebook.com/yourbusiness"
-                            data-testid="input-facebook-url"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="youtubeUrl">YouTube</Label>
-                          <Input
-                            id="youtubeUrl"
-                            {...form.register("youtubeUrl")}
-                            placeholder="https://youtube.com/@yourbusiness"
-                            data-testid="input-youtube-url"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-slate-700 mb-4">Experience</h3>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="yearsInBusiness">Years in Business</Label>
-                          <Input
-                            id="yearsInBusiness"
-                            type="number"
-                            {...form.register("yearsInBusiness", { valueAsNumber: true })}
-                            placeholder="e.g., 10"
-                            data-testid="input-years-in-business"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="eventsCompleted">Total Events Completed</Label>
-                          <Input
-                            id="eventsCompleted"
-                            type="number"
-                            {...form.register("eventsCompleted", { valueAsNumber: true })}
-                            placeholder="e.g., 500"
-                            data-testid="input-events-completed"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {currentStep === 7 && (
-                  <div className="space-y-6">
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <h3 className="font-semibold text-amber-800 mb-2">Review Your Information</h3>
-                      <p className="text-sm text-amber-700">
-                        Please review all information before submitting. You can go back to any step to make changes.
-                      </p>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-slate-700 mb-2">Business Details</h4>
-                        <dl className="text-sm space-y-1">
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">Business Name:</dt>
-                            <dd className="font-medium">{form.watch("businessName") || "-"}</dd>
-                          </div>
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">Entity Type:</dt>
-                            <dd className="font-medium">{formatCategoryLabel(form.watch("entityType") || "")}</dd>
-                          </div>
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">PAN:</dt>
-                            <dd className="font-medium">{form.watch("panNumber") || "-"}</dd>
-                          </div>
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">GST:</dt>
-                            <dd className="font-medium">{form.watch("gstNumber") || "-"}</dd>
-                          </div>
-                        </dl>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold text-slate-700 mb-2">Contact Details</h4>
-                        <dl className="text-sm space-y-1">
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">Contact Person:</dt>
-                            <dd className="font-medium">{form.watch("contactPersonName") || "-"}</dd>
-                          </div>
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">Email:</dt>
-                            <dd className="font-medium">{form.watch("contactEmail") || "-"}</dd>
-                          </div>
-                          <div className="flex justify-between">
-                            <dt className="text-slate-500">Phone:</dt>
-                            <dd className="font-medium">{form.watch("contactPhone") || "-"}</dd>
-                          </div>
-                        </dl>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold text-slate-700 mb-2">Categories</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {selectedCategories.map(cat => (
-                            <span key={cat} className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
-                              {formatCategoryLabel(cat)}
-                            </span>
-                          ))}
-                          {selectedCategories.length === 0 && <span className="text-sm text-slate-500">None selected</span>}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold text-slate-700 mb-2">Service Areas</h4>
-                        <p className="text-sm">
-                          {form.watch("panIndiaService") ? "Pan-India" : selectedStates.join(", ") || "Not specified"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-4 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={form.watch("agreesToTerms")}
-                          onCheckedChange={(checked) => form.setValue("agreesToTerms", checked as boolean)}
-                          data-testid="checkbox-agree-terms"
-                        />
-                        <div>
-                          <span className="font-medium text-sm">I agree to the Terms and Conditions *</span>
-                          <p className="text-xs text-slate-500">
-                            By checking this box, I confirm that all information provided is accurate and I agree to the vendor partnership terms.
-                          </p>
-                        </div>
-                      </div>
-                      {form.formState.errors.agreesToTerms && (
-                        <p className="text-sm text-red-500">{form.formState.errors.agreesToTerms.message}</p>
-                      )}
-
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={form.watch("agreesToNda")}
-                          onCheckedChange={(checked) => form.setValue("agreesToNda", checked as boolean)}
-                          data-testid="checkbox-agree-nda"
-                        />
-                        <div>
-                          <span className="font-medium text-sm">I agree to the Non-Disclosure Agreement</span>
-                          <p className="text-xs text-slate-500">
-                            I agree to keep client information confidential.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-between pt-6 border-t">
+                {/* Navigation */}
+                <div className="px-6 md:px-8 py-5 bg-gray-50 border-t flex items-center justify-between">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={prevStep}
                     disabled={currentStep === 1}
-                    data-testid="button-prev-step"
+                    className="gap-2"
+                    data-testid="button-prev"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    <ChevronLeft className="w-4 h-4" />
                     Previous
                   </Button>
 
-                  {currentStep < steps.length ? (
-                    <Button type="button" onClick={nextStep} data-testid="button-next-step">
-                      Next
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={createRegistration.isPending}
-                      className="bg-amber-500 hover:bg-amber-600"
-                      data-testid="button-submit-registration"
-                    >
-                      {createRegistration.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Submit Registration
-                        </>
-                      )}
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {currentStep < steps.length ? (
+                      <Button
+                        type="button"
+                        onClick={nextStep}
+                        className="gap-2 bg-[#601a29] hover:bg-[#4a1320]"
+                        data-testid="button-next"
+                      >
+                        Continue
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        disabled={createRegistration.isPending}
+                        className="gap-2 bg-gradient-to-r from-[#601a29] to-[#d4af37] hover:from-[#4a1320] hover:to-[#c5a030] min-w-[180px]"
+                        data-testid="button-submit"
+                      >
+                        {createRegistration.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            Submit Registration
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </motion.div>
           </form>
+
+          {/* Trust Badges */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-gray-500 text-sm">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-[#d4af37]" />
+              <span>Secure & Encrypted</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#d4af37]" />
+              <span>Verified Partners Only</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#d4af37]" />
+              <span>Premium Network</span>
+            </div>
+          </div>
         </div>
       </div>
+
       <Footer />
     </div>
   );
