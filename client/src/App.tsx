@@ -27,6 +27,7 @@ import CookiePolicyPage from "@/pages/cookie-policy";
 import BlogPage from "@/pages/blog";
 import BlogPostPage from "@/pages/blog-post";
 import VendorRegistrationPage from "@/pages/vendor-registration";
+import VendorOnboardingPage from "@/pages/vendor-onboarding";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import LeadsPage from "@/pages/admin/leads";
@@ -154,6 +155,7 @@ function Router() {
       <Route path="/blog" component={BlogPage} />
       <Route path="/blog/:slug" component={BlogPostPage} />
       <Route path="/vendor-registration" component={VendorRegistrationPage} />
+      <Route path="/vendor-onboarding" component={VendorOnboardingPage} />
       
       {/* Admin login - no auth required */}
       <Route path="/admin/login" component={AdminLogin} />
