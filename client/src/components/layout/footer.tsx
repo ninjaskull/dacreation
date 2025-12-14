@@ -158,7 +158,7 @@ export function Footer() {
 
   const quickLinks = [
     { name: "Get a Quote", href: "/inquire" },
-    { name: "Become a Partner", href: "/vendor-registration" },
+    { name: "Become a Partner", href: "/vendor-onboarding" },
     { name: "FAQs", href: "/#faq" },
     { name: "Contact Us", href: "/contact" },
     { name: "Sitemap", href: "/sitemap" },
