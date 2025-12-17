@@ -54,7 +54,7 @@ export const BRAND = {
       iconWhite: "/images/icon-white.webp",
       iconMaroon: "/images/icon-maroon.webp",
     },
-    favicon: "/favicon.webp",
+    favicon: "/favicon.png",
     ogImage: "/og-image.webp",
   },
 
