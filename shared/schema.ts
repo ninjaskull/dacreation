@@ -42,6 +42,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+export const updateUserSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(50, "Username must be at most 50 characters").optional(),
+  password: passwordSchema.optional(),
+  name: z.string().nullable().optional(),
+  email: z.string().email("Invalid email format").nullable().optional(),
+  phone: z.string().nullable().optional(),
+  role: z.enum(userRoles).optional(),
+  isActive: z.boolean().optional(),
+});
+export type UpdateUser = z.infer<typeof updateUserSchema>;
+
 export const sessions = pgTable("session", {
   sid: varchar("sid").primaryKey(),
   sess: jsonb("sess").notNull(),
@@ -401,7 +412,7 @@ export const clients = pgTable("clients", {
   notes: text("notes"),
   tags: text("tags").array(),
   source: text("source"),
-  referredBy: varchar("referred_by").references((): any => clients.id),
+  referredBy: varchar("referred_by").references(() => clients.id, { onDelete: "set null" }),
   lastContactDate: timestamp("last_contact_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

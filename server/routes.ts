@@ -8,7 +8,7 @@ import multer from "multer";
 import passport from "passport";
 import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange, broadcastLiveAgentRequest } from "./websocket";
 import { 
-  insertLeadSchema, insertUserSchema, updateLeadSchema,
+  insertLeadSchema, insertUserSchema, updateUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
   insertActivityLogSchema, insertLeadNoteSchema,
   insertTeamMemberSchema, insertPortfolioItemSchema,
@@ -266,8 +266,13 @@ export async function registerRoutes(
 
   app.patch("/api/users/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { password, ...data } = req.body;
-      const updateData: any = { ...data };
+      const result = updateUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error });
+      }
+
+      const { password, ...data } = result.data;
+      const updateData: Partial<{ username: string; password: string; name: string | null; email: string | null; phone: string | null; role: string; isActive: boolean }> = { ...data };
       
       if (password) {
         updateData.password = await crypto.hash(password);
@@ -318,7 +323,17 @@ export async function registerRoutes(
 
   app.get("/api/leads", isAuthenticated, async (req, res) => {
     try {
-      const filters: any = {};
+      const filters: {
+        status?: string;
+        eventType?: string;
+        location?: string;
+        budgetRange?: string;
+        assignedTo?: string;
+        search?: string;
+        leadSource?: string;
+        dateFrom?: Date;
+        dateTo?: Date;
+      } = {};
       
       if (req.query.status) filters.status = req.query.status as string;
       if (req.query.eventType) filters.eventType = req.query.eventType as string;

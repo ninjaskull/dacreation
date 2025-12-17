@@ -231,9 +231,16 @@ export function useChatWebSocket(options: UseChatWebSocketOptions = {}) {
         }, delay);
       };
 
-      ws.onerror = (error) => {
+      ws.onerror = (event) => {
         isConnectingRef.current = false;
-        console.error("[WebSocket] Error:", error);
+        const errorEvent = event as ErrorEvent;
+        const errorMessage = errorEvent.message || 'WebSocket connection error';
+        console.error("[WebSocket] Error:", errorMessage, {
+          type: event.type,
+          url: wsUrl,
+          readyState: ws.readyState,
+        });
+        onErrorRef.current?.(errorMessage);
       };
     } catch (error) {
       isConnectingRef.current = false;

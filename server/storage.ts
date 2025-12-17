@@ -563,14 +563,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLead(insertLead: InsertLead): Promise<Lead> {
-    const leadData = {
-      ...insertLead,
-      date: insertLead.date ? new Date(insertLead.date) : null,
+    const leadData: typeof leads.$inferInsert = {
+      eventType: insertLead.eventType,
+      name: insertLead.name,
+      phone: insertLead.phone,
+      email: insertLead.email,
+      contactMethod: insertLead.contactMethod,
+      leadSource: insertLead.leadSource,
+      date: insertLead.date ? new Date(insertLead.date as string | Date) : null,
+      guestCount: insertLead.guestCount ?? null,
+      location: insertLead.location ?? null,
+      budgetRange: insertLead.budgetRange ?? null,
+      leadMagnet: insertLead.leadMagnet ?? null,
+      message: insertLead.message ?? null,
+      consentGiven: insertLead.consentGiven ?? true,
     };
     
     const [lead] = await db
       .insert(leads)
-      .values(leadData as any)
+      .values(leadData)
       .returning();
     return lead;
   }

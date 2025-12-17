@@ -64,8 +64,9 @@ export function decryptPassword(encryptedPassword: string): string {
     // Not encrypted, return as-is
     return encryptedPassword;
   } catch (error) {
-    console.error('[email] Error decrypting password:', error instanceof Error ? error.message : 'Unknown error');
-    return encryptedPassword;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[email] Error decrypting SMTP password. This may indicate an invalid encryption key or corrupted password data:', errorMessage);
+    throw new Error(`SMTP password decryption failed: ${errorMessage}. Please re-save SMTP settings.`);
   }
 }
 
@@ -92,20 +93,33 @@ let cachedTransporter: EmailTransporter = {
   settings: null,
 };
 
-async function getTransporter(): Promise<nodemailer.Transporter | null> {
+interface TransporterResult {
+  transporter: nodemailer.Transporter | null;
+  error?: string;
+}
+
+async function getTransporter(): Promise<TransporterResult> {
   const settings = await storage.getSmtpSettings();
   
   if (!settings || !settings.isActive) {
-    return null;
+    return { transporter: null };
   }
   
   if (cachedTransporter.transporter && 
       cachedTransporter.settings?.id === settings.id &&
       cachedTransporter.settings?.updatedAt?.getTime() === settings.updatedAt?.getTime()) {
-    return cachedTransporter.transporter;
+    return { transporter: cachedTransporter.transporter };
   }
   
-  const decryptedPassword = decryptPassword(settings.password);
+  let decryptedPassword: string;
+  try {
+    decryptedPassword = decryptPassword(settings.password);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Password decryption failed';
+    console.error('[email] Failed to get transporter - password decryption error:', errorMessage);
+    clearTransporterCache();
+    return { transporter: null, error: errorMessage };
+  }
   
   const transportConfig: nodemailer.TransportOptions = {
     host: settings.host,
@@ -115,10 +129,10 @@ async function getTransporter(): Promise<nodemailer.Transporter | null> {
       user: settings.username,
       pass: decryptedPassword,
     },
-  } as any;
+  } as nodemailer.TransportOptions;
   
   if (settings.encryption === 'tls') {
-    (transportConfig as any).requireTLS = true;
+    (transportConfig as Record<string, unknown>).requireTLS = true;
   }
   
   const transporter = nodemailer.createTransport(transportConfig);
@@ -128,7 +142,7 @@ async function getTransporter(): Promise<nodemailer.Transporter | null> {
     settings,
   };
   
-  return transporter;
+  return { transporter };
 }
 
 export function clearTransporterCache(): void {
@@ -157,15 +171,17 @@ export interface SendEmailResult {
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
-  const transporter = await getTransporter();
+  const transporterResult = await getTransporter();
   const settings = await storage.getSmtpSettings();
   
-  if (!transporter || !settings) {
+  if (!transporterResult.transporter || !settings) {
     return {
       success: false,
-      error: 'SMTP is not configured or disabled',
+      error: transporterResult.error || 'SMTP is not configured or disabled',
     };
   }
+  
+  const transporter = transporterResult.transporter;
   
   const emailTypeSettings = await storage.getEmailTypeSettings();
   if (emailTypeSettings && options.type) {
@@ -210,8 +226,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
       messageId: result.messageId,
       logId: log.id,
     };
-  } catch (error: any) {
-    const errorMessage = error.message || 'Unknown error';
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     await storage.updateEmailLogStatus(log.id, 'failed', errorMessage);
     
     return {
@@ -223,15 +239,17 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
 }
 
 export async function testSmtpConnection(testEmail: string): Promise<{ success: boolean; message: string }> {
-  const transporter = await getTransporter();
+  const transporterResult = await getTransporter();
   const settings = await storage.getSmtpSettings();
   
-  if (!transporter || !settings) {
+  if (!transporterResult.transporter || !settings) {
     return {
       success: false,
-      message: 'SMTP is not configured',
+      message: transporterResult.error || 'SMTP is not configured',
     };
   }
+  
+  const transporter = transporterResult.transporter;
   
   try {
     await transporter.verify();
@@ -282,24 +300,39 @@ export function renderTemplate(
   
   let baseUrl = '';
   
-  if (companySettings?.website) {
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+  
+  if (companySettings?.website && isValidUrl(companySettings.website)) {
     baseUrl = companySettings.website.replace(/\/$/, '');
-  } else if (process.env.APP_ORIGIN) {
+  } else if (process.env.APP_ORIGIN && isValidUrl(process.env.APP_ORIGIN)) {
     baseUrl = process.env.APP_ORIGIN.replace(/\/$/, '');
   } else {
     const replitDomains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN;
     if (replitDomains) {
       const primaryDomain = replitDomains.split(',')[0];
-      baseUrl = `https://${primaryDomain}`;
+      const constructedUrl = `https://${primaryDomain}`;
+      if (isValidUrl(constructedUrl)) {
+        baseUrl = constructedUrl;
+      }
     }
   }
   
   const makeAbsoluteUrl = (path: string): string => {
     if (!path) return '';
-    if (path.startsWith('http')) return path;
+    if (path.startsWith('http')) {
+      return isValidUrl(path) ? path : '';
+    }
     if (!baseUrl) return '';
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-    return `${baseUrl}${normalizedPath}`;
+    const fullUrl = `${baseUrl}${normalizedPath}`;
+    return isValidUrl(fullUrl) ? fullUrl : '';
   };
   
   const companyName = companySettings?.name || 'Our Team';
