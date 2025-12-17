@@ -849,6 +849,9 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
 }).extend({
   issueDate: z.date().or(z.string()),
   dueDate: z.date().or(z.string()),
+  clientId: z.string().nullable().optional(),
+  eventId: z.string().nullable().optional(),
+  templateId: z.string().nullable().optional(),
 });
 
 export const updateInvoiceSchema = z.object({
@@ -912,6 +915,11 @@ export const invoiceItems = pgTable("invoice_items", {
 export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({
   id: true,
   createdAt: true,
+}).extend({
+  description: z.string().nullable().optional(),
+  hsnCode: z.string().nullable().optional(),
+  sacCode: z.string().nullable().optional(),
+  unit: z.string().nullable().optional(),
 });
 
 export const updateInvoiceItemSchema = z.object({
