@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,10 +17,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { 
   Building2, User, Briefcase, CheckCircle2, 
   ChevronLeft, ChevronRight, Loader2, Upload, X, File, Shield, Sparkles,
-  Phone, Mail, MapPin, ArrowLeft
+  Phone, Mail, MapPin, ArrowLeft, Save
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBranding } from "@/contexts/BrandingContext";
+
+const STORAGE_KEY = "vendor_registration_progress";
 
 const businessEntityTypes = [
   "proprietorship", "partnership", "llp", "private_limited", "public_limited",
@@ -124,6 +126,14 @@ interface UploadedDocument {
   mimeType: string;
 }
 
+interface SavedProgress {
+  formData: Partial<VendorRegistrationForm>;
+  currentStep: number;
+  selectedCategories: string[];
+  selectedStates: string[];
+  savedAt: string;
+}
+
 const documentTypeLabels: Record<string, string> = {
   pan_card: "PAN Card",
   gst_certificate: "GST Certificate",
@@ -138,6 +148,9 @@ export default function VendorRegistrationPage() {
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
+  const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { branding } = useBranding();
@@ -164,12 +177,93 @@ export default function VendorRegistrationPage() {
     },
   });
 
+  const saveProgressToStorage = useCallback(() => {
+    try {
+      const formData = form.getValues();
+      const progress: SavedProgress = {
+        formData,
+        currentStep,
+        selectedCategories,
+        selectedStates,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+      setLastSaved(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error("Failed to save progress:", error);
+    }
+  }, [form, currentStep, selectedCategories, selectedStates]);
+
+  useEffect(() => {
+    if (!hasRestoredProgress) {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const progress: SavedProgress = JSON.parse(saved);
+          Object.entries(progress.formData).forEach(([key, value]) => {
+            if (value !== undefined) {
+              form.setValue(key as keyof VendorRegistrationForm, value as any);
+            }
+          });
+          setCurrentStep(progress.currentStep);
+          setSelectedCategories(progress.selectedCategories || []);
+          setSelectedStates(progress.selectedStates || []);
+          setLastSaved(new Date(progress.savedAt).toLocaleTimeString());
+          toast({
+            title: "Progress Restored",
+            description: "Your previous form data has been restored.",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to restore progress:", error);
+      }
+      setHasRestoredProgress(true);
+    }
+  }, [hasRestoredProgress, form, toast]);
+
+  useEffect(() => {
+    if (!hasRestoredProgress) return;
+    
+    const subscription = form.watch(() => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        saveProgressToStorage();
+      }, 1000);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [form, hasRestoredProgress, saveProgressToStorage]);
+
+  useEffect(() => {
+    if (hasRestoredProgress) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        saveProgressToStorage();
+      }, 500);
+    }
+  }, [currentStep, selectedCategories, selectedStates, hasRestoredProgress, saveProgressToStorage]);
+
+  const clearProgress = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setLastSaved(null);
+  };
+
   const createRegistration = useMutation({
     mutationFn: async (data: VendorRegistrationForm) => {
       const response = await apiRequest("POST", "/api/vendor-registrations", data);
       return response.json();
     },
     onSuccess: () => {
+      clearProgress();
       toast({
         title: "Registration Submitted!",
         description: "Thank you for registering. Our team will review your application and contact you soon.",
@@ -274,8 +368,14 @@ export default function VendorRegistrationPage() {
     form.setValue("serviceStates", updated);
   };
 
-  const nextStep = () => currentStep < steps.length && setCurrentStep(currentStep + 1);
-  const prevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+  const nextStep = () => {
+    saveProgressToStorage();
+    currentStep < steps.length && setCurrentStep(currentStep + 1);
+  };
+  const prevStep = () => {
+    saveProgressToStorage();
+    currentStep > 1 && setCurrentStep(currentStep - 1);
+  };
   const onSubmit = (data: VendorRegistrationForm) => createRegistration.mutate(data);
 
   const formatCategoryLabel = (category: string) => {
@@ -283,10 +383,9 @@ export default function VendorRegistrationPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50 overflow-hidden">
-      {/* Compact Header */}
-      <header className="bg-gradient-to-r from-[#601a29] to-[#7a2233] text-white px-4 py-3 flex-shrink-0">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <header className="bg-gradient-to-r from-[#601a29] to-[#7a2233] text-white px-3 sm:px-4 py-3 flex-shrink-0">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate("/")} 
@@ -295,21 +394,20 @@ export default function VendorRegistrationPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="h-6 w-px bg-white/20" />
+            <div className="h-6 w-px bg-white/20 hidden sm:block" />
             <div>
-              <h1 className="text-lg font-bold" data-testid="text-page-title">Partner Registration</h1>
+              <h1 className="text-base sm:text-lg font-bold" data-testid="text-page-title">Partner Registration</h1>
               <p className="text-xs text-white/70">Join {branding.company.name}</p>
             </div>
           </div>
           
-          {/* Compact Step Indicator */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
             {steps.map((step, idx) => (
-              <div key={step.id} className="flex items-center">
+              <div key={step.id} className="flex items-center flex-shrink-0">
                 <button
                   onClick={() => setCurrentStep(step.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all",
+                    "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-full text-xs font-medium transition-all",
                     currentStep === step.id
                       ? "bg-white text-[#601a29]"
                       : currentStep > step.id
@@ -323,11 +421,11 @@ export default function VendorRegistrationPage() {
                   ) : (
                     <step.icon className="w-3.5 h-3.5" />
                   )}
-                  <span className="hidden sm:inline">{step.title}</span>
+                  <span className="hidden xs:inline sm:inline">{step.title}</span>
                 </button>
                 {idx < steps.length - 1 && (
                   <div className={cn(
-                    "w-4 h-0.5 mx-0.5",
+                    "w-3 sm:w-4 h-0.5 mx-0.5",
                     currentStep > step.id ? "bg-[#d4af37]" : "bg-white/20"
                   )} />
                 )}
@@ -337,10 +435,34 @@ export default function VendorRegistrationPage() {
         </div>
       </header>
 
-      {/* Form Content */}
+      {lastSaved && (
+        <div className="bg-green-50 border-b border-green-100 px-3 sm:px-4 py-2">
+          <div className="max-w-5xl mx-auto flex items-center justify-between text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-green-700">
+              <Save className="w-3.5 h-3.5" />
+              <span>Progress auto-saved at {lastSaved}</span>
+            </div>
+            <button
+              onClick={() => {
+                clearProgress();
+                form.reset();
+                setCurrentStep(1);
+                setSelectedCategories([]);
+                setSelectedStates([]);
+                toast({ title: "Progress cleared", description: "Form has been reset." });
+              }}
+              className="text-green-600 hover:text-green-800 underline"
+              data-testid="button-clear-progress"
+            >
+              Clear & Start Over
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-4 h-full">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
+        <div className="max-w-4xl mx-auto p-3 sm:p-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
@@ -348,21 +470,20 @@ export default function VendorRegistrationPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.2 }}
-                className="flex-1 flex flex-col"
+                className="flex flex-col"
               >
-                <Card className="flex-1 shadow-lg border-0 flex flex-col overflow-hidden">
-                  <CardContent className="p-5 flex-1 overflow-auto">
-                    {/* Step 1: Business Profile */}
+                <Card className="shadow-lg border-0 flex flex-col overflow-hidden">
+                  <CardContent className="p-4 sm:p-5 overflow-auto">
                     {currentStep === 1 && (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <Label htmlFor="businessName" className="text-sm">Business Name <span className="text-red-500">*</span></Label>
                             <Input
                               id="businessName"
                               {...form.register("businessName")}
                               placeholder="Your registered business name"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-business-name"
                             />
                             {form.formState.errors.businessName && (
@@ -375,17 +496,17 @@ export default function VendorRegistrationPage() {
                               id="brandName"
                               {...form.register("brandName")}
                               placeholder="If different from business name"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-brand-name"
                             />
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1.5">
                             <Label className="text-sm">Entity Type <span className="text-red-500">*</span></Label>
                             <Select onValueChange={(value) => form.setValue("entityType", value as any)} defaultValue="proprietorship">
-                              <SelectTrigger className="h-9" data-testid="select-entity-type">
+                              <SelectTrigger className="h-10 sm:h-9" data-testid="select-entity-type">
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent>
@@ -407,14 +528,14 @@ export default function VendorRegistrationPage() {
                               type="number"
                               {...form.register("yearEstablished", { valueAsNumber: true })}
                               placeholder="e.g., 2015"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-year-established"
                             />
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-sm">Team Size</Label>
                             <Select onValueChange={(value) => form.setValue("employeeCount", value)}>
-                              <SelectTrigger className="h-9" data-testid="select-employee-count">
+                              <SelectTrigger className="h-10 sm:h-9" data-testid="select-employee-count">
                                 <SelectValue placeholder="Select" />
                               </SelectTrigger>
                               <SelectContent>
@@ -426,11 +547,11 @@ export default function VendorRegistrationPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <Label className="text-sm">Annual Turnover</Label>
                             <Select onValueChange={(value) => form.setValue("annualTurnover", value)}>
-                              <SelectTrigger className="h-9" data-testid="select-annual-turnover">
+                              <SelectTrigger className="h-10 sm:h-9" data-testid="select-annual-turnover">
                                 <SelectValue placeholder="Select range" />
                               </SelectTrigger>
                               <SelectContent>
@@ -450,13 +571,13 @@ export default function VendorRegistrationPage() {
                             <Shield className="w-4 h-4 text-[#601a29]" />
                             Tax & Registration
                           </h3>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                               <Label className="text-sm">PAN Number</Label>
                               <Input
                                 {...form.register("panNumber")}
                                 placeholder="ABCDE1234F"
-                                className="h-9 uppercase"
+                                className="h-10 sm:h-9 uppercase"
                                 data-testid="input-pan-number"
                               />
                               {form.formState.errors.panNumber && (
@@ -468,7 +589,7 @@ export default function VendorRegistrationPage() {
                               <Input
                                 {...form.register("gstNumber")}
                                 placeholder="22ABCDE1234F1Z5"
-                                className="h-9 uppercase"
+                                className="h-10 sm:h-9 uppercase"
                                 data-testid="input-gst-number"
                               />
                               {form.formState.errors.gstNumber && (
@@ -480,16 +601,15 @@ export default function VendorRegistrationPage() {
                       </div>
                     )}
 
-                    {/* Step 2: Contact Details */}
                     {currentStep === 2 && (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <Label className="text-sm">Contact Person <span className="text-red-500">*</span></Label>
                             <Input
                               {...form.register("contactPersonName")}
                               placeholder="Full name"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-contact-name"
                             />
                             {form.formState.errors.contactPersonName && (
@@ -501,13 +621,13 @@ export default function VendorRegistrationPage() {
                             <Input
                               {...form.register("contactPersonDesignation")}
                               placeholder="e.g., Owner, Manager"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-designation"
                             />
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <Label className="text-sm flex items-center gap-1.5">
                               <Mail className="w-3.5 h-3.5" /> Email <span className="text-red-500">*</span>
@@ -516,7 +636,7 @@ export default function VendorRegistrationPage() {
                               type="email"
                               {...form.register("contactEmail")}
                               placeholder="your@email.com"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-email"
                             />
                             {form.formState.errors.contactEmail && (
@@ -530,7 +650,7 @@ export default function VendorRegistrationPage() {
                             <Input
                               {...form.register("contactPhone")}
                               placeholder="+91 98765 43210"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-phone"
                             />
                             {form.formState.errors.contactPhone && (
@@ -548,18 +668,18 @@ export default function VendorRegistrationPage() {
                             <Input
                               {...form.register("registeredAddress")}
                               placeholder="Full business address"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-address"
                             />
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                               <Input 
                                 {...form.register("registeredCity")} 
                                 placeholder="City" 
-                                className="h-9" 
+                                className="h-10 sm:h-9" 
                                 data-testid="input-city" 
                               />
                               <Select onValueChange={(value) => form.setValue("registeredState", value)}>
-                                <SelectTrigger className="h-9" data-testid="select-state">
+                                <SelectTrigger className="h-10 sm:h-9" data-testid="select-state">
                                   <SelectValue placeholder="State" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -572,7 +692,7 @@ export default function VendorRegistrationPage() {
                                 {...form.register("registeredPincode")} 
                                 placeholder="Pincode" 
                                 maxLength={6} 
-                                className="h-9" 
+                                className="h-10 sm:h-9" 
                                 data-testid="input-pincode" 
                               />
                             </div>
@@ -581,21 +701,20 @@ export default function VendorRegistrationPage() {
 
                         <div className="pt-3 border-t">
                           <h3 className="text-sm font-semibold text-gray-800 mb-3">Online Presence <span className="text-gray-400 font-normal">(Optional)</span></h3>
-                          <div className="grid grid-cols-2 gap-3">
-                            <Input {...form.register("websiteUrl")} placeholder="Website URL" className="h-9" data-testid="input-website" />
-                            <Input {...form.register("instagramUrl")} placeholder="@instagram" className="h-9" data-testid="input-instagram" />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <Input {...form.register("websiteUrl")} placeholder="Website URL" className="h-10 sm:h-9" data-testid="input-website" />
+                            <Input {...form.register("instagramUrl")} placeholder="@instagram" className="h-10 sm:h-9" data-testid="input-instagram" />
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Step 3: Services & Coverage */}
                     {currentStep === 3 && (
                       <div className="space-y-4">
                         <div>
                           <Label className="text-sm font-semibold">Service Categories <span className="text-red-500">*</span></Label>
                           <p className="text-xs text-gray-500 mb-2">Select all that apply</p>
-                          <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 sm:max-h-32 overflow-y-auto p-2 border rounded-lg bg-gray-50">
                             {vendorCategories.map(category => (
                               <div
                                 key={category}
@@ -612,7 +731,7 @@ export default function VendorRegistrationPage() {
                                   checked={selectedCategories.includes(category)} 
                                   className="w-3.5 h-3.5 data-[state=checked]:bg-white data-[state=checked]:text-[#601a29] data-[state=checked]:border-white" 
                                 />
-                                <span className="truncate">{formatCategoryLabel(category)}</span>
+                                <span className="truncate text-xs sm:text-sm">{formatCategoryLabel(category)}</span>
                               </div>
                             ))}
                           </div>
@@ -626,15 +745,15 @@ export default function VendorRegistrationPage() {
                           <Textarea
                             {...form.register("serviceDescription")}
                             placeholder="What makes your services special..."
-                            className="min-h-[60px] resize-none"
+                            className="min-h-[80px] sm:min-h-[60px] resize-none"
                             data-testid="input-service-description"
                           />
                         </div>
 
                         <div className="pt-3 border-t">
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                             <h3 className="text-sm font-semibold text-gray-800">Service Coverage</h3>
-                            <label className="flex items-center gap-2 px-3 py-1.5 bg-[#d4af37]/10 rounded-full cursor-pointer hover:bg-[#d4af37]/20 transition-colors">
+                            <label className="flex items-center gap-2 px-3 py-1.5 bg-[#d4af37]/10 rounded-full cursor-pointer hover:bg-[#d4af37]/20 transition-colors w-fit">
                               <Checkbox
                                 checked={form.watch("panIndiaService")}
                                 onCheckedChange={(checked) => form.setValue("panIndiaService", checked as boolean)}
@@ -644,12 +763,12 @@ export default function VendorRegistrationPage() {
                               <span className="text-sm font-medium text-gray-700">Pan-India</span>
                             </label>
                           </div>
-                          <div className="grid grid-cols-4 gap-1.5 max-h-24 overflow-y-auto p-2 border rounded-lg bg-gray-50">
+                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-1.5 max-h-32 sm:max-h-24 overflow-y-auto p-2 border rounded-lg bg-gray-50">
                             {indianStates.slice(0, 20).map(state => (
                               <div
                                 key={state}
                                 className={cn(
-                                  "px-2 py-1 rounded text-xs cursor-pointer text-center transition-all truncate",
+                                  "px-2 py-1.5 sm:py-1 rounded text-xs cursor-pointer text-center transition-all truncate",
                                   selectedStates.includes(state)
                                     ? "bg-[#601a29] text-white"
                                     : "bg-white hover:bg-gray-100"
@@ -663,11 +782,11 @@ export default function VendorRegistrationPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-3 border-t">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t">
                           <div className="space-y-1.5">
                             <Label className="text-sm">Pricing Tier</Label>
                             <Select onValueChange={(value) => form.setValue("pricingTier", value)}>
-                              <SelectTrigger className="h-9" data-testid="select-pricing-tier">
+                              <SelectTrigger className="h-10 sm:h-9" data-testid="select-pricing-tier">
                                 <SelectValue placeholder="Select tier" />
                               </SelectTrigger>
                               <SelectContent>
@@ -684,7 +803,7 @@ export default function VendorRegistrationPage() {
                               type="number"
                               {...form.register("minimumBudget", { valueAsNumber: true })}
                               placeholder="e.g., 50000"
-                              className="h-9"
+                              className="h-10 sm:h-9"
                               data-testid="input-minimum-budget"
                             />
                           </div>
@@ -692,15 +811,14 @@ export default function VendorRegistrationPage() {
                       </div>
                     )}
 
-                    {/* Step 4: Complete Registration */}
                     {currentStep === 4 && (
                       <div className="space-y-4">
-                        <div className="bg-gradient-to-r from-[#601a29]/5 to-[#d4af37]/5 rounded-lg p-4 border border-[#601a29]/10">
+                        <div className="bg-gradient-to-r from-[#601a29]/5 to-[#d4af37]/5 rounded-lg p-3 sm:p-4 border border-[#601a29]/10">
                           <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                             <Upload className="w-4 h-4 text-[#601a29]" />
                             Documents <span className="text-gray-400 font-normal">(Optional)</span>
                           </h3>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {Object.entries(documentTypeLabels).map(([docType, label]) => {
                               const uploadedDoc = uploadedDocuments.find(d => d.documentType === docType);
                               const isUploading = uploadingDoc === docType;
@@ -741,7 +859,7 @@ export default function VendorRegistrationPage() {
                             <Shield className="w-4 h-4 text-[#601a29]" />
                             Declarations
                           </h3>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <label className="flex items-center gap-2 p-3 border rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
                               <Checkbox
                                 checked={form.watch("hasNoPendingLitigation")}
@@ -762,7 +880,7 @@ export default function VendorRegistrationPage() {
                         </div>
 
                         <div className="pt-3 border-t">
-                          <label className="flex items-start gap-3 p-4 border-2 border-[#601a29]/20 rounded-lg bg-[#601a29]/5 cursor-pointer hover:bg-[#601a29]/10 transition-colors">
+                          <label className="flex items-start gap-3 p-3 sm:p-4 border-2 border-[#601a29]/20 rounded-lg bg-[#601a29]/5 cursor-pointer hover:bg-[#601a29]/10 transition-colors">
                             <Checkbox
                               checked={form.watch("agreesToTerms")}
                               onCheckedChange={(checked) => form.setValue("agreesToTerms", checked as boolean)}
@@ -782,18 +900,17 @@ export default function VendorRegistrationPage() {
                     )}
                   </CardContent>
 
-                  {/* Navigation Footer */}
-                  <div className="px-5 py-4 bg-gray-50 border-t flex items-center justify-between flex-shrink-0">
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 bg-gray-50 border-t flex items-center justify-between flex-shrink-0">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={prevStep}
                       disabled={currentStep === 1}
-                      className="gap-1.5 h-9"
+                      className="gap-1 sm:gap-1.5 h-10 sm:h-9 text-sm"
                       data-testid="button-prev"
                     >
                       <ChevronLeft className="w-4 h-4" />
-                      Back
+                      <span className="hidden xs:inline">Back</span>
                     </Button>
 
                     <div className="flex items-center gap-1.5">
@@ -816,23 +933,24 @@ export default function VendorRegistrationPage() {
                       <Button
                         type="button"
                         onClick={nextStep}
-                        className="gap-1.5 h-9 bg-[#601a29] hover:bg-[#4a1320]"
+                        className="gap-1 sm:gap-1.5 h-10 sm:h-9 bg-[#601a29] hover:bg-[#4a1320] text-sm"
                         data-testid="button-next"
                       >
-                        Continue
+                        <span className="hidden xs:inline">Continue</span>
+                        <span className="xs:hidden">Next</span>
                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     ) : (
                       <Button
                         type="submit"
                         disabled={createRegistration.isPending}
-                        className="gap-1.5 h-9 bg-gradient-to-r from-[#601a29] to-[#d4af37] hover:from-[#4a1320] hover:to-[#c5a030] min-w-[140px]"
+                        className="gap-1 sm:gap-1.5 h-10 sm:h-9 bg-gradient-to-r from-[#601a29] to-[#d4af37] hover:from-[#4a1320] hover:to-[#c5a030] min-w-[100px] sm:min-w-[140px] text-sm"
                         data-testid="button-submit"
                       >
                         {createRegistration.isPending ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Submitting...
+                            <span className="hidden sm:inline">Submitting...</span>
                           </>
                         ) : (
                           <>
