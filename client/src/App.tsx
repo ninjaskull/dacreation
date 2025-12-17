@@ -261,8 +261,9 @@ function Router() {
 function LeadCaptureWidgets() {
   const [location] = useLocation();
   const isAdminPage = location.startsWith("/admin");
+  const isVendorRegistration = location === "/vendor-registration";
   
-  if (isAdminPage) return null;
+  if (isAdminPage || isVendorRegistration) return null;
   
   return (
     <>
