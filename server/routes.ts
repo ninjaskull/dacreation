@@ -1824,19 +1824,35 @@ export async function registerRoutes(
       }
       
       if (invoice.status === 'sent' && !invoice.viewedAt) {
-        await storage.updateInvoice(req.params.id, { status: 'viewed' } as any);
+        try {
+          await storage.updateInvoice(req.params.id, { status: 'viewed' } as any);
+        } catch (e) {
+          console.error("Failed to update invoice viewed status:", e);
+        }
       }
 
       let template = null;
       if (invoice.templateId) {
-        template = await storage.getInvoiceTemplateById(invoice.templateId);
+        try {
+          template = await storage.getInvoiceTemplateById(invoice.templateId);
+        } catch (e) {
+          console.error("Failed to fetch template:", e);
+        }
       }
       if (!template) {
-        template = await storage.getDefaultInvoiceTemplate();
+        try {
+          template = await storage.getDefaultInvoiceTemplate();
+        } catch (e) {
+          console.error("Failed to fetch default template:", e);
+        }
       }
 
-      const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+      const companySettings = await storage.getCompanySettings();
+      
+      const items = invoice.items || [];
+
+      const formatCurrency = (amount: number | null | undefined) => {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
       };
 
       const html = `
@@ -1885,11 +1901,12 @@ export async function registerRoutes(
   <div class="invoice">
     <div class="header">
       <div class="company-info">
-        ${template?.showLogo && template?.logoUrl ? `<img src="${template.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 10px;">` : ''}
-        <h1>${template?.companyName || 'Your Company'}</h1>
-        <p>${template?.companyAddress || ''}</p>
-        <p>${template?.companyPhone || ''} | ${template?.companyEmail || ''}</p>
-        ${template?.showGst && template?.companyGst ? `<p>GSTIN: ${template.companyGst}</p>` : ''}
+        ${template?.showLogo && template?.logoUrl ? `<img src="${template.logoUrl}" alt="Logo" style="height: 60px; margin-bottom: 10px;">` : 
+          (companySettings?.logo ? `<img src="${companySettings.logo}" alt="Logo" style="height: 60px; margin-bottom: 10px;">` : '')}
+        <h1>${template?.companyName || companySettings?.name || 'Your Company'}</h1>
+        <p>${template?.companyAddress || companySettings?.address || ''}</p>
+        <p>${template?.companyPhone || companySettings?.phone || ''} | ${template?.companyEmail || companySettings?.email || ''}</p>
+        ${(template?.showGst && template?.companyGst) || companySettings?.taxId ? `<p>GSTIN: ${template?.companyGst || companySettings?.taxId}</p>` : ''}
       </div>
       <div class="invoice-info">
         <h2>INVOICE</h2>
@@ -1928,16 +1945,16 @@ export async function registerRoutes(
           </tr>
         </thead>
         <tbody>
-          ${invoice.items?.map((item, i) => `
+          ${items.length > 0 ? items.map((item: any, i: number) => `
           <tr>
             <td>${i + 1}</td>
-            <td><strong>${item.name}</strong>${item.description ? `<br><small style="color:#666;">${item.description}</small>` : ''}</td>
+            <td><strong>${item.name || ''}</strong>${item.description ? `<br><small style="color:#666;">${item.description}</small>` : ''}</td>
             <td>${item.hsnCode || item.sacCode || '-'}</td>
-            <td class="text-right">${item.quantity} ${item.unit || ''}</td>
+            <td class="text-right">${item.quantity || 0} ${item.unit || ''}</td>
             <td class="text-right">${formatCurrency(item.unitPrice)}</td>
             <td class="text-right">${formatCurrency(item.amount)}</td>
           </tr>
-          `).join('') || '<tr><td colspan="6">No items</td></tr>'}
+          `).join('') : '<tr><td colspan="6" style="text-align:center;color:#666;">No items</td></tr>'}
         </tbody>
       </table>
       <div class="totals">
@@ -2052,11 +2069,35 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Invoice not found" });
       }
 
-      const items = await storage.getInvoiceItems(req.params.id);
-      const companySettings = await storage.getCompanySettings();
-      let template = null;
+      let items: any[] = [];
+      try {
+        items = await storage.getInvoiceItems(req.params.id);
+      } catch (e) {
+        console.error("Failed to fetch invoice items:", e);
+        items = invoice.items || [];
+      }
+
+      let companySettings: any = null;
+      try {
+        companySettings = await storage.getCompanySettings();
+      } catch (e) {
+        console.error("Failed to fetch company settings:", e);
+      }
+
+      let template: any = null;
       if (invoice.templateId) {
-        template = await storage.getInvoiceTemplateById(invoice.templateId);
+        try {
+          template = await storage.getInvoiceTemplateById(invoice.templateId);
+        } catch (e) {
+          console.error("Failed to fetch invoice template:", e);
+        }
+      }
+      if (!template) {
+        try {
+          template = await storage.getDefaultInvoiceTemplate();
+        } catch (e) {
+          console.error("Failed to fetch default template:", e);
+        }
       }
 
       const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -2144,17 +2185,48 @@ export async function registerRoutes(
       doc.rect(340, yPosition, 205, 25).fill('#f1f5f9');
       doc.fontSize(12).fillColor('#333').text('Total:', 350, yPosition + 6).text(formatCurrency(invoice.totalAmount), 420, yPosition + 6, { width: 120, align: 'right' });
 
+      if (invoice.paidAmount && invoice.paidAmount > 0) {
+        yPosition += 35;
+        doc.fontSize(10).fillColor('#16a34a').text('Paid:', 340, yPosition).text(formatCurrency(invoice.paidAmount), 420, yPosition, { width: 120, align: 'right' });
+        yPosition += 15;
+        doc.fontSize(11).fillColor('#dc2626').text('Balance Due:', 340, yPosition).text(formatCurrency(invoice.balanceDue || 0), 420, yPosition, { width: 120, align: 'right' });
+      }
+
       if (invoice.notes) {
-        yPosition += 50;
+        yPosition += 40;
         doc.fontSize(10).fillColor('#333').text('Notes:', 50, yPosition);
         doc.fontSize(9).fillColor('#666').text(invoice.notes, 50, yPosition + 15, { width: 495 });
+        yPosition += 45;
       }
 
       if (invoice.termsAndConditions || template?.termsAndConditions) {
-        yPosition += 60;
+        yPosition += 20;
         doc.fontSize(10).fillColor('#333').text('Terms & Conditions:', 50, yPosition);
         doc.fontSize(9).fillColor('#666').text(invoice.termsAndConditions || template?.termsAndConditions || '', 50, yPosition + 15, { width: 495 });
+        yPosition += 45;
       }
+
+      if (template?.showBankDetails && (template?.bankName || template?.bankAccountNumber || companySettings?.bankName)) {
+        yPosition += 20;
+        doc.fontSize(10).fillColor('#333').text('Bank Details:', 50, yPosition);
+        yPosition += 15;
+        doc.fontSize(9).fillColor('#666');
+        const bankName = template?.bankName || companySettings?.bankName;
+        const bankAccount = template?.bankAccountNumber || companySettings?.bankAccountNumber;
+        const bankIfsc = template?.bankIfsc || companySettings?.bankIfsc;
+        const bankBranch = template?.bankBranch || companySettings?.bankBranch;
+        if (bankName) { doc.text(`Bank: ${bankName}`, 50, yPosition); yPosition += 12; }
+        if (bankAccount) { doc.text(`Account No: ${bankAccount}`, 50, yPosition); yPosition += 12; }
+        if (bankIfsc) { doc.text(`IFSC: ${bankIfsc}`, 50, yPosition); yPosition += 12; }
+        if (bankBranch) { doc.text(`Branch: ${bankBranch}`, 50, yPosition); yPosition += 12; }
+      }
+
+      if (template?.showUpi && (template?.upiId || companySettings?.upiId)) {
+        yPosition += 10;
+        doc.fontSize(9).fillColor('#666').text(`UPI: ${template?.upiId || companySettings?.upiId}`, 50, yPosition);
+      }
+
+      doc.fontSize(8).fillColor('#999').text(template?.footerText || 'Thank you for your business!', 50, 780, { align: 'center', width: 495 });
 
       doc.end();
     } catch (error) {

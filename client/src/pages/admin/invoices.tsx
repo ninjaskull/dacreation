@@ -166,10 +166,19 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceWithDetails | null>(null);
+  const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithDetails | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
+  const [paymentData, setPaymentData] = useState({
+    amount: 0,
+    paymentDate: format(new Date(), "yyyy-MM-dd"),
+    paymentMethod: "bank_transfer",
+    transactionId: "",
+    notes: "",
+  });
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     clientId: null,
@@ -285,6 +294,29 @@ export default function InvoicesPage() {
     },
     onError: () => {
       toast({ title: "Failed to send invoice", variant: "destructive" });
+    },
+  });
+
+  const recordPaymentMutation = useMutation({
+    mutationFn: async ({ invoiceId, data }: { invoiceId: string; data: any }) => {
+      const res = await apiRequest("POST", `/api/invoices/${invoiceId}/payments`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Payment recorded successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setShowPaymentDialog(false);
+      setPaymentInvoice(null);
+      setPaymentData({
+        amount: 0,
+        paymentDate: format(new Date(), "yyyy-MM-dd"),
+        paymentMethod: "bank_transfer",
+        transactionId: "",
+        notes: "",
+      });
+    },
+    onError: () => {
+      toast({ title: "Failed to record payment", variant: "destructive" });
     },
   });
 
@@ -609,10 +641,36 @@ export default function InvoicesPage() {
             <h1 className="text-2xl font-bold text-slate-900" data-testid="text-page-title">Invoice Generator</h1>
             <p className="text-sm text-slate-500 mt-1">Create and manage professional invoices</p>
           </div>
-          <Button onClick={() => { resetForm(); setShowCreateDialog(true); }} data-testid="button-create-invoice">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Invoice
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/invoices/export?format=csv', { credentials: 'include' });
+                  if (!response.ok) throw new Error('Export failed');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `invoices-${new Date().toISOString().split('T')[0]}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (error) {
+                  console.error('Export failed:', error);
+                }
+              }}
+              data-testid="button-export-invoices"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button onClick={() => { resetForm(); setShowCreateDialog(true); }} data-testid="button-create-invoice">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Invoice
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -746,9 +804,24 @@ export default function InvoicesPage() {
                       <TableCell>{format(new Date(invoice.dueDate), "dd MMM yyyy")}</TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(invoice.totalAmount)}</TableCell>
                       <TableCell>
-                        <Badge className={statusColors[invoice.status]}>
-                          {statusLabels[invoice.status]}
-                        </Badge>
+                        {(() => {
+                          const isOverdue = invoice.status !== 'paid' && 
+                            invoice.status !== 'cancelled' && 
+                            new Date(invoice.dueDate) < new Date();
+                          const displayStatus = isOverdue ? 'overdue' : invoice.status;
+                          return (
+                            <div className="flex items-center gap-1">
+                              <Badge className={statusColors[displayStatus]}>
+                                {statusLabels[displayStatus]}
+                              </Badge>
+                              {isOverdue && invoice.balanceDue > 0 && (
+                                <span className="text-xs text-red-600 font-medium">
+                                  ({formatCurrency(invoice.balanceDue)} due)
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -771,6 +844,23 @@ export default function InvoicesPage() {
                               Download PDF
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setPaymentInvoice(invoice);
+                                setPaymentData({
+                                  amount: invoice.balanceDue || 0,
+                                  paymentDate: format(new Date(), "yyyy-MM-dd"),
+                                  paymentMethod: "bank_transfer",
+                                  transactionId: "",
+                                  notes: "",
+                                });
+                                setShowPaymentDialog(true);
+                              }}
+                              disabled={invoice.status === 'paid' || invoice.status === 'cancelled'}
+                            >
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Record Payment
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSendEmail(invoice)}>
                               <Send className="h-4 w-4 mr-2" />
                               Send via Email
@@ -1444,22 +1534,147 @@ export default function InvoicesPage() {
             </ScrollArea>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>
               Close
             </Button>
             {previewInvoice && (
               <>
-                <Button variant="outline" onClick={() => handleDownloadPdf(previewInvoice.id)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(`/api/invoices/${previewInvoice.id}/html`, '_blank')}
+                  data-testid="button-open-invoice-html"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Full Page
+                </Button>
+                <Button variant="outline" onClick={() => handleDownloadPdf(previewInvoice.id)} data-testid="button-download-pdf">
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
                 </Button>
-                <Button onClick={() => handleSendEmail(previewInvoice)}>
+                <Button onClick={() => handleSendEmail(previewInvoice)} data-testid="button-send-email">
                   <Send className="h-4 w-4 mr-2" />
                   Send via Email
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+            <DialogDescription>
+              {paymentInvoice && (
+                <>
+                  Invoice: <strong>{paymentInvoice.invoiceNumber}</strong> | 
+                  Total: {formatCurrency(paymentInvoice.totalAmount)} | 
+                  Balance: <span className="text-red-600 font-medium">{formatCurrency(paymentInvoice.balanceDue)}</span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Payment Amount *</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="number"
+                  value={paymentData.amount}
+                  onChange={(e) => setPaymentData({ ...paymentData, amount: parseInt(e.target.value) || 0 })}
+                  placeholder="0"
+                  className="pl-9"
+                  min={0}
+                  max={paymentInvoice?.balanceDue || 0}
+                  data-testid="input-payment-amount"
+                />
+              </div>
+              {paymentInvoice && paymentData.amount > 0 && paymentData.amount < paymentInvoice.balanceDue && (
+                <p className="text-sm text-amber-600">Partial payment - {formatCurrency(paymentInvoice.balanceDue - paymentData.amount)} will remain due</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Date *</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="date"
+                  value={paymentData.paymentDate}
+                  onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
+                  className="pl-9"
+                  data-testid="input-payment-date"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Method</Label>
+              <Select 
+                value={paymentData.paymentMethod} 
+                onValueChange={(v) => setPaymentData({ ...paymentData, paymentMethod: v })}
+              >
+                <SelectTrigger data-testid="select-payment-method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="credit_card">Credit Card</SelectItem>
+                  <SelectItem value="debit_card">Debit Card</SelectItem>
+                  <SelectItem value="net_banking">Net Banking</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Transaction ID / Reference</Label>
+              <Input
+                value={paymentData.transactionId}
+                onChange={(e) => setPaymentData({ ...paymentData, transactionId: e.target.value })}
+                placeholder="Transaction reference number"
+                data-testid="input-transaction-id"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea
+                value={paymentData.notes}
+                onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
+                placeholder="Payment notes..."
+                className="min-h-[80px]"
+                data-testid="input-payment-notes"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (paymentInvoice && paymentData.amount > 0) {
+                  recordPaymentMutation.mutate({
+                    invoiceId: paymentInvoice.id,
+                    data: paymentData,
+                  });
+                }
+              }}
+              disabled={!paymentData.amount || paymentData.amount <= 0 || recordPaymentMutation.isPending}
+              data-testid="button-record-payment"
+            >
+              {recordPaymentMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Record Payment
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

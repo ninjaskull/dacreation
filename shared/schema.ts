@@ -981,6 +981,92 @@ export const invoiceLayouts = [
   { value: "elegant", label: "Elegant" },
 ] as const;
 
+export const recurringFrequencies = ["weekly", "biweekly", "monthly", "quarterly", "yearly"] as const;
+export type RecurringFrequency = typeof recurringFrequencies[number];
+
+export const recurringInvoices = pgTable("recurring_invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  clientId: varchar("client_id").references(() => clients.id),
+  templateId: varchar("template_id").references(() => invoiceTemplates.id),
+  frequency: text("frequency").notNull().default("monthly"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  nextInvoiceDate: timestamp("next_invoice_date").notNull(),
+  dayOfMonth: integer("day_of_month").default(1),
+  dayOfWeek: integer("day_of_week").default(1),
+  autoSend: boolean("auto_send").notNull().default(false),
+  items: jsonb("items").notNull().default([]),
+  subtotal: integer("subtotal").notNull().default(0),
+  discountType: text("discount_type").default("percentage"),
+  discountValue: integer("discount_value").default(0),
+  taxType: text("tax_type").default("gst"),
+  cgstRate: integer("cgst_rate").default(9),
+  sgstRate: integer("sgst_rate").default(9),
+  igstRate: integer("igst_rate").default(18),
+  totalAmount: integer("total_amount").notNull().default(0),
+  notes: text("notes"),
+  termsAndConditions: text("terms_and_conditions"),
+  clientName: text("client_name"),
+  clientEmail: text("client_email"),
+  clientPhone: text("client_phone"),
+  clientAddress: text("client_address"),
+  clientGst: text("client_gst"),
+  generatedCount: integer("generated_count").notNull().default(0),
+  lastGeneratedAt: timestamp("last_generated_at"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertRecurringInvoiceSchema = createInsertSchema(recurringInvoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  generatedCount: true,
+  lastGeneratedAt: true,
+}).extend({
+  startDate: z.date().or(z.string()),
+  endDate: z.date().or(z.string()).optional().nullable(),
+  nextInvoiceDate: z.date().or(z.string()),
+  items: z.array(z.any()).optional(),
+});
+
+export const updateRecurringInvoiceSchema = z.object({
+  name: z.string().optional(),
+  clientId: z.string().nullable().optional(),
+  templateId: z.string().nullable().optional(),
+  frequency: z.enum(recurringFrequencies).optional(),
+  startDate: z.date().or(z.string()).optional(),
+  endDate: z.date().or(z.string()).nullable().optional(),
+  nextInvoiceDate: z.date().or(z.string()).optional(),
+  dayOfMonth: z.number().optional(),
+  dayOfWeek: z.number().optional(),
+  autoSend: z.boolean().optional(),
+  items: z.array(z.any()).optional(),
+  subtotal: z.number().optional(),
+  discountType: z.string().optional(),
+  discountValue: z.number().optional(),
+  taxType: z.string().optional(),
+  cgstRate: z.number().optional(),
+  sgstRate: z.number().optional(),
+  igstRate: z.number().optional(),
+  totalAmount: z.number().optional(),
+  notes: z.string().optional(),
+  termsAndConditions: z.string().optional(),
+  clientName: z.string().optional(),
+  clientEmail: z.string().optional(),
+  clientPhone: z.string().optional(),
+  clientAddress: z.string().optional(),
+  clientGst: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type InsertRecurringInvoice = z.infer<typeof insertRecurringInvoiceSchema>;
+export type UpdateRecurringInvoice = z.infer<typeof updateRecurringInvoiceSchema>;
+export type RecurringInvoice = typeof recurringInvoices.$inferSelect;
+
 // Callback Requests Schema
 export const callbackRequestStatuses = ["pending", "called", "no_answer", "scheduled", "completed", "cancelled"] as const;
 export type CallbackRequestStatus = typeof callbackRequestStatuses[number];
