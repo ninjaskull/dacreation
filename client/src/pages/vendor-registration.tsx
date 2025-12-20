@@ -162,7 +162,7 @@ export default function VendorRegistrationPage() {
   const form = useForm<VendorRegistrationForm>({
     resolver: zodResolver(vendorRegistrationSchema),
     defaultValues: {
-      entityType: "proprietorship",
+      entityType: "sole_proprietor",
       categories: [],
       panIndiaService: false,
       equipmentOwned: false,
@@ -573,22 +573,23 @@ export default function VendorRegistrationPage() {
                           <div className="space-y-1.5">
                             <Label className="text-sm">Entity Type <span className="text-red-500">*</span></Label>
                             <Select 
-                              value={form.watch("entityType") || "proprietorship"}
+                              value={form.watch("entityType") || "sole_proprietor"}
                               onValueChange={(value) => form.setValue("entityType", value as any)}
                             >
                               <SelectTrigger className="h-10 sm:h-9" data-testid="select-entity-type">
                                 <SelectValue placeholder="Select entity type" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="proprietorship">Proprietorship</SelectItem>
+                                <SelectItem value="sole_proprietor">Sole Proprietor</SelectItem>
                                 <SelectItem value="partnership">Partnership</SelectItem>
                                 <SelectItem value="llp">LLP</SelectItem>
+                                <SelectItem value="opc">One Person Company (OPC)</SelectItem>
                                 <SelectItem value="private_limited">Pvt Ltd</SelectItem>
                                 <SelectItem value="public_limited">Public Ltd</SelectItem>
+                                <SelectItem value="huf">HUF</SelectItem>
                                 <SelectItem value="trust">Trust</SelectItem>
                                 <SelectItem value="society">Society</SelectItem>
-                                <SelectItem value="huf">HUF</SelectItem>
-                                <SelectItem value="individual">Individual</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
