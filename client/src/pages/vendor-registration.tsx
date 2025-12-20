@@ -714,34 +714,39 @@ export default function VendorRegistrationPage() {
                     {currentStep === 3 && (
                       <div className="space-y-4">
                         <div>
-                          <Label className="text-sm font-semibold">Service Categories <span className="text-red-500">*</span></Label>
-                          <p className="text-xs text-gray-500 mb-2">Select all that apply</p>
-                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 sm:max-h-32 overflow-y-auto p-2 border rounded-lg bg-gray-50">
-                            {vendorCategories.map(category => {
-                              const currentCategories = form.watch("categories") || [];
-                              return (
-                                <div
-                                  key={category}
-                                  className={cn(
-                                    "flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all text-sm",
-                                    currentCategories.includes(category)
-                                      ? "bg-[#601a29] text-white"
-                                      : "bg-white hover:bg-gray-100 border"
-                                  )}
-                                  onClick={() => handleCategoryToggle(category)}
-                                  data-testid={`category-${category}`}
-                                >
-                                  <Checkbox 
-                                    checked={currentCategories.includes(category)} 
-                                    className="w-3.5 h-3.5 data-[state=checked]:bg-white data-[state=checked]:text-[#601a29] data-[state=checked]:border-white" 
-                                  />
-                                  <span className="truncate text-xs sm:text-sm">{formatCategoryLabel(category)}</span>
-                                </div>
-                              );
-                            })}
+                          <Label className="text-sm font-semibold mb-3 block">Service Categories <span className="text-red-500">*</span></Label>
+                          <p className="text-xs text-gray-600 mb-3">Select all services you provide (click to toggle)</p>
+                          <div className="flex flex-wrap gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                            {vendorCategories.length > 0 ? (
+                              vendorCategories.map(category => {
+                                const currentCategories = form.watch("categories") || [];
+                                const isSelected = currentCategories.includes(category);
+                                return (
+                                  <button
+                                    key={category}
+                                    type="button"
+                                    onClick={() => handleCategoryToggle(category)}
+                                    className={cn(
+                                      "px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2",
+                                      isSelected
+                                        ? "bg-[#601a29] text-white border-[#601a29] shadow-md scale-105"
+                                        : "bg-white text-gray-700 border-gray-300 hover:border-[#601a29] hover:text-[#601a29]"
+                                    )}
+                                    data-testid={`category-${category}`}
+                                  >
+                                    {formatCategoryLabel(category)}
+                                  </button>
+                                );
+                              })
+                            ) : (
+                              <p className="text-sm text-gray-500 w-full text-center py-4">Loading categories...</p>
+                            )}
                           </div>
                           {form.formState.errors.categories && (
-                            <p className="text-xs text-red-500 mt-1">{form.formState.errors.categories.message}</p>
+                            <p className="text-xs text-red-500 mt-2">{form.formState.errors.categories.message}</p>
+                          )}
+                          {form.watch("categories")?.length > 0 && (
+                            <p className="text-xs text-green-600 mt-2">✓ {form.watch("categories")?.length} category/categories selected</p>
                           )}
                         </div>
 
