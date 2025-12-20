@@ -378,7 +378,27 @@ export default function VendorRegistrationPage() {
     saveProgressToStorage();
     currentStep > 1 && setCurrentStep(currentStep - 1);
   };
-  const onSubmit = (data: VendorRegistrationForm) => createRegistration.mutate(data);
+  const onSubmit = async (data: VendorRegistrationForm) => {
+    // Validate required fields before submission
+    const errors = [];
+    if (!data.businessName?.trim()) errors.push("Business name is required");
+    if (!data.entityType) errors.push("Entity type is required");
+    if (!data.contactPersonName?.trim()) errors.push("Contact person name is required");
+    if (!data.contactEmail?.trim()) errors.push("Contact email is required");
+    if (!data.contactPhone?.trim()) errors.push("Contact phone is required");
+    if (!data.agreesToTerms) errors.push("You must agree to Terms & Conditions");
+    
+    if (errors.length > 0) {
+      toast({
+        title: "Please complete required fields",
+        description: errors.join(", "),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createRegistration.mutate(data);
+  };
 
   const formatCategoryLabel = (category: string) => {
     return category.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
