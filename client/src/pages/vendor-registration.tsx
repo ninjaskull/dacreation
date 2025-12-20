@@ -258,8 +258,18 @@ export default function VendorRegistrationPage() {
   };
 
   const createRegistration = useMutation({
-    mutationFn: async (data: VendorRegistrationForm) => {
+    mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/vendor-registrations", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errorMessages = errorData.errors
+            .map((err: any) => `${err.path?.join('.') || 'Field'}: ${err.message}`)
+            .join(", ");
+          throw new Error(errorMessages);
+        }
+        throw new Error(errorData.message || "Registration failed. Please check your details.");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -268,9 +278,10 @@ export default function VendorRegistrationPage() {
         title: "Registration Submitted!",
         description: "Thank you for registering. Our team will review your application and contact you soon.",
       });
-      navigate("/");
+      setTimeout(() => navigate("/"), 1500);
     },
     onError: (error: any) => {
+      console.error("Registration error:", error);
       toast({
         title: "Registration Failed",
         description: error.message || "Please check your details and try again.",
@@ -379,29 +390,57 @@ export default function VendorRegistrationPage() {
     currentStep > 1 && setCurrentStep(currentStep - 1);
   };
   const onSubmit = async (data: VendorRegistrationForm) => {
-    // Validate required fields before submission
-    const errors = [];
-    if (!data.businessName?.trim()) errors.push("Business name is required");
-    if (!data.entityType) errors.push("Entity type is required");
-    if (!data.contactPersonName?.trim()) errors.push("Contact person name is required");
-    if (!data.contactEmail?.trim()) errors.push("Contact email is required");
-    if (!data.contactPhone?.trim()) errors.push("Contact phone is required");
-    if (!data.agreesToTerms) errors.push("You must agree to Terms & Conditions");
-    
-    if (errors.length > 0) {
+    try {
+      // Clean and validate data before submission
+      const cleanedData = cleanFormData(data);
+      createRegistration.mutate(cleanedData);
+    } catch (error: any) {
       toast({
-        title: "Please complete required fields",
-        description: errors.join(", "),
+        title: "Validation Error",
+        description: error.message,
         variant: "destructive",
       });
-      return;
     }
-    
-    createRegistration.mutate(data);
   };
 
   const formatCategoryLabel = (category: string) => {
     return category.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+  };
+
+  // Smart PAN formatting: ABCDE1234F
+  const formatPAN = (value: string) => {
+    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (cleaned.length > 10) return cleaned.slice(0, 10);
+    return cleaned;
+  };
+
+  // Smart GST formatting: 22ABCDE1234F1Z5
+  const formatGST = (value: string) => {
+    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (cleaned.length > 15) return cleaned.slice(0, 15);
+    return cleaned;
+  };
+
+  // Clean data before submission (remove undefined/empty values)
+  const cleanFormData = (data: VendorRegistrationForm) => {
+    const cleaned: any = { ...data };
+    
+    // Clean up empty strings to undefined
+    Object.keys(cleaned).forEach(key => {
+      if (cleaned[key] === '' || (Array.isArray(cleaned[key]) && cleaned[key].length === 0)) {
+        delete cleaned[key];
+      }
+    });
+
+    // Ensure required fields are present
+    if (!cleaned.businessName?.trim()) throw new Error("Business name is required");
+    if (!cleaned.entityType) throw new Error("Entity type is required");
+    if (!cleaned.contactPersonName?.trim()) throw new Error("Contact person name is required");
+    if (!cleaned.contactEmail?.trim()) throw new Error("Contact email is required");
+    if (!cleaned.contactPhone?.trim()) throw new Error("Contact phone is required");
+    if (!cleaned.agreesToTerms) throw new Error("You must agree to Terms & Conditions");
+
+    return cleaned;
   };
 
   return (
@@ -595,27 +634,43 @@ export default function VendorRegistrationPage() {
                           </h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                              <Label className="text-sm">PAN Number</Label>
+                              <Label className="text-sm">PAN Number <span className="text-gray-400 text-xs">(Auto-formatted)</span></Label>
                               <Input
-                                {...form.register("panNumber")}
                                 placeholder="ABCDE1234F"
+                                maxLength={10}
                                 className="h-10 sm:h-9 uppercase"
                                 data-testid="input-pan-number"
+                                value={form.watch("panNumber") || ""}
+                                onChange={(e) => {
+                                  const formatted = formatPAN(e.target.value);
+                                  form.setValue("panNumber", formatted);
+                                }}
                               />
                               {form.formState.errors.panNumber && (
                                 <p className="text-xs text-red-500">{form.formState.errors.panNumber.message}</p>
                               )}
+                              {form.watch("panNumber") && form.watch("panNumber")!.length === 10 && (
+                                <p className="text-xs text-green-600">✓ Valid PAN format</p>
+                              )}
                             </div>
                             <div className="space-y-1.5">
-                              <Label className="text-sm">GST Number</Label>
+                              <Label className="text-sm">GST Number <span className="text-gray-400 text-xs">(Auto-formatted)</span></Label>
                               <Input
-                                {...form.register("gstNumber")}
                                 placeholder="22ABCDE1234F1Z5"
+                                maxLength={15}
                                 className="h-10 sm:h-9 uppercase"
                                 data-testid="input-gst-number"
+                                value={form.watch("gstNumber") || ""}
+                                onChange={(e) => {
+                                  const formatted = formatGST(e.target.value);
+                                  form.setValue("gstNumber", formatted);
+                                }}
                               />
                               {form.formState.errors.gstNumber && (
                                 <p className="text-xs text-red-500">{form.formState.errors.gstNumber.message}</p>
+                              )}
+                              {form.watch("gstNumber") && form.watch("gstNumber")!.length === 15 && (
+                                <p className="text-xs text-green-600">✓ Valid GST format</p>
                               )}
                             </div>
                           </div>
@@ -819,7 +874,7 @@ export default function VendorRegistrationPage() {
                           {form.formState.errors.serviceStates && (
                             <p className="text-xs text-red-500 mt-2">{form.formState.errors.serviceStates.message}</p>
                           )}
-                          {form.watch("serviceStates")?.length > 0 && (
+                          {(form.watch("serviceStates")?.length ?? 0) > 0 && (
                             <p className="text-xs text-green-600 mt-2">✓ {form.watch("serviceStates")?.length} state/states selected</p>
                           )}
                         </div>
