@@ -47,6 +47,21 @@ Preferred communication style: Simple, everyday language.
     8. Consultation CTA Section
 - **Lead Attribution**: `leadSource` field tracks origin (e.g., `inquiry_form`, `popup`, `chatbot`).
 
+### Invoice System
+- **Invoice Management**: Full CRUD operations at `/admin/invoices` with invoice creation, editing, deletion, and payment tracking.
+- **Features**:
+    - Professional invoice generation with customizable templates
+    - Line items with HSN/SAC codes for GST compliance
+    - Tax calculation (CGST/SGST/IGST)
+    - Discount options (percentage or fixed amount)
+    - Invoice status tracking (draft, sent, viewed, paid, overdue, etc.)
+    - PDF download functionality with proper error handling
+    - Email sending capabilities
+    - Payment recording with multiple payment methods
+    - Invoice number auto-generation
+- **PDF Generation**: Uses PDFKit library for server-side PDF generation with error handling for stream management.
+- **Recent Fixes (Dec 20, 2025)**: Fixed PDF generation error handling to properly catch and report errors during document creation and streaming.
+
 ### Blog System
 - **Public Pages**: Blog listing at `/blog` and individual posts at `/blog/:slug`.
 - **Admin Management**: Full CRUD operations at `/admin/blog` with search, filter by status/category.

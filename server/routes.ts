@@ -2104,6 +2104,19 @@ export async function registerRoutes(
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+      
+      // Handle errors in PDF generation
+      doc.on('error', (error) => {
+        console.error("PDF document error:", error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Failed to generate invoice PDF" });
+        }
+      });
+      
+      res.on('error', (error) => {
+        console.error("Response error:", error);
+      });
+      
       doc.pipe(res);
 
       const primaryColor = template?.primaryColor || '#3B82F6';
@@ -2231,7 +2244,11 @@ export async function registerRoutes(
       doc.end();
     } catch (error) {
       console.error("Generate invoice PDF error:", error);
-      res.status(500).json({ message: "Failed to generate invoice PDF" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate invoice PDF" });
+      } else {
+        res.end();
+      }
     }
   });
 
