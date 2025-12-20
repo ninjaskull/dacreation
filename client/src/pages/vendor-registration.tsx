@@ -200,8 +200,19 @@ export default function VendorRegistrationPage() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const progress: SavedProgress = JSON.parse(saved);
+          
+          // Map old entityType values to new ones
+          const entityTypeMap: Record<string, string> = {
+            'proprietorship': 'sole_proprietor',
+            'individual': 'other',
+          };
+          
           Object.entries(progress.formData).forEach(([key, value]) => {
             if (value !== undefined) {
+              // Normalize entityType values
+              if (key === 'entityType' && typeof value === 'string' && entityTypeMap[value]) {
+                value = entityTypeMap[value];
+              }
               form.setValue(key as keyof VendorRegistrationForm, value as any);
             }
           });
