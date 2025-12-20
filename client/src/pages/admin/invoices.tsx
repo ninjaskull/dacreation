@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/layout";
+import { InvoiceBrandingSettings } from "@/components/admin/invoice-branding-settings";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ import {
   Calendar,
   Filter,
   RefreshCw,
+  Settings,
 } from "lucide-react";
 import type { Invoice, Client, InvoiceItem, InvoiceTemplate, Event, CompanySettings } from "@shared/schema";
 
@@ -167,6 +169,7 @@ export default function InvoicesPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showBrandingSettings, setShowBrandingSettings] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceWithDetails | null>(null);
   const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithDetails | null>(null);
@@ -642,6 +645,15 @@ export default function InvoicesPage() {
             <p className="text-sm text-slate-500 mt-1">Create and manage professional invoices</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setShowBrandingSettings(true)}
+              title="Invoice branding settings"
+              data-testid="button-branding-settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
             <Button 
               variant="outline" 
               onClick={async () => {
@@ -1678,6 +1690,11 @@ export default function InvoicesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <InvoiceBrandingSettings 
+        open={showBrandingSettings}
+        onOpenChange={setShowBrandingSettings}
+      />
     </AdminLayout>
   );
 }
