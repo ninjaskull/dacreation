@@ -1886,7 +1886,12 @@ export class DatabaseStorage implements IStorage {
     }
 
     const items = await this.getInvoiceItems(id);
-    const payments = await this.getInvoicePayments(id);
+    let payments: InvoicePayment[] = [];
+    try {
+      payments = await this.getInvoicePayments(id);
+    } catch (e) {
+      console.error("Failed to fetch invoice payments:", e);
+    }
 
     return { ...invoice, client, event, template, items, payments };
   }
@@ -1923,7 +1928,11 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInvoice(id: string): Promise<boolean> {
     await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
-    await db.delete(invoicePayments).where(eq(invoicePayments.invoiceId, id));
+    try {
+      await db.delete(invoicePayments).where(eq(invoicePayments.invoiceId, id));
+    } catch (e) {
+      console.error("Failed to delete invoice payments:", e);
+    }
     await db.delete(invoices).where(eq(invoices.id, id));
     return true;
   }
