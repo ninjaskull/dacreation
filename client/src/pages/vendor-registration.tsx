@@ -762,7 +762,7 @@ export default function VendorRegistrationPage() {
 
                         <div className="pt-3 border-t">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                            <h3 className="text-sm font-semibold text-gray-800">Service Coverage</h3>
+                            <Label className="text-sm font-semibold">Service Coverage <span className="text-red-500">*</span></Label>
                             <label className="flex items-center gap-2 px-3 py-1.5 bg-[#d4af37]/10 rounded-full cursor-pointer hover:bg-[#d4af37]/20 transition-colors w-fit">
                               <Checkbox
                                 checked={form.watch("panIndiaService")}
@@ -770,29 +770,38 @@ export default function VendorRegistrationPage() {
                                 className="w-4 h-4 data-[state=checked]:bg-[#d4af37] data-[state=checked]:border-[#d4af37]"
                                 data-testid="checkbox-pan-india-service"
                               />
-                              <span className="text-sm font-medium text-gray-700">Pan-India</span>
+                              <span className="text-sm font-medium text-gray-700">Pan-India Service</span>
                             </label>
                           </div>
-                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-1.5 max-h-32 sm:max-h-24 overflow-y-auto p-2 border rounded-lg bg-gray-50">
-                            {indianStates.slice(0, 20).map(state => {
+                          <p className="text-xs text-gray-600 mb-3">Select all states where you provide service (click to toggle)</p>
+                          <div className="flex flex-wrap gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                            {indianStates.map(state => {
                               const currentStates = form.watch("serviceStates") || [];
+                              const isSelected = currentStates.includes(state);
                               return (
-                                <div
+                                <button
                                   key={state}
-                                  className={cn(
-                                    "px-2 py-1.5 sm:py-1 rounded text-xs cursor-pointer text-center transition-all truncate",
-                                    currentStates.includes(state)
-                                      ? "bg-[#601a29] text-white"
-                                      : "bg-white hover:bg-gray-100"
-                                  )}
+                                  type="button"
                                   onClick={() => handleStateToggle(state)}
-                                  data-testid={`chip-state-${state.toLowerCase().replace(/\s+/g, '-')}`}
+                                  className={cn(
+                                    "px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2 whitespace-nowrap",
+                                    isSelected
+                                      ? "bg-[#601a29] text-white border-[#601a29] shadow-md scale-105"
+                                      : "bg-white text-gray-700 border-gray-300 hover:border-[#601a29] hover:text-[#601a29]"
+                                  )}
+                                  data-testid={`state-${state.toLowerCase().replace(/\s+/g, '-')}`}
                                 >
                                   {state}
-                                </div>
+                                </button>
                               );
                             })}
                           </div>
+                          {form.formState.errors.serviceStates && (
+                            <p className="text-xs text-red-500 mt-2">{form.formState.errors.serviceStates.message}</p>
+                          )}
+                          {form.watch("serviceStates")?.length > 0 && (
+                            <p className="text-xs text-green-600 mt-2">✓ {form.watch("serviceStates")?.length} state/states selected</p>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t">
