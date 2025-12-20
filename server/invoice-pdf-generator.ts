@@ -1,6 +1,7 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
+import { getTemplate, TemplateStyle, availableTemplates } from './invoice-templates';
 
 interface InvoiceData {
   invoiceNumber: string;
@@ -57,6 +58,7 @@ interface InvoiceTemplate {
   bankIfsc?: string;
   bankBranch?: string;
   upiId?: string;
+  templateStyle?: TemplateStyle;
 }
 
 class InvoicePDFGenerator {
@@ -77,6 +79,24 @@ class InvoicePDFGenerator {
   }
 
   async generateHTMLInvoice(
+    invoice: InvoiceData,
+    company: CompanyDetails,
+    template?: InvoiceTemplate,
+    templateStyle: TemplateStyle = 'modernPremium'
+  ): Promise<string> {
+    // Use the template style from template config or parameter
+    const style = template?.templateStyle || templateStyle;
+    const templateFunc = getTemplate(style);
+    
+    if (!templateFunc) {
+      console.warn(`Template style '${style}' not found, using modernPremium`);
+      return getTemplate('modernPremium')(invoice, company, template);
+    }
+    
+    return templateFunc(invoice, company, template);
+  }
+
+  async generateHTMLInvoiceOld(
     invoice: InvoiceData,
     company: CompanyDetails,
     template?: InvoiceTemplate
@@ -561,7 +581,7 @@ class InvoicePDFGenerator {
         printBackground: true,
       });
 
-      return pdfBuffer;
+      return Buffer.from(pdfBuffer);
     } finally {
       await page.close();
     }
@@ -570,9 +590,10 @@ class InvoicePDFGenerator {
   async generateInvoicePDF(
     invoice: InvoiceData,
     company: CompanyDetails,
-    template?: InvoiceTemplate
+    template?: InvoiceTemplate,
+    templateStyle: TemplateStyle = 'modernPremium'
   ): Promise<Buffer> {
-    const htmlContent = await this.generateHTMLInvoice(invoice, company, template);
+    const htmlContent = await this.generateHTMLInvoice(invoice, company, template, templateStyle);
     return this.generatePDFFromHTML(htmlContent, invoice.invoiceNumber);
   }
 
@@ -584,4 +605,4 @@ class InvoicePDFGenerator {
   }
 }
 
-export { InvoicePDFGenerator, InvoiceData, CompanyDetails, InvoiceTemplate };
+export { InvoicePDFGenerator, InvoiceData, CompanyDetails, InvoiceTemplate, availableTemplates, TemplateStyle };
