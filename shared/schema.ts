@@ -907,7 +907,7 @@ export const invoiceItems = pgTable("invoice_items", {
   taxable: boolean("taxable").notNull().default(true),
   hsnCode: text("hsn_code"),
   sacCode: text("sac_code"),
-  amount: integer("amount").notNull().default(0),
+  amount: integer("total").notNull().default(0),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

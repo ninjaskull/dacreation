@@ -2120,38 +2120,51 @@ export async function registerRoutes(
       doc.pipe(res);
 
       const primaryColor = template?.primaryColor || '#3B82F6';
+      const secondaryColor = template?.secondaryColor || '#1E40AF';
 
-      doc.fontSize(24).fillColor(primaryColor).text('INVOICE', 400, 50, { align: 'right' });
-      doc.fontSize(12).fillColor('#333').text(invoice.invoiceNumber, 400, 80, { align: 'right' });
+      // Add logo if available
+      let logoHeight = 0;
+      if (template?.logoUrl || companySettings?.logo) {
+        try {
+          const logoUrl = template?.logoUrl || companySettings?.logo;
+          doc.image(logoUrl, 50, 30, { width: 100 });
+          logoHeight = 70;
+        } catch (e) {
+          console.warn("Failed to render logo:", e);
+        }
+      }
+
+      doc.fontSize(24).fillColor(primaryColor).text('INVOICE', 400, 50 + logoHeight, { align: 'right' });
+      doc.fontSize(12).fillColor(secondaryColor).text(invoice.invoiceNumber, 400, 80 + logoHeight, { align: 'right' });
       
       if (companySettings?.name) {
-        doc.fontSize(16).fillColor('#333').text(companySettings.name, 50, 50);
+        doc.fontSize(16).fillColor(primaryColor).text(companySettings.name, 50, 50 + logoHeight);
         doc.fontSize(10).fillColor('#666');
-        let yPos = 70;
+        let yPos = 70 + logoHeight;
         if (companySettings.address) { doc.text(companySettings.address, 50, yPos); yPos += 15; }
         if (companySettings.phone) { doc.text(`Phone: ${companySettings.phone}`, 50, yPos); yPos += 12; }
         if (companySettings.email) { doc.text(`Email: ${companySettings.email}`, 50, yPos); yPos += 12; }
         if (companySettings.taxId) { doc.text(`GSTIN: ${companySettings.taxId}`, 50, yPos); }
       }
 
-      doc.moveTo(50, 130).lineTo(545, 130).strokeColor('#ddd').stroke();
+      doc.moveTo(50, 130 + logoHeight).lineTo(545, 130 + logoHeight).strokeColor(primaryColor).stroke();
 
       doc.fontSize(10).fillColor('#666');
-      doc.text(`Issue Date: ${new Date(invoice.issueDate).toLocaleDateString('en-IN')}`, 400, 145, { align: 'right' });
-      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}`, 400, 160, { align: 'right' });
+      doc.text(`Issue Date: ${new Date(invoice.issueDate).toLocaleDateString('en-IN')}`, 400, 145 + logoHeight, { align: 'right' });
+      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}`, 400, 160 + logoHeight, { align: 'right' });
 
-      doc.fontSize(12).fillColor('#333').text('Bill To:', 50, 145);
-      doc.fontSize(11).text(invoice.clientName || 'N/A', 50, 160);
+      doc.fontSize(12).fillColor(primaryColor).text('Bill To:', 50, 145 + logoHeight);
+      doc.fontSize(11).fillColor('#333').text(invoice.clientName || 'N/A', 50, 160 + logoHeight);
       doc.fontSize(10).fillColor('#666');
-      let billY = 175;
+      let billY = 175 + logoHeight;
       if (invoice.clientEmail) { doc.text(invoice.clientEmail, 50, billY); billY += 12; }
       if (invoice.clientPhone) { doc.text(invoice.clientPhone, 50, billY); billY += 12; }
       if (invoice.clientAddress) { doc.text(invoice.clientAddress, 50, billY, { width: 200 }); billY += 25; }
       if (invoice.clientGst) { doc.text(`GSTIN: ${invoice.clientGst}`, 50, billY); }
 
-      const tableTop = 260;
-      doc.rect(50, tableTop, 495, 25).fill('#f1f5f9');
-      doc.fontSize(10).fillColor('#333');
+      const tableTop = 260 + logoHeight;
+      doc.rect(50, tableTop, 495, 25).fill(primaryColor);
+      doc.fontSize(10).fillColor('#fff');
       doc.text('Item', 55, tableTop + 7);
       doc.text('Qty', 280, tableTop + 7, { width: 50, align: 'center' });
       doc.text('Rate', 340, tableTop + 7, { width: 70, align: 'right' });
@@ -2160,23 +2173,28 @@ export async function registerRoutes(
       let yPosition = tableTop + 30;
       const formatCurrency = (amt: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amt);
 
-      for (const item of items) {
-        doc.fontSize(10).fillColor('#333').text(item.name, 55, yPosition, { width: 220 });
-        doc.text(item.quantity.toString(), 280, yPosition, { width: 50, align: 'center' });
-        doc.text(formatCurrency(item.unitPrice), 340, yPosition, { width: 70, align: 'right' });
-        doc.text(formatCurrency(item.amount), 420, yPosition, { width: 120, align: 'right' });
-        yPosition += 20;
+      if (items && items.length > 0) {
+        for (const item of items) {
+          doc.fontSize(10).fillColor('#333').text(item.name, 55, yPosition, { width: 220 });
+          doc.text(item.quantity.toString(), 280, yPosition, { width: 50, align: 'center' });
+          doc.text(formatCurrency(item.unitPrice), 340, yPosition, { width: 70, align: 'right' });
+          doc.text(formatCurrency(item.amount), 420, yPosition, { width: 120, align: 'right' });
+          yPosition += 20;
+        }
+      } else {
+        doc.fontSize(10).fillColor('#999').text('No items added', 55, yPosition);
+        yPosition += 30;
       }
 
       yPosition += 10;
-      doc.moveTo(300, yPosition).lineTo(545, yPosition).strokeColor('#ddd').stroke();
+      doc.moveTo(300, yPosition).lineTo(545, yPosition).strokeColor(secondaryColor).stroke();
       yPosition += 10;
 
       doc.fontSize(10).fillColor('#666').text('Subtotal:', 340, yPosition).fillColor('#333').text(formatCurrency(invoice.subtotal), 420, yPosition, { width: 120, align: 'right' });
       yPosition += 15;
 
       if (invoice.discountAmount && invoice.discountAmount > 0) {
-        doc.fillColor('#16a34a').text('Discount:', 340, yPosition).text(`-${formatCurrency(invoice.discountAmount)}`, 420, yPosition, { width: 120, align: 'right' });
+        doc.fillColor(primaryColor).text('Discount:', 340, yPosition).text(`-${formatCurrency(invoice.discountAmount)}`, 420, yPosition, { width: 120, align: 'right' });
         yPosition += 15;
       }
 
@@ -2195,8 +2213,8 @@ export async function registerRoutes(
       }
 
       yPosition += 5;
-      doc.rect(340, yPosition, 205, 25).fill('#f1f5f9');
-      doc.fontSize(12).fillColor('#333').text('Total:', 350, yPosition + 6).text(formatCurrency(invoice.totalAmount), 420, yPosition + 6, { width: 120, align: 'right' });
+      doc.rect(340, yPosition, 205, 25).fill(primaryColor);
+      doc.fontSize(12).fillColor('#fff').text('Total:', 350, yPosition + 6).text(formatCurrency(invoice.totalAmount), 420, yPosition + 6, { width: 120, align: 'right' });
 
       if (invoice.paidAmount && invoice.paidAmount > 0) {
         yPosition += 35;
