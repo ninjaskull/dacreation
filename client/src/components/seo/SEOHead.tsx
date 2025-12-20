@@ -289,12 +289,25 @@ export function getBreadcrumbSchema(branding: BrandingData, items: { name: strin
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": items.map((item, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "name": item.name,
-      "item": item.url
-    }))
+    "itemListElement": items.map((item, index) => {
+      const listItem: any = {
+        "@type": "ListItem",
+        "position": index + 1,
+        "name": item.name,
+        "item": item.url
+      };
+      
+      // Add parentItem reference if not the root (first item)
+      if (index > 0) {
+        listItem.parentItem = {
+          "@type": "ListItem",
+          "position": index,
+          "item": items[index - 1].url
+        };
+      }
+      
+      return listItem;
+    })
   };
 }
 
