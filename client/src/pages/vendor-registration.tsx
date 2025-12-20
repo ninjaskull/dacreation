@@ -423,22 +423,28 @@ export default function VendorRegistrationPage() {
 
   // Clean data before submission (remove undefined/empty values)
   const cleanFormData = (data: VendorRegistrationForm) => {
+    // Validate required fields FIRST
+    if (!data.businessName?.trim()) throw new Error("Business name is required");
+    if (!data.entityType || data.entityType === '') throw new Error("Entity type is required");
+    if (!data.contactPersonName?.trim()) throw new Error("Contact person name is required");
+    if (!data.contactEmail?.trim()) throw new Error("Contact email is required");
+    if (!data.contactPhone?.trim()) throw new Error("Contact phone is required");
+    if (!data.agreesToTerms) throw new Error("You must agree to Terms & Conditions");
+
     const cleaned: any = { ...data };
     
-    // Clean up empty strings to undefined
+    // Clean up empty strings and empty arrays (but keep entityType and other required fields)
     Object.keys(cleaned).forEach(key => {
+      if (key === 'entityType' || key === 'businessName' || key === 'contactPersonName' || 
+          key === 'contactEmail' || key === 'contactPhone' || key === 'agreesToTerms') {
+        // Never delete required fields
+        return;
+      }
+      
       if (cleaned[key] === '' || (Array.isArray(cleaned[key]) && cleaned[key].length === 0)) {
         delete cleaned[key];
       }
     });
-
-    // Ensure required fields are present
-    if (!cleaned.businessName?.trim()) throw new Error("Business name is required");
-    if (!cleaned.entityType) throw new Error("Entity type is required");
-    if (!cleaned.contactPersonName?.trim()) throw new Error("Contact person name is required");
-    if (!cleaned.contactEmail?.trim()) throw new Error("Contact email is required");
-    if (!cleaned.contactPhone?.trim()) throw new Error("Contact phone is required");
-    if (!cleaned.agreesToTerms) throw new Error("You must agree to Terms & Conditions");
 
     return cleaned;
   };
@@ -566,9 +572,12 @@ export default function VendorRegistrationPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1.5">
                             <Label className="text-sm">Entity Type <span className="text-red-500">*</span></Label>
-                            <Select onValueChange={(value) => form.setValue("entityType", value as any)} defaultValue="proprietorship">
+                            <Select 
+                              value={form.watch("entityType") || "proprietorship"}
+                              onValueChange={(value) => form.setValue("entityType", value as any)}
+                            >
                               <SelectTrigger className="h-10 sm:h-9" data-testid="select-entity-type">
-                                <SelectValue placeholder="Select" />
+                                <SelectValue placeholder="Select entity type" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="proprietorship">Proprietorship</SelectItem>
