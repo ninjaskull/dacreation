@@ -224,13 +224,13 @@ export default function VendorRegistrationPage() {
   useEffect(() => {
     if (!hasRestoredProgress) return;
     
-    const subscription = form.watch(() => {
+    const subscription = form.watch((data) => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
       saveTimeoutRef.current = setTimeout(() => {
         saveProgressToStorage();
-      }, 1000);
+      }, 2000);
     });
     
     return () => {
@@ -239,7 +239,7 @@ export default function VendorRegistrationPage() {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [form, hasRestoredProgress, saveProgressToStorage]);
+  }, [hasRestoredProgress, saveProgressToStorage]);
 
   useEffect(() => {
     if (hasRestoredProgress) {
@@ -353,19 +353,21 @@ export default function VendorRegistrationPage() {
   };
 
   const handleCategoryToggle = (category: string) => {
-    const updated = selectedCategories.includes(category)
-      ? selectedCategories.filter(c => c !== category)
-      : [...selectedCategories, category];
-    setSelectedCategories(updated);
+    const currentCategories = form.watch("categories") || [];
+    const updated = currentCategories.includes(category)
+      ? currentCategories.filter(c => c !== category)
+      : [...currentCategories, category];
     form.setValue("categories", updated);
+    setSelectedCategories(updated);
   };
 
   const handleStateToggle = (state: string) => {
-    const updated = selectedStates.includes(state)
-      ? selectedStates.filter(s => s !== state)
-      : [...selectedStates, state];
-    setSelectedStates(updated);
+    const currentStates = form.watch("serviceStates") || [];
+    const updated = currentStates.includes(state)
+      ? currentStates.filter(s => s !== state)
+      : [...currentStates, state];
     form.setValue("serviceStates", updated);
+    setSelectedStates(updated);
   };
 
   const nextStep = () => {
@@ -715,25 +717,28 @@ export default function VendorRegistrationPage() {
                           <Label className="text-sm font-semibold">Service Categories <span className="text-red-500">*</span></Label>
                           <p className="text-xs text-gray-500 mb-2">Select all that apply</p>
                           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 sm:max-h-32 overflow-y-auto p-2 border rounded-lg bg-gray-50">
-                            {vendorCategories.map(category => (
-                              <div
-                                key={category}
-                                className={cn(
-                                  "flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all text-sm",
-                                  selectedCategories.includes(category)
-                                    ? "bg-[#601a29] text-white"
-                                    : "bg-white hover:bg-gray-100 border"
-                                )}
-                                onClick={() => handleCategoryToggle(category)}
-                                data-testid={`category-${category}`}
-                              >
-                                <Checkbox 
-                                  checked={selectedCategories.includes(category)} 
-                                  className="w-3.5 h-3.5 data-[state=checked]:bg-white data-[state=checked]:text-[#601a29] data-[state=checked]:border-white" 
-                                />
-                                <span className="truncate text-xs sm:text-sm">{formatCategoryLabel(category)}</span>
-                              </div>
-                            ))}
+                            {vendorCategories.map(category => {
+                              const currentCategories = form.watch("categories") || [];
+                              return (
+                                <div
+                                  key={category}
+                                  className={cn(
+                                    "flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all text-sm",
+                                    currentCategories.includes(category)
+                                      ? "bg-[#601a29] text-white"
+                                      : "bg-white hover:bg-gray-100 border"
+                                  )}
+                                  onClick={() => handleCategoryToggle(category)}
+                                  data-testid={`category-${category}`}
+                                >
+                                  <Checkbox 
+                                    checked={currentCategories.includes(category)} 
+                                    className="w-3.5 h-3.5 data-[state=checked]:bg-white data-[state=checked]:text-[#601a29] data-[state=checked]:border-white" 
+                                  />
+                                  <span className="truncate text-xs sm:text-sm">{formatCategoryLabel(category)}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                           {form.formState.errors.categories && (
                             <p className="text-xs text-red-500 mt-1">{form.formState.errors.categories.message}</p>
@@ -764,21 +769,24 @@ export default function VendorRegistrationPage() {
                             </label>
                           </div>
                           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-1.5 max-h-32 sm:max-h-24 overflow-y-auto p-2 border rounded-lg bg-gray-50">
-                            {indianStates.slice(0, 20).map(state => (
-                              <div
-                                key={state}
-                                className={cn(
-                                  "px-2 py-1.5 sm:py-1 rounded text-xs cursor-pointer text-center transition-all truncate",
-                                  selectedStates.includes(state)
-                                    ? "bg-[#601a29] text-white"
-                                    : "bg-white hover:bg-gray-100"
-                                )}
-                                onClick={() => handleStateToggle(state)}
-                                data-testid={`chip-state-${state.toLowerCase().replace(/\s+/g, '-')}`}
-                              >
-                                {state}
-                              </div>
-                            ))}
+                            {indianStates.slice(0, 20).map(state => {
+                              const currentStates = form.watch("serviceStates") || [];
+                              return (
+                                <div
+                                  key={state}
+                                  className={cn(
+                                    "px-2 py-1.5 sm:py-1 rounded text-xs cursor-pointer text-center transition-all truncate",
+                                    currentStates.includes(state)
+                                      ? "bg-[#601a29] text-white"
+                                      : "bg-white hover:bg-gray-100"
+                                  )}
+                                  onClick={() => handleStateToggle(state)}
+                                  data-testid={`chip-state-${state.toLowerCase().replace(/\s+/g, '-')}`}
+                                >
+                                  {state}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
 
