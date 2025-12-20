@@ -68,7 +68,7 @@ const vendorRegistrationSchema = z.object({
   operationalCity: z.string().optional(),
   operationalState: z.string().optional(),
   operationalPincode: z.string().optional(),
-  categories: z.array(z.string()).min(1, "At least one category is required"),
+  categories: z.array(z.string()).optional().default([]),
   primaryCategory: z.string().optional(),
   serviceDescription: z.string().optional(),
   specializations: z.array(z.string()).optional(),
@@ -105,7 +105,7 @@ const vendorRegistrationSchema = z.object({
   hasPollutionCertificate: z.boolean().optional(),
   hasNoPendingLitigation: z.boolean().optional(),
   hasNeverBlacklisted: z.boolean().optional(),
-  agreesToTerms: z.boolean().refine((val) => val === true, "You must agree to the terms"),
+  agreesToTerms: z.boolean().refine((val) => val === true, { message: "You must agree to the Terms & Conditions to proceed" }),
   agreesToNda: z.boolean().optional(),
 });
 
