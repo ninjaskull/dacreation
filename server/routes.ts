@@ -1729,6 +1729,22 @@ export async function registerRoutes(
     }
   });
 
+  // Get branding settings for invoice PDF generation
+  app.get("/api/invoice-branding", isAuthenticated, async (req, res) => {
+    try {
+      const defaultTemplate = await storage.getDefaultInvoiceTemplate();
+      const companySettings = await storage.getCompanySettings();
+      res.json({
+        template: defaultTemplate || null,
+        company: companySettings || null,
+        availableStyles: ["modernPremium", "cleanMinimal", "corporateProfessional"],
+      });
+    } catch (error) {
+      console.error("Get invoice branding error:", error);
+      res.status(500).json({ message: "Failed to fetch branding settings" });
+    }
+  });
+
   app.get("/api/invoices", isAuthenticated, async (req, res) => {
     try {
       const filters: any = {};

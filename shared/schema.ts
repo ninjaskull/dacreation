@@ -708,12 +708,15 @@ export type UserSettings = typeof userSettings.$inferSelect;
 export const invoiceStatuses = ["draft", "sent", "viewed", "paid", "partially_paid", "overdue", "cancelled", "refunded"] as const;
 export type InvoiceStatus = typeof invoiceStatuses[number];
 
+export const invoiceTemplateStyles = ["modernPremium", "cleanMinimal", "corporateProfessional"] as const;
+export type InvoiceTemplateStyle = typeof invoiceTemplateStyles[number];
+
 export const invoiceTemplates = pgTable("invoice_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
   isDefault: boolean("is_default").notNull().default(false),
-  layout: text("layout").notNull().default("modern"),
+  layout: text("layout").notNull().default("modernPremium"),
   primaryColor: text("primary_color").notNull().default("#3B82F6"),
   secondaryColor: text("secondary_color").notNull().default("#1E40AF"),
   accentColor: text("accent_color").notNull().default("#60A5FA"),
@@ -756,7 +759,7 @@ export const updateInvoiceTemplateSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   isDefault: z.boolean().optional(),
-  layout: z.string().optional(),
+  layout: z.enum(invoiceTemplateStyles).optional(),
   primaryColor: z.string().optional(),
   secondaryColor: z.string().optional(),
   accentColor: z.string().optional(),
