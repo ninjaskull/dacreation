@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useBranding } from "@/contexts/BrandingContext";
 import { extractStateFromGST, suggestEntityTypeFromPAN, isValidGSTFormat, isValidPANFormat } from "@/lib/vendor-utils";
+import { isFieldVisible, isFieldRequired, getFieldHelpText, type EntityType } from "@/lib/vendor-form-config";
 
 const STORAGE_KEY = "vendor_registration_progress";
 
@@ -697,6 +698,7 @@ export default function VendorRegistrationPage() {
                           </div>
                         </div>
 
+                        {isFieldVisible('gstNumber', form.watch('entityType') as EntityType) && (
                         <div className="pt-3 border-t">
                           <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                             <Shield className="w-4 h-4 text-[#601a29]" />
@@ -763,6 +765,8 @@ export default function VendorRegistrationPage() {
                             </div>
                           </div>
                         </div>
+                        )}
+
                       </div>
                     )}
 
@@ -876,6 +880,11 @@ export default function VendorRegistrationPage() {
 
                     {currentStep === 3 && (
                       <div className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                          <p className="text-sm text-blue-900">
+                            💡 <strong>Smart Form:</strong> Only relevant fields for your business type and services are shown. Fields automatically appear/hide based on your selections.
+                          </p>
+                        </div>
                         <div>
                           <Label className="text-sm font-semibold mb-3 block">Service Categories <span className="text-red-500">*</span></Label>
                           <p className="text-xs text-gray-600 mb-3">Select all services you provide (click to toggle)</p>
@@ -967,6 +976,7 @@ export default function VendorRegistrationPage() {
                           )}
                         </div>
 
+                        {form.watch('categories')?.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t">
                           <div className="space-y-1.5">
                             <Label className="text-sm">Pricing Tier</Label>
@@ -993,6 +1003,7 @@ export default function VendorRegistrationPage() {
                             />
                           </div>
                         </div>
+                        )}
                       </div>
                     )}
 

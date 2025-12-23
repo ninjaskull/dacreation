@@ -81,20 +81,27 @@ Preferred communication style: Simple, everyday language.
 
 ### Vendor Registration System
 - **Vendor Onboarding**: Full vendor registration form at `/vendor-registration` with multi-step workflow.
-- **Smart Auto-filling (Task #1 - COMPLETED Dec 23, 2025)**:
+- **Task #1 - Smart Auto-filling (COMPLETED Dec 23, 2025)**:
     - GST State Extraction: Automatically extracts state from GST code (first 2 digits) and auto-fills gstState field
     - PAN Entity Type Detection: Suggests business entity type from PAN (5th character), shows entity description
     - Auto-fill Toast Notifications: Shows user-friendly feedback when state is auto-filled
     - Formatting: Auto-formats GST/PAN to uppercase, removes special characters
     - Validation: Real-time validation of GST and PAN formats
-- **Utility Library**: `client/src/lib/vendor-utils.ts` contains:
-    - `extractStateFromGST()`: Extract state from GST code
-    - `suggestEntityTypeFromPAN()`: Suggest entity type from PAN
-    - `isValidGSTFormat()`, `isValidPANFormat()`: Validation functions
-    - 36 GST state codes mapped to Indian state names
-    - 12 PAN entity types with descriptions
-- **Integration**: Form watchers trigger auto-fill on GST/PAN entry, provide visual feedback via toast and inline cards
-- **Remaining Tasks**: 7 more tasks documented in vendor.md (Field dependencies, validation, suggestions, formatting, calculations, UX, conditional required fields)
+    - **Files Created**: `client/src/lib/vendor-utils.ts` with 36 GST state codes and 12 PAN entity type mappings
+- **Task #2 - Intelligent Field Dependencies (COMPLETED Dec 23, 2025)**:
+    - Entity Type-Based Visibility: Show/hide fields based on sole proprietor, partnership, company, trust, etc.
+    - Category-Based Visibility: Show/hide category-specific fields (Decorator needs capacity, Caterer needs FSSAI, etc.)
+    - Geographic Dependencies: Pan-India service toggle hides state selection
+    - Dynamic Required Fields: Different fields required for different entity types
+    - Utility Library: `client/src/lib/vendor-form-config.ts` with visibility rules and helper functions
+    - Integration: Tax & Registration section conditionally shows for companies; Pricing section shows only after category selection
+    - User Feedback: Blue info card on Step 3 explains how smart visibility works
+    - **Functions Exported**:
+      - `isFieldVisible()`: Check if field should display
+      - `isFieldRequired()`: Check if field is required
+      - `getFieldHelpText()`: Get context-aware help text
+      - `getVisibleFields()`, `getRequiredFields()`: Get sets of fields
+- **Remaining Tasks**: 6 more tasks documented in vendor.md (Validation, suggestions, auto-formatting, calculations, UX, conditional required fields)
 
 ## External Dependencies
 
