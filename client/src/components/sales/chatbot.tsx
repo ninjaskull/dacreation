@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useChatWebSocket } from "@/hooks/use-chat-websocket";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useFloatingWidget } from "@/contexts/FloatingWidgetContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type ChatPhase = "collecting" | "submitted" | "live" | "ended";
 type CollectionStep = "welcome" | "name" | "phone" | "email";
@@ -81,6 +83,13 @@ export function Chatbot() {
   const { toast } = useToast();
   const { branding } = useBranding();
   const visitorId = getVisitorId();
+  const { openWidget, setOpenWidget } = useFloatingWidget();
+  const isMobile = useIsMobile();
+
+  const handleToggleChat = (open: boolean) => {
+    setIsOpen(open);
+    setOpenWidget(open ? "chat" : "none");
+  };
 
   const handleNewMessage = useCallback((data: any) => {
     if (data.senderType === 'admin' && data.conversationId === conversationId) {
@@ -466,7 +475,7 @@ export function Chatbot() {
     setSessionRestored(false);
     chatInitializedRef.current = false;
     saveSession(null);
-    setIsOpen(false);
+    handleToggleChat(false);
   };
 
   const startNewChat = () => {
@@ -584,15 +593,19 @@ export function Chatbot() {
     return "Let us plan your event";
   };
 
+  const shouldHideButton = isMobile && openWidget === "callback";
+
   return (
     <div className="floating-widget">
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 right-4 md:bottom-16 md:left-6 md:right-auto z-50 w-14 h-14 bg-secondary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/90 transition-colors"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        data-testid="chatbot-button"
-      >
+      <AnimatePresence>
+        {!shouldHideButton && (
+          <motion.button
+            onClick={() => handleToggleChat(!isOpen)}
+            className="fixed bottom-24 right-4 md:bottom-16 md:left-6 md:right-auto z-50 w-14 h-14 bg-secondary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/90 transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            data-testid="chatbot-button"
+          >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
@@ -614,10 +627,12 @@ export function Chatbot() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.button>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !shouldHideButton && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -639,7 +654,7 @@ export function Chatbot() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => handleToggleChat(false)}
                   className="text-white hover:bg-white/20"
                   data-testid="chatbot-close"
                 >

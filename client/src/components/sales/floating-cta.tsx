@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useFloatingWidget } from "@/contexts/FloatingWidgetContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const quickFormSchema = z.object({
   name: z.string().min(2, "Name required"),
@@ -30,6 +32,8 @@ export function FloatingCTA() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { openWidget, setOpenWidget } = useFloatingWidget();
+  const isMobile = useIsMobile();
 
   const form = useForm<QuickFormData>({
     resolver: zodResolver(quickFormSchema),
@@ -39,6 +43,11 @@ export function FloatingCTA() {
       eventType: "",
     },
   });
+
+  const handleToggle = (open: boolean) => {
+    setIsOpen(open);
+    setOpenWidget(open ? "callback" : "none");
+  };
 
   const onSubmit = async (data: QuickFormData) => {
     setIsSubmitting(true);
@@ -64,7 +73,7 @@ export function FloatingCTA() {
       });
 
       setTimeout(() => {
-        setIsOpen(false);
+        handleToggle(false);
         setIsSuccess(false);
         form.reset();
       }, 3000);
@@ -79,15 +88,21 @@ export function FloatingCTA() {
     }
   };
 
+  const shouldHideButton = isMobile && openWidget === "chat";
+
   return (
     <div className="floating-widget">
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-4 md:right-6 md:bottom-16 z-50 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        data-testid="floating-cta-button"
-      >
+      <AnimatePresence>
+        {!shouldHideButton && (
+          <motion.button
+            onClick={() => handleToggle(!isOpen)}
+            initial={isMobile && openWidget === "chat" ? { opacity: 0, scale: 0 } : undefined}
+            exit={isMobile && openWidget === "chat" ? { opacity: 0, scale: 0 } : undefined}
+            className="fixed bottom-6 right-4 md:right-6 md:bottom-16 z-50 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            data-testid="floating-cta-button"
+          >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
@@ -109,10 +124,12 @@ export function FloatingCTA() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.button>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
-        {!isOpen && (
+        {!isOpen && !shouldHideButton && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
