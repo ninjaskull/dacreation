@@ -79,6 +79,23 @@ Preferred communication style: Simple, everyday language.
 - **Sitemap System**: Automatic generation of `/sitemap.xml`, `/robots.txt`, and HTML `/sitemap`.
 - **Sitemap Configuration**: New pages added via `shared/seo-config.ts` with defined `path`, `title`, `description`, `keywords`, `priority`, `changefreq`, `isPublic`.
 
+### Vendor Registration System
+- **Vendor Onboarding**: Full vendor registration form at `/vendor-registration` with multi-step workflow.
+- **Smart Auto-filling (Task #1 - COMPLETED Dec 23, 2025)**:
+    - GST State Extraction: Automatically extracts state from GST code (first 2 digits) and auto-fills gstState field
+    - PAN Entity Type Detection: Suggests business entity type from PAN (5th character), shows entity description
+    - Auto-fill Toast Notifications: Shows user-friendly feedback when state is auto-filled
+    - Formatting: Auto-formats GST/PAN to uppercase, removes special characters
+    - Validation: Real-time validation of GST and PAN formats
+- **Utility Library**: `client/src/lib/vendor-utils.ts` contains:
+    - `extractStateFromGST()`: Extract state from GST code
+    - `suggestEntityTypeFromPAN()`: Suggest entity type from PAN
+    - `isValidGSTFormat()`, `isValidPANFormat()`: Validation functions
+    - 36 GST state codes mapped to Indian state names
+    - 12 PAN entity types with descriptions
+- **Integration**: Form watchers trigger auto-fill on GST/PAN entry, provide visual feedback via toast and inline cards
+- **Remaining Tasks**: 7 more tasks documented in vendor.md (Field dependencies, validation, suggestions, formatting, calculations, UX, conditional required fields)
+
 ## External Dependencies
 
 ### Third-Party Services

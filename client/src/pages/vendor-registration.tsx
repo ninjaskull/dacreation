@@ -17,10 +17,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { 
   Building2, User, Briefcase, CheckCircle2, 
   ChevronLeft, ChevronRight, Loader2, Upload, X, File, Shield, Sparkles,
-  Phone, Mail, MapPin, ArrowLeft, Save
+  Phone, Mail, MapPin, ArrowLeft, Save, AlertCircle, Lightbulb
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBranding } from "@/contexts/BrandingContext";
+import { extractStateFromGST, suggestEntityTypeFromPAN, isValidGSTFormat, isValidPANFormat } from "@/lib/vendor-utils";
 
 const STORAGE_KEY = "vendor_registration_progress";
 
@@ -150,6 +151,8 @@ export default function VendorRegistrationPage() {
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [gstAutoFilled, setGstAutoFilled] = useState(false);
+  const [panEntitySuggestion, setPanEntitySuggestion] = useState<{ type: string; description: string } | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -262,6 +265,52 @@ export default function VendorRegistrationPage() {
       }, 500);
     }
   }, [currentStep, selectedCategories, selectedStates, hasRestoredProgress, saveProgressToStorage]);
+
+  // Auto-fill GST state when valid GST is entered
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'gstNumber' && value.gstNumber) {
+        const gstNumber = value.gstNumber as string;
+        if (isValidGSTFormat(gstNumber)) {
+          const { state } = extractStateFromGST(gstNumber);
+          if (state) {
+            const currentState = form.getValues('gstState');
+            if (!currentState || currentState === '') {
+              form.setValue('gstState', state);
+              setGstAutoFilled(true);
+              toast({
+                title: "✓ State Auto-filled",
+                description: `Extracted from GST: ${state}`,
+                duration: 3000,
+              });
+              // Reset flag after 5 seconds
+              setTimeout(() => setGstAutoFilled(false), 5000);
+            }
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, toast]);
+
+  // Suggest entity type when valid PAN is entered
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'panNumber' && value.panNumber) {
+        const panNumber = value.panNumber as string;
+        if (isValidPANFormat(panNumber)) {
+          const suggestion = suggestEntityTypeFromPAN(panNumber);
+          if (suggestion.entityType) {
+            setPanEntitySuggestion({
+              type: suggestion.entityType,
+              description: suggestion.description,
+            });
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const clearProgress = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -673,6 +722,15 @@ export default function VendorRegistrationPage() {
                               {form.watch("panNumber") && form.watch("panNumber")!.length === 10 && (
                                 <p className="text-xs text-green-600">✓ Valid PAN format</p>
                               )}
+                              {panEntitySuggestion && (
+                                <div className="bg-blue-50 border border-blue-200 rounded p-2 flex items-start gap-2">
+                                  <Lightbulb className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                                  <div className="text-xs text-blue-800">
+                                    <p className="font-semibold">Entity Type Detected:</p>
+                                    <p>{panEntitySuggestion.description}</p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             <div className="space-y-1.5">
                               <Label className="text-sm">GST Number <span className="text-gray-400 text-xs">(Auto-formatted)</span></Label>
@@ -692,6 +750,15 @@ export default function VendorRegistrationPage() {
                               )}
                               {form.watch("gstNumber") && form.watch("gstNumber")!.length === 15 && (
                                 <p className="text-xs text-green-600">✓ Valid GST format</p>
+                              )}
+                              {gstAutoFilled && form.watch("gstState") && (
+                                <div className="bg-green-50 border border-green-200 rounded p-2 flex items-start gap-2">
+                                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <div className="text-xs text-green-800">
+                                    <p className="font-semibold">State Auto-filled!</p>
+                                    <p>{form.watch("gstState")}</p>
+                                  </div>
+                                </div>
                               )}
                             </div>
                           </div>
