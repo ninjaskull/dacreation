@@ -91,6 +91,13 @@ export function Chatbot() {
     setOpenWidget(open ? "chat" : "none");
   };
 
+  // Close chat on Escape key
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && isOpen) {
+      handleToggleChat(false);
+    }
+  };
+
   const handleNewMessage = useCallback((data: any) => {
     if (data.senderType === 'admin' && data.conversationId === conversationId) {
       setMessages((prev) => [
@@ -480,7 +487,7 @@ export function Chatbot() {
 
   const startNewChat = () => {
     resetChat();
-    setIsOpen(true);
+    handleToggleChat(true);
   };
 
   const renderActionButtons = () => {
@@ -596,7 +603,7 @@ export function Chatbot() {
   const shouldHideButton = isMobile && openWidget === "callback";
 
   return (
-    <div className="floating-widget">
+    <div className="floating-widget" onKeyDown={handleKeyDown}>
       <AnimatePresence>
         {!shouldHideButton && (
           <motion.button

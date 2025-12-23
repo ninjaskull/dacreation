@@ -49,7 +49,15 @@ export function FloatingCTA() {
     setOpenWidget(open ? "callback" : "none");
   };
 
+  // Close form on Escape key
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && isOpen) {
+      handleToggle(false);
+    }
+  };
+
   const onSubmit = async (data: QuickFormData) => {
+    if (isSubmitting) return; // Prevent duplicate submissions
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/callback-requests", {
@@ -90,14 +98,16 @@ export function FloatingCTA() {
 
   const shouldHideButton = isMobile && openWidget === "chat";
 
+  const handleCloseForm = () => {
+    handleToggle(false);
+  };
+
   return (
-    <div className="floating-widget">
+    <div className="floating-widget" onKeyDown={handleKeyDown}>
       <AnimatePresence>
         {!shouldHideButton && (
           <motion.button
             onClick={() => handleToggle(!isOpen)}
-            initial={isMobile && openWidget === "chat" ? { opacity: 0, scale: 0 } : undefined}
-            exit={isMobile && openWidget === "chat" ? { opacity: 0, scale: 0 } : undefined}
             className="fixed bottom-6 right-4 md:right-6 md:bottom-16 z-50 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -142,7 +152,7 @@ export function FloatingCTA() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !shouldHideButton && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -152,7 +162,7 @@ export function FloatingCTA() {
           >
             {!isSuccess ? (
               <>
-                <div className="bg-primary p-4 text-white">
+                <div className="bg-primary p-4 text-white flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                       <Phone className="w-5 h-5" />
@@ -162,6 +172,13 @@ export function FloatingCTA() {
                       <p className="text-xs text-white/80">We'll call you within 30 mins</p>
                     </div>
                   </div>
+                  <button
+                    onClick={handleCloseForm}
+                    className="text-white hover:bg-white/20 p-1 rounded transition-colors"
+                    data-testid="floating-cta-close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
                 <div className="p-4">
