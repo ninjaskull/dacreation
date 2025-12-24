@@ -107,7 +107,7 @@ const REQUIRED_FIELD_REASONS: Record<string, Record<string, string>> = {
     'default': 'We need a primary contact for your business',
   },
   'contactEmail': {
-    'default': 'Email is how we'll contact you about leads and updates',
+    'default': 'Email is how we\'ll contact you about leads and updates',
   },
   'contactPhone': {
     'default': 'Phone is how leads will contact you for bookings',

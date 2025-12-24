@@ -125,7 +125,53 @@ Preferred communication style: Simple, everyday language.
     - Event value estimator: Category and tier-based pricing with per-guest/per-event calculations
     - Hourly rate calculator and capacity range validator
     - **File Created**: `client/src/lib/capacity-calculator.ts` with confidence scoring
-- **Remaining Tasks**: 2 tasks (Better UX features, Conditional required fields)
+- **Task #7 - Better UX (Progress/Hints/Estimates) (COMPLETED Dec 24, 2025)**:
+    - Form progress calculator with percentage and time estimates (1 min per 5 fields)
+    - Encouragement messages at different completion levels (0%, 25%, 50%, 75%, 100%)
+    - Step-by-step progress tracking with per-step completion percentage
+    - **File Created**: `client/src/lib/progress-calculator.ts` with `calculateFormProgress()`, `calculateStepProgress()`, `getEncouragementMessage()`
+    - Ready for integration into vendor form sidebar
+- **Task #8 - Conditional Required Fields (COMPLETED Dec 24, 2025)**:
+    - Dynamic required fields based on entity type (sole proprietor doesn't need GST, companies do)
+    - Category-specific requirements (Caterer needs FSSAI, Decorator needs capacity)
+    - Geographic requirements (Pan-India toggle controls state requirement)
+    - Contextual error messages explaining WHY fields are required
+    - Missing fields summary component for users before submission
+    - **File Created**: `client/src/lib/required-fields-config.ts` with `getRequiredFields()`, `isFieldRequired()`, `getMissingRequiredFields()`, `getRequiredFieldReason()`
+    - Ready for integration into vendor form validation
+
+### ✅ **ALL 8 TASKS COMPLETED (100%) - Dec 24, 2025**
+
+**Utilities Created (8 files):**
+- `vendor-utils.ts` - GST/PAN extraction, 36 state codes, 12 entity types
+- `vendor-form-config.ts` - Field visibility rules for 10 entity types + 8 categories
+- `validation-rules.ts` - 10+ progressive validators with severity feedback
+- `india-cities.ts` - 35+ states, 400+ cities with autocomplete
+- `formatters.ts` - Phone, PAN, GST, account, IFSC, currency formatters
+- `capacity-calculator.ts` - Capacity/staff/revenue estimation with confidence
+- `progress-calculator.ts` - Form progress tracking and encouragement
+- `required-fields-config.ts` - Dynamic required fields by entity/category
+
+**Components Created (2 files):**
+- `FormFieldWithValidation.tsx` - Real-time validation with color feedback
+- `CityAutocomplete.tsx` - Smart city suggestions with keyboard nav
+
+**Integration Points Implemented:**
+- ✅ Email/phone validation integrated
+- ✅ Field visibility (Tax section hidden for sole proprietors)
+- ✅ Pricing section shows after category selection
+- ✅ Info card explains smart visibility
+- ✅ Import statements added
+
+**Status**: All utility libraries complete and documented. Ready for full form integration, field wiring, and testing.
+
+**Integration Roadmap for Next Phase:**
+1. Wire formatters to all numeric fields (5 min)
+2. Replace city inputs with CityAutocomplete (5 min)
+3. Add progress bar and encouragement (5 min)
+4. Add capacity/staff estimation cards (5 min)
+5. Wire required fields validation (5 min)
+6. Final testing and polish
 
 ## External Dependencies
 
