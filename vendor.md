@@ -13,10 +13,10 @@
 |---|------|--------|-----------|-----------|----------|
 | 1 | Smart Auto-filling from GST/PAN | ✅ DONE | Dec 23, 2025 | Medium | High |
 | 2 | Intelligent Field Dependencies | ✅ DONE | Dec 23, 2025 | High | High |
-| 3 | Real-time Progressive Validation | 🚀 STARTED | Dec 24, 2025 | Medium | High |
-| 4 | Smart Suggestions (City/Category) | 🚀 STARTED | Dec 24, 2025 | Medium | Medium |
-| 5 | Auto-formatting Numbers/Strings | ⏳ PENDING | - | Low | Medium |
-| 6 | Calculated Fields (Capacity/Staff) | ⏳ PENDING | - | Low | Low |
+| 3 | Real-time Progressive Validation | ✅ DONE | Dec 24, 2025 | Medium | High |
+| 4 | Smart Suggestions (City/Category) | ✅ DONE | Dec 24, 2025 | Medium | Medium |
+| 5 | Auto-formatting Numbers/Strings | ✅ DONE | Dec 24, 2025 | Low | Medium |
+| 6 | Calculated Fields (Capacity/Staff) | ✅ DONE | Dec 24, 2025 | Low | Low |
 | 7 | Better UX (Progress/Hints/Estimates) | ⏳ PENDING | - | Medium | High |
 | 8 | Conditional Required Fields | ⏳ PENDING | - | High | High |
 

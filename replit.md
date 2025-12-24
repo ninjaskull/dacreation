@@ -101,7 +101,31 @@ Preferred communication style: Simple, everyday language.
       - `isFieldRequired()`: Check if field is required
       - `getFieldHelpText()`: Get context-aware help text
       - `getVisibleFields()`, `getRequiredFields()`: Get sets of fields
-- **Remaining Tasks**: 6 more tasks documented in vendor.md (Validation, suggestions, auto-formatting, calculations, UX, conditional required fields)
+- **Task #3 - Real-time Progressive Validation (COMPLETED Dec 24, 2025)**:
+    - Comprehensive validation rules for phone, email, GST, PAN, FSSAI, bank account, IFSC, URLs, and numeric fields
+    - Progressive validation with real-time feedback as user types
+    - **Files Created**: `client/src/lib/validation-rules.ts`, `client/src/components/FormFieldWithValidation.tsx`
+    - Visual feedback with icons (checkmark, alert) and color-coded messages (success, error, warning, info)
+    - Fully integrated with vendor registration form for email and phone fields
+- **Task #4 - Smart Suggestions (COMPLETED Dec 24, 2025)**:
+    - City/State autocomplete with intelligent filtering for all Indian cities across 35+ states
+    - Dropdown suggestions with keyboard navigation (arrow keys, enter, escape)
+    - **Files Created**: `client/src/lib/india-cities.ts`, `client/src/components/CityAutocomplete.tsx`
+    - Ready to integrate into registered/operational city fields
+- **Task #5 - Auto-formatting Numbers/Strings (COMPLETED Dec 24, 2025)**:
+    - Phone formatter: `9876543210` → `+91 98765 43210`
+    - PAN formatter: `abcd1234567x` → `ABCD1234567X`
+    - GST formatter: `29aagct1234567890z1` → `29AAGCT1234567890Z1`
+    - Bank account formatter: Groups digits with spaces every 4 digits
+    - IFSC, currency (Indian numbering), percentage, year formatters
+    - **File Created**: `client/src/lib/formatters.ts` with dispatcher and raw value extractors
+- **Task #6 - Calculated Fields (COMPLETED Dec 24, 2025)**:
+    - Capacity estimation: Extracts numeric capacity from text and applies safety margins (min 0.8x, max 1.5x)
+    - Staff strength calculator: Uses industry ratios (1 staff per 30-50 guests) with category-specific adjustments
+    - Event value estimator: Category and tier-based pricing with per-guest/per-event calculations
+    - Hourly rate calculator and capacity range validator
+    - **File Created**: `client/src/lib/capacity-calculator.ts` with confidence scoring
+- **Remaining Tasks**: 2 tasks (Better UX features, Conditional required fields)
 
 ## External Dependencies
 
