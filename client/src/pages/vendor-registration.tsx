@@ -23,6 +23,9 @@ import { cn } from "@/lib/utils";
 import { useBranding } from "@/contexts/BrandingContext";
 import { extractStateFromGST, suggestEntityTypeFromPAN, isValidGSTFormat, isValidPANFormat } from "@/lib/vendor-utils";
 import { isFieldVisible, isFieldRequired, getFieldHelpText, type EntityType } from "@/lib/vendor-form-config";
+import { FormFieldWithValidation } from "@/components/FormFieldWithValidation";
+import { CityAutocomplete } from "@/components/CityAutocomplete";
+import { validatePhone, validateEmail, validateField } from "@/lib/validation-rules";
 
 const STORAGE_KEY = "vendor_registration_progress";
 
