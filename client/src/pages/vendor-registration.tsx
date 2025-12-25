@@ -30,8 +30,8 @@ import { validatePhone, validateEmail, validateField } from "@/lib/validation-ru
 const STORAGE_KEY = "vendor_registration_progress";
 
 const businessEntityTypes = [
-  "proprietorship", "partnership", "llp", "private_limited", "public_limited",
-  "trust", "society", "huf", "individual"
+  "sole_proprietor", "partnership", "llp", "opc", "private_limited", "public_limited",
+  "trust", "society", "huf", "other"
 ] as const;
 
 const employeeCountOptions = ["1-5", "6-10", "11-25", "26-50", "51-100", "100+"];
@@ -453,7 +453,7 @@ export default function VendorRegistrationPage() {
     saveProgressToStorage();
     currentStep > 1 && setCurrentStep(currentStep - 1);
   };
-  const onSubmit = async (data: VendorRegistrationForm) => {
+  const onSubmit = (data: VendorRegistrationForm) => {
     try {
       // Clean and validate data before submission
       const cleanedData = cleanFormData(data);
@@ -461,7 +461,7 @@ export default function VendorRegistrationPage() {
     } catch (error: any) {
       toast({
         title: "Validation Error",
-        description: error.message,
+        description: error.message || "Please check your form details",
         variant: "destructive",
       });
     }
@@ -489,11 +489,11 @@ export default function VendorRegistrationPage() {
   const cleanFormData = (data: VendorRegistrationForm) => {
     // Validate required fields FIRST
     if (!data.businessName?.trim()) throw new Error("Business name is required");
-    if (!data.entityType || data.entityType === '') throw new Error("Entity type is required");
+    if (!data.entityType) throw new Error("Entity type is required");
     if (!data.contactPersonName?.trim()) throw new Error("Contact person name is required");
     if (!data.contactEmail?.trim()) throw new Error("Contact email is required");
     if (!data.contactPhone?.trim()) throw new Error("Contact phone is required");
-    if (!data.agreesToTerms) throw new Error("You must agree to Terms & Conditions");
+    if (data.agreesToTerms !== true) throw new Error("You must agree to Terms & Conditions");
 
     const cleaned: any = { ...data };
     
@@ -593,7 +593,7 @@ export default function VendorRegistrationPage() {
 
       <div className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto p-3 sm:p-4">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+          <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
