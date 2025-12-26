@@ -910,7 +910,7 @@ export default function AdminPortfolioPage() {
                 <p className="text-sm text-muted-foreground">No videos uploaded yet</p>
               ) : (
                 <div className="space-y-2">
-                  {portfolioVideos.map((video) => (
+                  {portfolioVideos.map((video: PortfolioVideo) => (
                     <div
                       key={video.id}
                       className="flex items-center justify-between p-3 border rounded-lg"
