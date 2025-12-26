@@ -1331,7 +1331,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createClient(insertClient: InsertClient): Promise<Client> {
-    const [client] = await db.insert(clients).values(insertClient as any).returning();
+    const [client] = await db.insert(clients).values(insertClient).returning();
     return client;
   }
 

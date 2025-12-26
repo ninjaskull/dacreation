@@ -7,7 +7,10 @@ import fs from "fs";
 import multer from "multer";
 import passport from "passport";
 import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange, broadcastLiveAgentRequest } from "./websocket";
+import { db } from "./db";
+import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
 import { 
+  portfolioVideos,
   insertLeadSchema, insertUserSchema, updateUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
   insertActivityLogSchema, insertLeadNoteSchema,
