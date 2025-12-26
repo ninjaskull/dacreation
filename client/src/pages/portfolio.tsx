@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
+import { Play, X } from "lucide-react";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -36,6 +37,18 @@ interface WebsiteSettings {
   showPreferredBy: boolean;
   showTrustedBy: boolean;
 }
+
+// Helper function to determine if URL is a video format
+const isVideoUrl = (url: string): boolean => {
+  return /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url) || 
+         /youtube\.com|youtu\.be|vimeo\.com/.test(url);
+};
+
+// Helper function to get YouTube embed URL
+const getYouTubeEmbedUrl = (url: string): string => {
+  const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\&\?\/]+)/)?.[1];
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+};
 
 const categories = [
   { value: "all", label: "All Events" },
@@ -137,6 +150,7 @@ type PortfolioDisplayItem = {
   client?: string | null;
   featuredImage?: string | null;
   images?: string[] | null;
+  videos?: string[] | null;
   isFeatured?: boolean;
   isActive?: boolean;
 };
@@ -193,6 +207,7 @@ export default function PortfolioPage() {
         client: item.client,
         featuredImage: item.featuredImage,
         images: item.images,
+        videos: item.videos,
         isFeatured: item.isFeatured,
         isActive: item.isActive,
       }));
@@ -533,6 +548,33 @@ export default function PortfolioPage() {
                   <p className="text-gray-600 leading-relaxed">{selectedItem.description}</p>
                 )}
                 
+                {selectedItem.videos && selectedItem.videos.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-4">Videos</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedItem.videos.map((video, idx) => (
+                        <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-black relative group">
+                          {/youtube\.com|youtu\.be|vimeo\.com/.test(video) ? (
+                            <iframe 
+                              src={getYouTubeEmbedUrl(video)}
+                              title={`${selectedItem.title} - Video ${idx + 1}`}
+                              className="w-full h-full"
+                              allowFullScreen
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            />
+                          ) : (
+                            <video 
+                              src={video} 
+                              controls
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedItem.images && selectedItem.images.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-4">Gallery</h4>
