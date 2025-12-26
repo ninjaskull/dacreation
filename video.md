@@ -1,26 +1,12 @@
-# Portfolio Video Gallery - Pending Tasks
+# Portfolio Video Upload Task List
 
-### Phase 2: Admin Frontend
-- [ ] Add video reordering functionality (drag-to-reorder - optional enhancement)
-
-### Phase 4: Testing & Refinement
-
-#### 4.1 Functional Testing
-- [ ] **Video Upload Testing**
-  - Test with files: 1MB, 50MB, 100MB, 500MB, >500MB (should reject)
-  - Test file types: MP4, WebM, OGG, MOV, AVI (valid)
-- [ ] **Video Metadata Management**
-  - Test updating titles and display orders
-  - Test toggling active/inactive status
-- [ ] **Deletion Cleanup**
-  - Verify file deletion from disk upon database record removal
-  - Verify cascading deletion when portfolio item is removed
-
-#### 4.2 UI/UX Refinement
-- [ ] **Mobile Responsiveness**
-  - Fine-tune carousel behavior on small screens
-  - Ensure video player controls are accessible on touch devices
-- [ ] **Reordering Polish**
-  - Implement and test drag-to-reorder functionality
-- [ ] **LSP & Code Quality**
-  - Fix any remaining type errors and lint warnings
+## Verification Status (COMPLETED)
+- [x] **Thumbnail Generation Logic**: Automatic thumbnail generation integrated using `fluent-ffmpeg`.
+- [x] **Video Duration Metadata**: Extraction of duration metadata from uploaded videos implemented.
+- [x] **Database Synchronization**: Table `portfolio_videos` exists in Neon.
+- [x] **Infrastructure**: Upload directories created with 755 permissions.
+- [x] **Server-Side Constraints**: Multer configured for 500MB and specific MIME types.
+- [x] **Storage Implementation**: All CRUD methods implemented in `server/storage.ts`.
+- [x] **Frontend Implementation**: XHR upload with progress and error handling fixed.
+- [x] **Cleanup**: Orphaned files removed on portfolio item deletion.
+- [x] **Metadata**: `isActive` and `displayOrder` defaults handled.

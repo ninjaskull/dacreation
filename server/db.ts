@@ -5,7 +5,12 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-let connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+let connectionString = process.env.NEON_DATABASE_URL;
+
+if (!connectionString || connectionString.trim() === '') {
+  console.warn('NEON_DATABASE_URL is not set, falling back to DATABASE_URL');
+  connectionString = process.env.DATABASE_URL;
+}
 
 if (!connectionString || connectionString.trim() === '') {
   const { PGUSER, PGPASSWORD, PGHOST, PGPORT, PGDATABASE } = process.env;

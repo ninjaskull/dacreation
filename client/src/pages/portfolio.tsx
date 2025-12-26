@@ -624,53 +624,92 @@ export default function PortfolioPage() {
                       )}
                     </div>
 
-                    {/* Video Carousel */}
+                    {/* Video Grid/Carousel */}
                     {displayedVideos.length > 0 && (
                       <div className="space-y-3" data-testid="carousel-videos">
                         <h4 className="font-semibold text-gray-900">Videos</h4>
-                        <Carousel className="w-full">
-                          <CarouselContent>
-                            {displayedVideos.map((video) => (
-                              <CarouselItem key={video.id} className="md:basis-1/2 lg:basis-1/3">
-                                <div
-                                  className="aspect-video rounded-lg overflow-hidden bg-black/50 relative group cursor-pointer"
-                                  onClick={() => setPlayingVideo(video)}
-                                  data-testid={`video-card-${video.id}`}
-                                >
-                                  {video.thumbnail ? (
-                                    <img
-                                      src={video.thumbnail}
-                                      alt={video.title}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-[#601a29]/50 to-black flex items-center justify-center">
-                                      <Film className="w-12 h-12 text-white/30" />
+                        
+                        {/* Mobile Carousel View */}
+                        <div className="block md:hidden" data-testid="video-carousel-mobile">
+                          <Carousel 
+                            opts={{ align: "center", loop: true }} 
+                            className="w-full"
+                          >
+                            <CarouselContent className="-ml-2">
+                              {displayedVideos.map((video: PortfolioVideo) => (
+                                <CarouselItem key={video.id} className="pl-2 basis-full flex items-center justify-center">
+                                  <div
+                                    className="group rounded-2xl overflow-hidden cursor-pointer w-full"
+                                    onClick={() => setPlayingVideo(video)}
+                                    data-testid={`video-card-mobile-${video.id}`}
+                                  >
+                                    {/* Professional Frame Border */}
+                                    <div className="p-1 bg-gradient-to-br from-[#d4af37]/60 via-[#d4af37]/40 to-[#d4af37]/20 rounded-2xl shadow-2xl hover:shadow-3xl group-hover:from-[#d4af37]/80 group-hover:via-[#d4af37]/60 group-hover:to-[#d4af37]/40 transition-all duration-300">
+                                      <div className="p-4 bg-white rounded-xl">
+                                        <div className="relative bg-black rounded-lg overflow-hidden border-4 border-[#601a29]/20 shadow-inner max-h-[60vh]">
+                                          <video
+                                            autoPlay
+                                            muted
+                                            loop
+                                            playsInline
+                                            className="w-full h-full object-contain bg-black group-hover:opacity-80 transition-opacity duration-300"
+                                            src={video.filePath}
+                                          />
+                                          {/* Play Button Overlay */}
+                                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-300">
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-75 group-hover:scale-100">
+                                              <div className="w-16 h-16 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg">
+                                                <Play className="w-7 h-7 fill-[#601a29] text-[#601a29] ml-1" />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                  )}
-                                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors flex items-center justify-center">
-                                    <Button
-                                      size="icon"
-                                      className="rounded-full bg-white/90 hover:bg-white text-[#601a29] h-14 w-14"
-                                      data-testid={`button-play-video-${video.id}`}
-                                    >
-                                      <Play className="w-6 h-6 fill-current" />
-                                    </Button>
                                   </div>
-                                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                                    <p className="text-white text-sm font-medium line-clamp-1">{video.title}</p>
+                                </CarouselItem>
+                              ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="left-0" data-testid="button-prev-videos-mobile" />
+                            <CarouselNext className="right-0" data-testid="button-next-videos-mobile" />
+                          </Carousel>
+                        </div>
+
+                        {/* Desktop Grid View */}
+                        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-8" data-testid="video-grid">
+                          {displayedVideos.map((video: PortfolioVideo) => (
+                            <div
+                              key={video.id}
+                              className="group rounded-2xl overflow-hidden cursor-pointer"
+                              onClick={() => setPlayingVideo(video)}
+                              data-testid={`video-card-${video.id}`}
+                            >
+                              {/* Professional Frame Border */}
+                              <div className="p-1 bg-gradient-to-br from-[#d4af37]/60 via-[#d4af37]/40 to-[#d4af37]/20 rounded-2xl shadow-2xl hover:shadow-3xl group-hover:from-[#d4af37]/80 group-hover:via-[#d4af37]/60 group-hover:to-[#d4af37]/40 transition-all duration-300">
+                                <div className="p-4 bg-white rounded-xl">
+                                  <div className="relative bg-black rounded-lg overflow-hidden border-4 border-[#601a29]/20 shadow-inner">
+                                    <video
+                                      autoPlay
+                                      muted
+                                      loop
+                                      playsInline
+                                      className="w-full h-full object-contain bg-black group-hover:opacity-80 transition-opacity duration-300"
+                                      src={video.filePath}
+                                    />
+                                    {/* Play Button Overlay */}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-300">
+                                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-75 group-hover:scale-100">
+                                        <div className="w-16 h-16 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg">
+                                          <Play className="w-7 h-7 fill-[#601a29] text-[#601a29] ml-1" />
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                              </CarouselItem>
-                            ))}
-                          </CarouselContent>
-                          {displayedVideos.length > 1 && (
-                            <>
-                              <CarouselPrevious data-testid="button-prev-videos" />
-                              <CarouselNext data-testid="button-next-videos" />
-                            </>
-                          )}
-                        </Carousel>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -678,10 +717,13 @@ export default function PortfolioPage() {
                     {displayedImages.length > 0 && (
                       <div className="space-y-3" data-testid="carousel-images">
                         <h4 className="font-semibold text-gray-900">Images</h4>
-                        <Carousel className="w-full">
-                          <CarouselContent>
-                            {displayedImages.map((image, idx) => (
-                              <CarouselItem key={idx} className="md:basis-1/2 lg:basis-1/3">
+                        <Carousel 
+                          opts={{ align: "start", loop: true }} 
+                          className="w-full relative px-1 sm:px-0"
+                        >
+                          <CarouselContent className="-ml-2 md:-ml-4">
+                            {displayedImages.map((image: string, idx: number) => (
+                              <CarouselItem key={idx} className="pl-2 basis-[85%] sm:basis-1/2 lg:basis-1/3">
                                 <div className="aspect-square rounded-lg overflow-hidden" data-testid={`image-card-${idx}`}>
                                   <img
                                     src={image}
@@ -692,12 +734,10 @@ export default function PortfolioPage() {
                               </CarouselItem>
                             ))}
                           </CarouselContent>
-                          {displayedImages.length > 1 && (
-                            <>
-                              <CarouselPrevious data-testid="button-prev-images" />
-                              <CarouselNext data-testid="button-next-images" />
-                            </>
-                          )}
+                          <div className="hidden sm:block">
+                            <CarouselPrevious className="-left-4 sm:-left-12" data-testid="button-prev-images" />
+                            <CarouselNext className="-right-4 sm:-right-12" data-testid="button-next-images" />
+                          </div>
                         </Carousel>
                       </div>
                     )}

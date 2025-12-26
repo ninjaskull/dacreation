@@ -6,7 +6,8 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import passport from "passport";
-import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange, broadcastLiveAgentRequest } from "./websocket";
+import ffmpeg from "fluent-ffmpeg";
+import { broadcastNewMessage, broadcastConversationUpdate, broadcastAgentStatusChange, broadcastLiveAgentRequest, broadcastVideoUploadProgress } from "./websocket";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, like, or, sql, asc } from "drizzle-orm";
 import { 
@@ -154,17 +155,19 @@ const videoUpload = multer({
     fileSize: 500 * 1024 * 1024, // 500MB max file size
   },
   fileFilter: function (req, file, cb) {
-    const allowedTypes = [
+    const allowedMimeTypes = [
       'video/mp4',
       'video/webm',
       'video/ogg',
-      'video/quicktime',
-      'video/x-msvideo'
+      'video/quicktime', // .mov
+      'video/x-msvideo', // .avi
+      'video/mpeg'
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+    
+    if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Allowed: MP4, WebM, OGG, MOV, AVI'));
+      cb(new Error("Invalid file type. Only MP4, WebM, OGG, MOV, AVI, and MPEG are allowed."));
     }
   }
 });
@@ -173,6 +176,17 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  app.get("/api/portfolio", async (req, res) => {
+    try {
+      const activeOnly = req.query.active !== 'false';
+      const items = await storage.getAllPortfolioItems(activeOnly);
+      res.json(items);
+    } catch (error) {
+      console.error("Get portfolio error:", error);
+      res.status(500).json({ message: "Failed to fetch portfolio" });
+    }
+  });
 
   // Serve uploaded files statically
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -829,8 +843,25 @@ export async function registerRoutes(
 
   app.delete("/api/cms/portfolio/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      await storage.deletePortfolioItem(req.params.id);
-      res.json({ message: "Portfolio item deleted successfully" });
+      const portfolioItemId = req.params.id;
+      
+      // Get all videos for this portfolio item to clean up files
+      const videos = await storage.getAllPortfolioVideos(portfolioItemId);
+      for (const video of videos) {
+        const videoPath = path.join(process.cwd(), 'uploads/portfolio-videos', video.fileName);
+        if (fs.existsSync(videoPath)) {
+          fs.unlinkSync(videoPath);
+        }
+        if (video.thumbnail) {
+          const thumbPath = path.join(process.cwd(), 'uploads/portfolio-videos/thumbnails', path.basename(video.thumbnail));
+          if (fs.existsSync(thumbPath)) {
+            fs.unlinkSync(thumbPath);
+          }
+        }
+      }
+
+      await storage.deletePortfolioItem(portfolioItemId);
+      res.json({ message: "Portfolio item and associated videos deleted successfully" });
     } catch (error) {
       console.error("Delete portfolio item error:", error);
       res.status(500).json({ message: "Failed to delete portfolio item" });
@@ -865,7 +896,7 @@ export async function registerRoutes(
   app.get("/api/cms/portfolio/:itemId/videos", async (req, res) => {
     try {
       const videos = await storage.getAllPortfolioVideos(req.params.itemId);
-      res.json({ videos });
+      res.json(videos);
     } catch (error) {
       console.error("Get portfolio videos error:", error);
       res.status(500).json({ message: "Failed to fetch portfolio videos" });
@@ -874,33 +905,72 @@ export async function registerRoutes(
 
   // POST upload new video for a portfolio item
   app.post("/api/cms/portfolio/:itemId/videos", isAuthenticated, isAdmin, videoUpload.single('video'), async (req, res) => {
+    let uploadedFilePath: string | undefined;
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No video file provided" });
       }
+      uploadedFilePath = req.file.path;
 
       const { title, displayOrder } = req.body;
       
       if (!title || !title.trim()) {
-        fs.unlink(req.file.path, () => {});
+        if (uploadedFilePath) fs.unlink(uploadedFilePath, () => {});
         return res.status(400).json({ message: "Video title is required" });
       }
 
       const item = await storage.getPortfolioItemById(req.params.itemId);
       if (!item) {
-        fs.unlink(req.file.path, () => {});
+        if (uploadedFilePath) fs.unlink(uploadedFilePath, () => {});
         return res.status(404).json({ message: "Portfolio item not found" });
       }
 
       const existingVideos = await storage.getAllPortfolioVideos(req.params.itemId);
       if (existingVideos.length >= 20) {
-        fs.unlink(req.file.path, () => {});
+        if (uploadedFilePath) fs.unlink(uploadedFilePath, () => {});
         return res.status(409).json({ message: "Maximum 20 videos per portfolio item" });
       }
 
       const fileName = path.basename(req.file.path);
       const filePath = `/uploads/portfolio-videos/${fileName}`;
       
+      // Generate thumbnail and get duration
+      const thumbFileName = `thumb-${path.parse(fileName).name}.jpg`;
+      const thumbDir = path.join(process.cwd(), "uploads/portfolio-videos/thumbnails");
+      
+      const videoInfo = await new Promise<{duration: number, thumbnail?: string}>((resolve) => {
+        let duration = 0;
+        let resolved = false;
+
+        ffmpeg.ffprobe(uploadedFilePath!, (err: any, metadata: any) => {
+          if (!err && metadata?.format?.duration) {
+            duration = Math.round(metadata.format.duration);
+          }
+          
+          // Generate thumbnail
+          ffmpeg(uploadedFilePath!)
+            .on('end', () => {
+              if (!resolved) {
+                resolved = true;
+                resolve({ duration, thumbnail: `/uploads/portfolio-videos/thumbnails/${thumbFileName}` });
+              }
+            })
+            .on('error', (err: any) => {
+              console.error("FFMPEG error:", err);
+              if (!resolved) {
+                resolved = true;
+                resolve({ duration });
+              }
+            })
+            .screenshots({
+              count: 1,
+              folder: thumbDir,
+              filename: thumbFileName,
+              size: '640x360'
+            });
+        });
+      });
+
       const videoData = {
         portfolioItemId: req.params.itemId,
         title: title.trim(),
@@ -908,14 +978,17 @@ export async function registerRoutes(
         filePath,
         mimeType: req.file.mimetype,
         fileSize: req.file.size,
+        duration: videoInfo.duration,
+        thumbnail: videoInfo.thumbnail || null,
         displayOrder: displayOrder ? parseInt(displayOrder) : existingVideos.length,
+        isActive: true
       };
 
       const video = await storage.createPortfolioVideo(videoData);
       res.status(201).json({ success: true, video, message: "Video uploaded successfully" });
     } catch (error) {
-      if (req.file) {
-        fs.unlink(req.file.path, () => {});
+      if (uploadedFilePath) {
+        fs.unlink(uploadedFilePath, () => {});
       }
       console.error("Upload portfolio video error:", error);
       res.status(500).json({ message: "Failed to upload video" });
@@ -925,6 +998,7 @@ export async function registerRoutes(
   // PATCH update video metadata
   app.patch("/api/cms/portfolio/:itemId/videos/:videoId", isAuthenticated, isAdmin, async (req, res) => {
     try {
+      // Validating display order and title
       const video = await storage.getPortfolioVideoById(req.params.videoId);
       if (!video || video.portfolioItemId !== req.params.itemId) {
         return res.status(404).json({ message: "Video not found" });
@@ -943,6 +1017,7 @@ export async function registerRoutes(
         updateData.isActive = isActive;
       }
 
+      console.log(`Updating video ${req.params.videoId} with:`, updateData);
       const updated = await storage.updatePortfolioVideo(req.params.videoId, updateData);
       res.json(updated);
     } catch (error) {
@@ -959,13 +1034,13 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Video not found" });
       }
 
-      const filePath = path.join(process.cwd(), video.filePath);
+      const filePath = path.join(process.cwd(), 'uploads/portfolio-videos', video.fileName);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
 
       if (video.thumbnail) {
-        const thumbPath = path.join(process.cwd(), video.thumbnail);
+        const thumbPath = path.join(process.cwd(), 'uploads/portfolio-videos/thumbnails', path.basename(video.thumbnail));
         if (fs.existsSync(thumbPath)) {
           fs.unlinkSync(thumbPath);
         }
@@ -1759,6 +1834,20 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get website settings error:", error);
       res.status(500).json({ message: "Failed to fetch website settings" });
+    }
+  });
+
+  app.get("/api/settings/featured-videos", async (req, res) => {
+    try {
+      const allVideos = await storage.getAllPortfolioVideos("");
+      if (!allVideos || allVideos.length === 0) {
+        return res.json([]);
+      }
+      const featuredVideos = allVideos.slice(0, 3);
+      res.json(featuredVideos);
+    } catch (error) {
+      console.error("Get featured videos error:", error);
+      res.json([]);
     }
   });
 
@@ -4738,6 +4827,32 @@ Crawl-delay: 1
       console.error("Get vendor approval logs error:", error);
       res.status(500).json({ message: "Failed to fetch vendor approval logs" });
     }
+  });
+
+  // Error handling middleware - MUST be after all route handlers
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error("Express Error Middleware:", err);
+    
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ message: 'File too large. Maximum 500MB allowed' });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({ message: 'Too many files. Maximum 1 file allowed' });
+      }
+      return res.status(400).json({ message: `Upload error: ${err.message}` });
+    }
+    
+    if (err && err.message && err.message.includes('Invalid file type')) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    // Default error handler for JSON responses
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ 
+      message: err.message || "Internal server error",
+      error: process.env.NODE_ENV !== 'production' ? err : undefined
+    });
   });
 
   return httpServer;

@@ -296,6 +296,7 @@ export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit
 export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
 export type PortfolioItem = typeof portfolioItems.$inferSelect;
 
+// Re-defining portfolio_videos to ensure it's picked up by drizzle-kit
 export const portfolioVideos = pgTable("portfolio_videos", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   portfolioItemId: varchar("portfolio_item_id").references(() => portfolioItems.id).notNull(),
@@ -437,7 +438,7 @@ export const clients = pgTable("clients", {
   notes: text("notes"),
   tags: text("tags").array(),
   source: text("source"),
-  referredBy: varchar("referred_by").references(() => clients.id, { onDelete: "set null" }),
+  referredBy: varchar("referred_by").references((): any => clients.id, { onDelete: "set null" }),
   lastContactDate: timestamp("last_contact_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

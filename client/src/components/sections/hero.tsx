@@ -4,21 +4,53 @@ import heroImage from "@assets/generated_images/luxury_indian_wedding_reception_
 import { useBranding } from "@/contexts/BrandingContext";
 import { Link } from "wouter";
 import { Building2, Heart, Users, Award } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+type PortfolioVideo = {
+  id: string;
+  filePath: string;
+  portfolioItemId: string;
+  title: string;
+};
 
 export function Hero() {
   const { branding } = useBranding();
+  
+  const { data: featuredVideos = [] } = useQuery<PortfolioVideo[]>({
+    queryKey: ["/api/settings/featured-videos"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/featured-videos");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  // Find a video for the hero background (e.g., first featured video or specific hero video)
+  const backgroundVideo = featuredVideos[0];
+
   return (
     <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-[#1a1a1a]">
-      {/* Background Image with Overlay */}
+      {/* Background Media with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src={heroImage} 
-          alt={`Premium Event Management - ${branding.company.name} Weddings & Corporate Events`} 
-          className="w-full h-full object-cover transition-transform duration-[20s] ease-in-out transform scale-100 hover:scale-105"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-        />
+        {backgroundVideo ? (
+          <video
+            src={backgroundVideo.filePath}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover transition-transform duration-[20s] ease-in-out transform scale-100 hover:scale-105"
+          />
+        ) : (
+          <img 
+            src={heroImage} 
+            alt={`Premium Event Management - ${branding.company.name} Weddings & Corporate Events`} 
+            className="w-full h-full object-cover transition-transform duration-[20s] ease-in-out transform scale-100 hover:scale-105"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
+        )}
         <div className="absolute inset-0 bg-black/40 bg-gradient-to-b from-black/70 via-transparent to-black/70" />
       </div>
 

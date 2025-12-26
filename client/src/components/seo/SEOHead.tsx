@@ -252,11 +252,6 @@ export function useLocalBusinessSchema() {
       "addressRegion": branding.addresses.primary.state,
       "postalCode": branding.addresses.primary.pincode,
       "addressCountry": branding.addresses.primary.country
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": branding.stats.rating.toString(),
-      "reviewCount": branding.stats.happyClients.toString()
     }
   };
 }

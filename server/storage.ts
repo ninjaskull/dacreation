@@ -1,3 +1,5 @@
+import path from "path";
+import fs from "fs";
 import { 
   type User, type InsertUser, type Lead, type InsertLead, type UpdateLead,
   type Appointment, type InsertAppointment, type UpdateAppointment,
@@ -1123,6 +1125,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePortfolioItem(id: string): Promise<boolean> {
+    // Clean up physical files for all videos associated with this item
+    const videos = await db.select().from(portfolioVideos).where(eq(portfolioVideos.portfolioItemId, id));
+    for (const video of videos) {
+      const fullPath = path.join(process.cwd(), video.filePath);
+      if (fs.existsSync(fullPath)) {
+        try {
+          fs.unlinkSync(fullPath);
+        } catch (err) {
+          console.error(`Failed to delete file ${fullPath}:`, err);
+        }
+      }
+      if (video.thumbnail) {
+        const thumbPath = path.join(process.cwd(), video.thumbnail);
+        if (fs.existsSync(thumbPath)) {
+          try {
+            fs.unlinkSync(thumbPath);
+          } catch (err) {
+            console.error(`Failed to delete thumbnail ${thumbPath}:`, err);
+          }
+        }
+      }
+    }
+    
     await db.delete(portfolioVideos).where(eq(portfolioVideos.portfolioItemId, id));
     await db.delete(portfolioItems).where(eq(portfolioItems.id, id));
     return true;

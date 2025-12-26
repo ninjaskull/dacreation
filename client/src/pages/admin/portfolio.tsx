@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -148,7 +148,7 @@ export default function AdminPortfolioPage() {
       const response = await fetch(`/api/cms/portfolio/${selectedPortfolioId}/videos`);
       if (!response.ok) throw new Error("Failed to fetch videos");
       const data = await response.json();
-      return data.videos || [];
+      return Array.isArray(data) ? data : (data.videos || []);
     },
     enabled: !!selectedPortfolioId,
   });
@@ -343,11 +343,67 @@ export default function AdminPortfolioPage() {
       return;
     }
 
+    setVideoUploadProgress(1); // Start showing progress immediately
     const formData = new FormData();
     formData.append("video", file);
     formData.append("title", videoTitle);
     formData.append("displayOrder", videoDisplayOrder.toString());
-    uploadVideoMutation.mutate(formData);
+    
+    const xhr = new XMLHttpRequest();
+    
+    // Use a ref-like variable to track if load has already handled completion
+    let isCompleted = false;
+
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percentComplete = Math.round((e.loaded / e.total) * 100);
+        // Cap at 99% until the server actually returns 201
+        setVideoUploadProgress(Math.min(percentComplete, 99));
+      }
+    });
+    
+    xhr.addEventListener('load', () => {
+      if (isCompleted) return;
+      isCompleted = true;
+      setVideoUploadProgress(100);
+      
+      if (xhr.status === 201 || xhr.status === 200) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          queryClient.invalidateQueries({ queryKey: ["/api/cms/portfolio", selectedPortfolioId, "videos"] });
+          resetVideoForm();
+          setShowVideoDialog(false);
+          toast({ title: "Success", description: response.message || "Video uploaded successfully" });
+        } catch (e) {
+          toast({ title: "Success", description: "Video uploaded successfully" });
+        }
+      } else {
+        setVideoUploadProgress(0);
+        try {
+          const error = JSON.parse(xhr.responseText);
+          toast({ title: "Error", description: error.message || "Failed to upload video", variant: "destructive" });
+        } catch {
+          toast({ title: "Error", description: `Upload failed with status: ${xhr.status}`, variant: "destructive" });
+        }
+      }
+    });
+    
+    xhr.addEventListener('error', () => {
+      if (isCompleted) return;
+      isCompleted = true;
+      setVideoUploadProgress(0);
+      toast({ title: "Error", description: "Upload failed due to network error", variant: "destructive" });
+    });
+
+    xhr.addEventListener('abort', () => {
+      if (isCompleted) return;
+      isCompleted = true;
+      setVideoUploadProgress(0);
+      toast({ title: "Error", description: "Upload aborted", variant: "destructive" });
+    });
+    
+    xhr.open('POST', `/api/cms/portfolio/${selectedPortfolioId}/videos`);
+    xhr.send(formData);
   };
 
   const handleEditVideo = (video: PortfolioVideo) => {
@@ -920,12 +976,15 @@ export default function AdminPortfolioPage() {
                     />
                   </div>
 
-                  {uploadVideoMutation.isPending && (
-                    <div className="space-y-2">
-                      <p className="text-sm">Uploading... {videoUploadProgress}%</p>
-                      <div className="w-full bg-muted rounded-full h-2">
+                  {(videoUploadProgress > 0 && videoUploadProgress < 100) && (
+                    <div className="space-y-2 mt-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium">Uploading video...</span>
+                        <span>{Math.round(videoUploadProgress)}%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
                         <div
-                          className="bg-primary h-2 rounded-full transition-all"
+                          className="bg-primary h-full transition-all duration-300 ease-in-out"
                           style={{ width: `${videoUploadProgress}%` }}
                         />
                       </div>

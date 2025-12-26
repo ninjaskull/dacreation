@@ -450,6 +450,26 @@ export function broadcastLiveAgentRequest(conversationId: string, visitorInfo: a
   });
 }
 
+export function broadcastVideoUploadProgress(userId: string, progress: number, fileName?: string) {
+  const payload = JSON.stringify({
+    type: "video_upload_progress",
+    userId,
+    progress,
+    fileName,
+    timestamp: new Date().toISOString(),
+  });
+  
+  clients.forEach((client, clientId) => {
+    if (client.userId === userId && client.ws.readyState === WebSocket.OPEN) {
+      try {
+        client.ws.send(payload);
+      } catch (error) {
+        console.error(`[WebSocket] Error sending upload progress to ${clientId}:`, error);
+      }
+    }
+  });
+}
+
 function generateClientId(): string {
   return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
