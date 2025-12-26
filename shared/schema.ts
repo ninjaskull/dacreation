@@ -279,7 +279,6 @@ export const portfolioItems = pgTable("portfolio_items", {
   date: text("date"),
   client: text("client"),
   images: text("images").array(),
-  videos: text("videos").array(),
   featuredImage: text("featured_image"),
   isFeatured: boolean("is_featured").notNull().default(false),
   displayOrder: integer("display_order").notNull().default(0),

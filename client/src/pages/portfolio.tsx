@@ -150,7 +150,6 @@ type PortfolioDisplayItem = {
   client?: string | null;
   featuredImage?: string | null;
   images?: string[] | null;
-  videos?: string[] | null;
   isFeatured?: boolean;
   isActive?: boolean;
 };
@@ -207,7 +206,6 @@ export default function PortfolioPage() {
         client: item.client,
         featuredImage: item.featuredImage,
         images: item.images,
-        videos: item.videos,
         isFeatured: item.isFeatured,
         isActive: item.isActive,
       }));
@@ -548,33 +546,6 @@ export default function PortfolioPage() {
                   <p className="text-gray-600 leading-relaxed">{selectedItem.description}</p>
                 )}
                 
-                {selectedItem.videos && selectedItem.videos.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-4">Videos</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedItem.videos.map((video, idx) => (
-                        <div key={idx} className="aspect-video rounded-lg overflow-hidden bg-black relative group">
-                          {/youtube\.com|youtu\.be|vimeo\.com/.test(video) ? (
-                            <iframe 
-                              src={getYouTubeEmbedUrl(video)}
-                              title={`${selectedItem.title} - Video ${idx + 1}`}
-                              className="w-full h-full"
-                              allowFullScreen
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            />
-                          ) : (
-                            <video 
-                              src={video} 
-                              controls
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {selectedItem.images && selectedItem.images.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-4">Gallery</h4>

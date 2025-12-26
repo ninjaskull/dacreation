@@ -55,7 +55,6 @@ type PortfolioItem = {
   date: string | null;
   client: string | null;
   images: string[] | null;
-  videos: string[] | null;
   featuredImage: string | null;
   isFeatured: boolean;
   displayOrder: number;
@@ -97,7 +96,6 @@ export default function AdminPortfolioPage() {
     client: "",
     featuredImage: "",
     images: "",
-    videos: "",
     isFeatured: false,
     displayOrder: 0,
     isActive: true,
@@ -117,7 +115,6 @@ export default function AdminPortfolioPage() {
       const payload = {
         ...data,
         images: data.images ? data.images.split("\n").filter(Boolean) : [],
-        videos: data.videos ? data.videos.split("\n").filter(Boolean) : [],
       };
       const response = await fetch("/api/cms/portfolio", {
         method: "POST",
@@ -148,11 +145,6 @@ export default function AdminPortfolioPage() {
         payload.images = typeof data.images === "string" 
           ? data.images.split("\n").filter(Boolean) 
           : (Array.isArray(data.images) ? data.images : []);
-      }
-      if (data.videos !== undefined) {
-        payload.videos = typeof data.videos === "string" 
-          ? data.videos.split("\n").filter(Boolean) 
-          : (Array.isArray(data.videos) ? data.videos : []);
       }
       const response = await fetch(`/api/cms/portfolio/${id}`, {
         method: "PATCH",
@@ -201,7 +193,6 @@ export default function AdminPortfolioPage() {
       client: "",
       featuredImage: "",
       images: "",
-      videos: "",
       isFeatured: false,
       displayOrder: 0,
       isActive: true,
@@ -219,7 +210,6 @@ export default function AdminPortfolioPage() {
       client: item.client || "",
       featuredImage: item.featuredImage || "",
       images: item.images?.join("\n") || "",
-      videos: item.videos?.join("\n") || "",
       isFeatured: item.isFeatured,
       displayOrder: item.displayOrder,
       isActive: item.isActive,
@@ -614,19 +604,6 @@ export default function AdminPortfolioPage() {
                 onChange={(e) => setFormData(prev => ({ ...prev, images: e.target.value }))}
                 data-testid="input-images"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="videos">Video URLs (one per line - supports MP4, WebM, Ogg, YouTube links)</Label>
-              <Textarea
-                id="videos"
-                placeholder="https://example.com/video1.mp4&#10;https://youtube.com/watch?v=...&#10;https://example.com/video2.webm"
-                rows={3}
-                value={formData.videos}
-                onChange={(e) => setFormData(prev => ({ ...prev, videos: e.target.value }))}
-                data-testid="input-videos"
-              />
-              <p className="text-xs text-muted-foreground">Supported formats: MP4, WebM, Ogg, and YouTube/Vimeo URLs</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
