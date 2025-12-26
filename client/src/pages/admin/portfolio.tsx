@@ -28,6 +28,8 @@ import {
   Film,
   Upload,
   X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -287,6 +289,25 @@ export default function AdminPortfolioPage() {
     },
   });
 
+  const reorderVideosMutation = useMutation({
+    mutationFn: async (videoIds: string[]) => {
+      const response = await fetch(`/api/cms/portfolio/${selectedPortfolioId}/videos/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoIds }),
+      });
+      if (!response.ok) throw new Error("Failed to reorder videos");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/portfolio", selectedPortfolioId, "videos"] });
+      toast({ title: "Success", description: "Videos reordered" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -386,6 +407,17 @@ export default function AdminPortfolioPage() {
       acc[item.category] = (acc[item.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>) || {},
+  };
+
+  const moveVideo = (index: number, direction: 'up' | 'down') => {
+    const newVideos = [...portfolioVideos];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= newVideos.length) return;
+    
+    const [movedVideo] = newVideos.splice(index, 1);
+    newVideos.splice(newIndex, 0, movedVideo);
+    
+    reorderVideosMutation.mutate(newVideos.map(v => v.id));
   };
 
   return (
@@ -910,7 +942,7 @@ export default function AdminPortfolioPage() {
                 <p className="text-sm text-muted-foreground">No videos uploaded yet</p>
               ) : (
                 <div className="space-y-2">
-                  {portfolioVideos.map((video: PortfolioVideo) => (
+                  {portfolioVideos.map((video: PortfolioVideo, index: number) => (
                     <div
                       key={video.id}
                       className="flex items-center justify-between p-3 border rounded-lg"
@@ -923,6 +955,30 @@ export default function AdminPortfolioPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 mr-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={index === 0 || reorderVideosMutation.isPending}
+                            onClick={() => moveVideo(index, 'up')}
+                            title="Move Up"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                            <span className="sr-only">Move Up</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={index === portfolioVideos.length - 1 || reorderVideosMutation.isPending}
+                            onClick={() => moveVideo(index, 'down')}
+                            title="Move Down"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                            <span className="sr-only">Move Down</span>
+                          </Button>
+                        </div>
                         <Switch
                           checked={video.isActive}
                           onCheckedChange={(checked) =>

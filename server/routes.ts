@@ -837,6 +837,28 @@ export async function registerRoutes(
   // ==================== Portfolio Videos ====================
 
   // GET all videos for a portfolio item
+  app.patch("/api/cms/portfolio/:itemId/videos/reorder", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { videoIds } = req.body;
+      if (!Array.isArray(videoIds)) {
+        return res.status(400).json({ message: "Invalid data: videoIds must be an array" });
+      }
+
+      await db.transaction(async (tx) => {
+        for (let i = 0; i < videoIds.length; i++) {
+          await tx.update(portfolioVideos)
+            .set({ displayOrder: i })
+            .where(and(eq(portfolioVideos.id, videoIds[i]), eq(portfolioVideos.portfolioItemId, req.params.itemId)));
+        }
+      });
+
+      res.json({ success: true, message: "Videos reordered successfully" });
+    } catch (error) {
+      console.error("Reorder videos error:", error);
+      res.status(500).json({ message: "Failed to reorder videos" });
+    }
+  });
+
   app.get("/api/cms/portfolio/:itemId/videos", async (req, res) => {
     try {
       const videos = await storage.getAllPortfolioVideos(req.params.itemId);
