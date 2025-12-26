@@ -708,13 +708,132 @@ Add sample videos to seed file for testing (optional).
 - [x] Add gallery mode tabs (all/videos/images) ✅ (December 26, 2025)
 - [x] Implement mobile responsive design ✅ (December 26, 2025)
 
-### Phase 4: Testing & Refinement (NOT STARTED 0/6)
-- [ ] Test video upload with various file sizes
-- [ ] Test mobile carousel on actual devices
-- [ ] Test video player on different browsers
-- [ ] Test deletion and cleanup
-- [ ] Performance testing with large videos
-- [ ] Accessibility testing
+### Phase 4: Testing & Refinement (PENDING 0/6)
+
+#### 4.1 Functional Testing
+- [ ] **Video Upload Testing**
+  - Test with files: 1MB, 50MB, 100MB, 500MB, >500MB (should reject)
+  - Test file types: MP4, WebM, OGG, MOV, AVI (valid)
+  - Test invalid types: PDF, TXT, JPG (should reject with error message)
+  - Verify file cleanup on failed uploads
+  - Verify database record created on successful upload
+  - Acceptance: All file size/type validations working, error messages clear
+
+- [ ] **Video Management (Admin)**
+  - Test upload, edit, delete, active/inactive toggle
+  - Test multiple videos per portfolio item (up to 20 limit)
+  - Test exceeding 20 video limit (should show error)
+  - Verify display order update works correctly
+  - Test drag-to-reorder functionality (optional enhancement)
+  - Acceptance: All CRUD operations working, 20 video limit enforced
+
+- [ ] **Video Playback (Public)**
+  - Test video plays with audio
+  - Test video controls: play/pause, volume, progress bar, fullscreen
+  - Test carousel navigation: prev/next buttons
+  - Test gallery tabs: All/Videos/Images switching
+  - Test with no videos (should show images only)
+  - Test with no images (should show videos only)
+  - Test with both videos and images
+  - Acceptance: All playback controls responsive, carousels smooth
+
+#### 4.2 Browser & Device Compatibility
+- [ ] **Desktop Browsers**
+  - Chrome (latest)
+  - Firefox (latest)
+  - Safari (latest)
+  - Edge (latest)
+  - Verify: Video playback, controls, carousel smooth
+
+- [ ] **Mobile Devices**
+  - iPhone (Safari)
+  - Android (Chrome)
+  - Test orientation: portrait ↔ landscape rotation
+  - Test carousel on mobile: 1 item wide, swipe navigation
+  - Test video player fullscreen on mobile
+  - Acceptance: Fully functional on all major devices
+
+- [ ] **Tablet Testing**
+  - iPad (portrait & landscape)
+  - Android tablet
+  - Test: 2-3 items per row, touch interactions
+  - Acceptance: Proper responsive layout, no layout breakage
+
+#### 4.3 Performance Testing
+- [ ] **Video Load Performance**
+  - Measure initial load time with 1, 5, 10, 20 videos
+  - Check carousel scroll/swipe smoothness
+  - Monitor memory usage with large videos
+  - Test lazy loading (load videos only when carousel opened)
+  - Acceptance: <100ms carousel interaction, <3s initial page load
+
+- [ ] **Network Performance**
+  - Test on slow 3G connection
+  - Test video streaming vs download behavior
+  - Verify thumbnails load before full videos
+  - Acceptance: Graceful degradation, no stalling
+
+- [ ] **Database Performance**
+  - Check query performance with 100+ portfolio items
+  - Verify indexes working on portfolio_item_id, is_active
+  - Acceptance: API response <200ms
+
+#### 4.4 File Management Testing
+- [ ] **Video Deletion & Cleanup**
+  - Verify video file deleted from disk on delete
+  - Verify thumbnail deleted from disk on delete
+  - Verify database record deleted
+  - Test cascade delete when portfolio item deleted
+  - Verify no orphaned files left behind
+  - Acceptance: Complete cleanup, no orphaned files
+
+- [ ] **Storage Space Management**
+  - Monitor upload directory growth
+  - Test with 50+ videos uploaded
+  - Verify file permissions correct (readable by web server)
+  - Acceptance: Proper file organization, no permission issues
+
+#### 4.5 Security Testing
+- [ ] **File Upload Security**
+  - Test filename sanitization (no directory traversal)
+  - Test MIME type validation (magic bytes check)
+  - Test file size limits enforced server-side
+  - Verify uploaded files not executable
+  - Test admin-only route access (non-admin should get 403)
+  - Acceptance: No security vulnerabilities
+
+- [ ] **Access Control**
+  - Verify admin-only endpoints protected
+  - Test delete endpoint only works for item owner
+  - Test public API returns only active videos
+  - Acceptance: All access controls working
+
+#### 4.6 Accessibility Testing
+- [ ] **WCAG 2.1 AA Compliance**
+  - Test keyboard navigation (Tab through all controls)
+  - Test video player keyboard shortcuts (spacebar to play, arrow keys)
+  - Test carousel with keyboard (arrow keys to navigate)
+  - Verify alt text on all video thumbnails
+  - Test with screen reader (NVDA, JAWS)
+  - Verify color contrast ratios (4.5:1 for text)
+  - Test focus indicators visible
+  - Acceptance: WCAG AA compliant, fully keyboard accessible
+
+#### 4.7 Known Issues & Limitations
+
+**Current Limitations:**
+1. Thumbnail generation not yet implemented - uses fallback icon
+2. No video compression on upload - stored at original quality
+3. No adaptive bitrate streaming - serves single quality
+4. No video analytics (views, watch time) tracking
+5. Maximum 20 videos per portfolio (by design)
+6. No drag-to-reorder in admin UI (can update displayOrder via API)
+
+**Known Issues:**
+1. Browser compatibility for WebM format may vary (fallback to MP4)
+2. Very large videos (>300MB) may timeout on slow connections
+3. Thumbnail caching not implemented - regenerates on each load
+4. No rate limiting on upload endpoint (implement in security hardening)
 
 ---
 
@@ -739,29 +858,133 @@ Add sample videos to seed file for testing (optional).
 
 ---
 
-## 11. FUTURE ENHANCEMENTS
+## 11. FUTURE ENHANCEMENTS & ROADMAP
 
+### Priority 1: Core Improvements (Recommended Next)
+1. **Thumbnail Generation** ✨ HIGH IMPACT
+   - Implement FFmpeg integration for automatic thumbnail extraction
+   - Extract frame at 5 seconds or user-selectable timestamp
+   - Generate JPG thumbnails (320x180px, ~50KB)
+   - Cache thumbnails with videos
+   - Fallback to generic video icon if extraction fails
+   - Estimated effort: 2-3 hours
+   - Impact: Better UX, professional appearance
+
+2. **Rate Limiting & Security Hardening**
+   - Add rate limiting to POST /api/cms/portfolio/:itemId/videos (max 10 uploads/hour)
+   - Implement CSRF protection
+   - Add file integrity checking (verify video codec on upload)
+   - Implement virus scanning for uploads (optional, requires 3rd party service)
+   - Estimated effort: 1-2 hours
+   - Impact: Security, prevent abuse
+
+3. **Error Recovery & Validation**
+   - Add file resumption for interrupted uploads
+   - Implement video duration detection and storage
+   - Add pre-upload validation (check codec, resolution)
+   - Graceful fallback for unsupported formats
+   - Estimated effort: 2 hours
+   - Impact: Better error messages, reliability
+
+### Priority 2: Performance & Optimization
+1. **Video Streaming & Compression**
+   - Implement HLS streaming (HTTP Live Streaming)
+   - Generate multiple bitrate versions (720p, 480p, 360p)
+   - Auto-select quality based on connection speed
+   - Estimated effort: 4-5 hours
+   - Impact: Better performance, bandwidth optimization
+
+2. **Thumbnail Caching**
+   - Implement CDN caching for thumbnails
+   - Browser cache headers for static videos
+   - Generate WebP format thumbnails for smaller size
+   - Estimated effort: 2 hours
+   - Impact: Faster page loads
+
+3. **Lazy Loading**
+   - Load carousel items only when visible
+   - Load full video metadata on carousel open
+   - Implement intersection observer
+   - Estimated effort: 1-2 hours
+   - Impact: Initial page load improvement
+
+4. **Database Indexing**
+   - Add index on portfolio_item_id (improves query speed)
+   - Add composite index on (portfolio_item_id, is_active, display_order)
+   - Monitor query performance
+   - Estimated effort: 30 mins
+   - Impact: API response time optimization
+
+### Priority 3: Advanced Features (Nice to Have)
 1. **Advanced Video Features**
-   - Video search/filtering
-   - Video analytics (views, playtime)
-   - Captions/subtitles support
-   - Video quality selection
+   - Video search/filtering by title
+   - Video analytics dashboard (views, watch time, engagement)
+   - Captions/subtitles support (SRT format)
+   - Video quality selection UI
+   - Estimated effort: 5-6 hours each
 
 2. **Admin Features**
-   - Bulk video upload
-   - Drag-to-reorder in UI
-   - Video preview while uploading
-   - Video cropping/editing
+   - Bulk video upload (multi-select)
+   - Drag-to-reorder in admin UI (add SortableJS)
+   - Live video preview while uploading
+   - Video thumbnail preview/selection
+   - Video metadata editor (duration, resolution)
+   - Estimated effort: 3-4 hours each
 
-3. **Performance**
-   - Implement video streaming (not just download)
-   - CDN integration
-   - Video compression optimization
+3. **User Experience**
+   - Lightbox gallery view (full-screen image viewer)
+   - Video playlists (group related videos)
+   - Auto-play next video in carousel
+   - Video sharing buttons (social media)
+   - Estimated effort: 2-3 hours each
 
-4. **User Experience**
-   - Lightbox gallery view
-   - Video collections
-   - Video playlist creation
+4. **Content Creation Tools**
+   - In-browser video trimming/cropping
+   - Watermark generation
+   - Video effect filters
+   - Estimated effort: 4+ hours each (requires complex libraries)
+
+### Priority 4: Analytics & Reporting
+1. **Video Analytics**
+   - Track video plays, watch duration, completion rate
+   - Dashboard showing most-watched videos
+   - User engagement metrics
+   - Export reports (PDF, CSV)
+   - Estimated effort: 4-5 hours
+
+2. **Admin Insights**
+   - Portfolio performance metrics
+   - Video upload trends
+   - Storage usage analytics
+   - Estimated effort: 2-3 hours
+
+### Priority 5: Integration & Compliance
+1. **Third-Party Integrations**
+   - YouTube import (embed existing YouTube videos)
+   - Vimeo integration
+   - AWS S3 storage (for large deployments)
+   - Cloudfront CDN integration
+   - Estimated effort: 3-4 hours each
+
+2. **Compliance & Privacy**
+   - GDPR compliance (video data handling)
+   - Privacy policy updates
+   - Cookie consent for analytics
+   - Data retention policies
+   - Estimated effort: 2-3 hours
+
+### Timeline & Budget Estimation
+
+| Phase | Features | Effort | Cost |
+|-------|----------|--------|------|
+| **Now** | Core features (Phases 1-3) | ✅ Complete | ✅ Done |
+| **Week 1** | Thumbnail generation + Security | 3-4 hrs | $150-200 |
+| **Week 2** | Error recovery + Lazy loading | 3-4 hrs | $150-200 |
+| **Week 3** | Video streaming + CDN caching | 6-8 hrs | $300-400 |
+| **Month 2** | Advanced features (pick 2-3) | 6-12 hrs | $300-600 |
+| **Month 3+** | Analytics, integrations, polish | 12+ hrs | $600+ |
+
+**Recommendation:** Start with Priority 1 items (Thumbnail generation + Rate limiting) for quick wins and improved user experience.
 
 ---
 
@@ -781,6 +1004,93 @@ Add sample videos to seed file for testing (optional).
 ### Database Errors
 - Transaction failures: Rollback and notify
 - Constraint violations: Validate before insert
+
+---
+
+## 13. DEPLOYMENT & MAINTENANCE GUIDE
+
+### Pre-Deployment Checklist
+- [ ] All Phase 1-3 features tested locally
+- [ ] No console errors in browser or server
+- [ ] Admin video management fully functional
+- [ ] Public portfolio displays correctly
+- [ ] Mobile responsive on iOS/Android
+- [ ] 404/error pages working
+- [ ] Database migrations run successfully
+- [ ] Environment variables configured
+- [ ] Upload directory has write permissions
+- [ ] CORS headers properly set (if needed)
+
+### Deployment Steps
+1. Backup production database
+2. Run migrations: `npm run db:migrate`
+3. Deploy code to production
+4. Test admin upload with small video
+5. Test public gallery playback
+6. Monitor logs for errors
+
+### Post-Deployment Monitoring
+- Monitor upload directory disk usage
+- Check API response times (target: <200ms)
+- Monitor error logs for video processing issues
+- Track video playback errors in browser console
+- Monitor database query performance
+
+### Maintenance Tasks (Monthly)
+- [ ] Review storage usage and cleanup orphaned files
+- [ ] Check for failed uploads in logs
+- [ ] Test video playback on latest browsers
+- [ ] Update video format support if needed
+- [ ] Monitor database indices and optimize if needed
+- [ ] Review security logs for attempted exploits
+
+### Backup Strategy
+- Back up `/uploads/portfolio-videos` directory daily
+- Include thumbnails in backup
+- Maintain separate backup of video database metadata
+- Test restore procedure quarterly
+
+---
+
+## 14. TROUBLESHOOTING GUIDE
+
+### Common Issues & Solutions
+
+**Issue: Video upload fails with "File too large"**
+- Check if file is actually >500MB
+- Verify Multer configuration in server/routes.ts
+- Check server disk space availability
+- Solution: Compress video before upload
+
+**Issue: Video plays but no audio**
+- Verify video file has audio stream (ffmpeg check)
+- Check browser audio permissions
+- Try different video format (MP4 vs WebM)
+- Solution: Re-encode video with audio
+
+**Issue: Carousel stutters on mobile**
+- Check if too many videos loading at once
+- Implement lazy loading for carousel items
+- Reduce video resolution/quality
+- Solution: Implement intersection observer for lazy loading
+
+**Issue: Admin upload dialog not appearing**
+- Check React Query cache (might be stale)
+- Clear browser cache
+- Check console for errors
+- Solution: Refresh page or use incognito mode
+
+**Issue: Database migration fails**
+- Check if database tables already exist
+- Verify Neon connection string
+- Check database permissions
+- Solution: Drop and recreate tables via SQL
+
+**Issue: Videos accessible but won't play**
+- Verify video file not corrupted
+- Check Content-Type headers (should be video/mp4)
+- Test with curl: `curl -I /uploads/portfolio-videos/filename.mp4`
+- Solution: Re-upload video or test file locally
 
 ---
 
