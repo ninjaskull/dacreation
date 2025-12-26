@@ -296,6 +296,31 @@ export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit
 export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
 export type PortfolioItem = typeof portfolioItems.$inferSelect;
 
+export const portfolioVideos = pgTable("portfolio_videos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  portfolioItemId: varchar("portfolio_item_id").references(() => portfolioItems.id).notNull(),
+  title: text("title").notNull(),
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  duration: integer("duration"),
+  thumbnail: text("thumbnail"),
+  displayOrder: integer("display_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPortfolioVideoSchema = createInsertSchema(portfolioVideos).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPortfolioVideo = z.infer<typeof insertPortfolioVideoSchema>;
+export type PortfolioVideo = typeof portfolioVideos.$inferSelect;
+
 export const testimonials = pgTable("testimonials", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   clientName: text("client_name").notNull(),
