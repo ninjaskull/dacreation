@@ -15,7 +15,10 @@ import {
   Eye,
   Sparkles,
   Award,
-  Building2
+  Building2,
+  Play,
+  X,
+  Film
 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { SEOHead, getBreadcrumbSchema } from "@/components/seo/SEOHead";
 import { useBranding } from "@/contexts/BrandingContext";
-import { Play, X } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface WebsiteSettings {
   weddingsCount: number;
@@ -154,11 +157,29 @@ type PortfolioDisplayItem = {
   isActive?: boolean;
 };
 
+type PortfolioVideo = {
+  id: string;
+  portfolioItemId: string;
+  title: string;
+  fileName: string;
+  filePath: string;
+  mimeType: string;
+  fileSize: number;
+  duration?: number;
+  thumbnail?: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export default function PortfolioPage() {
   const { branding } = useBranding();
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedItem, setSelectedItem] = useState<PortfolioDisplayItem | null>(null);
   const [hoveredItem, setHoveredItem] = useState<number | string | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<PortfolioVideo | null>(null);
+  const [galleryMode, setGalleryMode] = useState<"all" | "videos" | "images">("all");
   
   const { data: websiteSettings } = useQuery<WebsiteSettings>({
     queryKey: ["/api/settings/website"],
@@ -217,6 +238,24 @@ export default function PortfolioPage() {
   const filteredItems = displayItems.filter(
     item => activeCategory === "all" || item.category === activeCategory
   );
+
+  // Fetch videos for selected item
+  const { data: portfolioDetails } = useQuery({
+    queryKey: ["/api/cms/portfolio", selectedItem?.id, "details"],
+    queryFn: async () => {
+      if (!selectedItem?.id) return { videos: [], images: [] };
+      const res = await fetch(`/api/cms/portfolio/${selectedItem.id}/details`);
+      if (!res.ok) return { videos: [], images: [] };
+      return res.json();
+    },
+    enabled: !!selectedItem?.id,
+  });
+
+  const videos = portfolioDetails?.videos || [];
+  const galleryImages = portfolioDetails?.images || selectedItem?.images || [];
+  
+  const displayedVideos = galleryMode === "images" ? [] : videos;
+  const displayedImages = galleryMode === "videos" ? [] : galleryImages;
 
   return (
     <div className="min-h-screen bg-white">
@@ -496,7 +535,7 @@ export default function PortfolioPage() {
       </section>
 
       {/* Detail Dialog */}
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog open={!!selectedItem} onOpenChange={() => { setSelectedItem(null); setGalleryMode("all"); }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedItem && (
             <>
@@ -546,20 +585,122 @@ export default function PortfolioPage() {
                   <p className="text-gray-600 leading-relaxed">{selectedItem.description}</p>
                 )}
                 
-                {selectedItem.images && selectedItem.images.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-4">Gallery</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {selectedItem.images.map((image, idx) => (
-                        <div key={idx} className="aspect-square rounded-lg overflow-hidden">
-                          <img 
-                            src={image} 
-                            alt={`${selectedItem.title} - ${idx + 1}`}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform"
-                          />
-                        </div>
-                      ))}
+                {/* Gallery Section */}
+                {(displayedVideos.length > 0 || displayedImages.length > 0) && (
+                  <div className="space-y-4" data-testid="section-portfolio-gallery">
+                    <div className="flex gap-2" data-testid="tabs-gallery-mode">
+                      {(videos.length > 0 && galleryImages.length > 0) && (
+                        <>
+                          <Button
+                            variant={galleryMode === "all" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setGalleryMode("all")}
+                            className="rounded-full"
+                            data-testid="button-gallery-all"
+                          >
+                            All ({videos.length + galleryImages.length})
+                          </Button>
+                          <Button
+                            variant={galleryMode === "videos" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setGalleryMode("videos")}
+                            className="rounded-full gap-1"
+                            data-testid="button-gallery-videos"
+                          >
+                            <Film className="w-3 h-3" />
+                            Videos ({videos.length})
+                          </Button>
+                          <Button
+                            variant={galleryMode === "images" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setGalleryMode("images")}
+                            className="rounded-full gap-1"
+                            data-testid="button-gallery-images"
+                          >
+                            <Camera className="w-3 h-3" />
+                            Images ({galleryImages.length})
+                          </Button>
+                        </>
+                      )}
                     </div>
+
+                    {/* Video Carousel */}
+                    {displayedVideos.length > 0 && (
+                      <div className="space-y-3" data-testid="carousel-videos">
+                        <h4 className="font-semibold text-gray-900">Videos</h4>
+                        <Carousel className="w-full">
+                          <CarouselContent>
+                            {displayedVideos.map((video) => (
+                              <CarouselItem key={video.id} className="md:basis-1/2 lg:basis-1/3">
+                                <div
+                                  className="aspect-video rounded-lg overflow-hidden bg-black/50 relative group cursor-pointer"
+                                  onClick={() => setPlayingVideo(video)}
+                                  data-testid={`video-card-${video.id}`}
+                                >
+                                  {video.thumbnail ? (
+                                    <img
+                                      src={video.thumbnail}
+                                      alt={video.title}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-[#601a29]/50 to-black flex items-center justify-center">
+                                      <Film className="w-12 h-12 text-white/30" />
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors flex items-center justify-center">
+                                    <Button
+                                      size="icon"
+                                      className="rounded-full bg-white/90 hover:bg-white text-[#601a29] h-14 w-14"
+                                      data-testid={`button-play-video-${video.id}`}
+                                    >
+                                      <Play className="w-6 h-6 fill-current" />
+                                    </Button>
+                                  </div>
+                                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                    <p className="text-white text-sm font-medium line-clamp-1">{video.title}</p>
+                                  </div>
+                                </div>
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          {displayedVideos.length > 1 && (
+                            <>
+                              <CarouselPrevious data-testid="button-prev-videos" />
+                              <CarouselNext data-testid="button-next-videos" />
+                            </>
+                          )}
+                        </Carousel>
+                      </div>
+                    )}
+
+                    {/* Image Carousel */}
+                    {displayedImages.length > 0 && (
+                      <div className="space-y-3" data-testid="carousel-images">
+                        <h4 className="font-semibold text-gray-900">Images</h4>
+                        <Carousel className="w-full">
+                          <CarouselContent>
+                            {displayedImages.map((image, idx) => (
+                              <CarouselItem key={idx} className="md:basis-1/2 lg:basis-1/3">
+                                <div className="aspect-square rounded-lg overflow-hidden" data-testid={`image-card-${idx}`}>
+                                  <img
+                                    src={image}
+                                    alt={`${selectedItem.title} - ${idx + 1}`}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                  />
+                                </div>
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          {displayedImages.length > 1 && (
+                            <>
+                              <CarouselPrevious data-testid="button-prev-images" />
+                              <CarouselNext data-testid="button-next-images" />
+                            </>
+                          )}
+                        </Carousel>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -574,6 +715,31 @@ export default function PortfolioPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Player Modal */}
+      <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0" data-testid="modal-video-player">
+          <div className="relative w-full bg-black rounded-lg overflow-hidden">
+            <button
+              onClick={() => setPlayingVideo(null)}
+              className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 rounded-full p-2 text-white"
+              data-testid="button-close-video-player"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            {playingVideo && (
+              <div className="aspect-video" data-testid="video-element">
+                <video
+                  autoPlay
+                  controls
+                  className="w-full h-full"
+                  src={playingVideo.filePath}
+                />
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
