@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,9 @@ import {
   Image,
   Eye,
   EyeOff,
+  Film,
+  Upload,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -63,6 +66,22 @@ type PortfolioItem = {
   updatedAt: string;
 };
 
+type PortfolioVideo = {
+  id: string;
+  portfolioItemId: string;
+  title: string;
+  fileName: string;
+  filePath: string;
+  mimeType: string;
+  fileSize: number;
+  duration?: number;
+  thumbnail?: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 const CATEGORIES = [
   { value: "all", label: "All Categories" },
   { value: "wedding", label: "Wedding" },
@@ -87,6 +106,16 @@ export default function AdminPortfolioPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   
+  // Video management state
+  const [showVideoDialog, setShowVideoDialog] = useState(false);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
+  const [editingVideo, setEditingVideo] = useState<PortfolioVideo | null>(null);
+  const [deleteVideo, setDeleteVideo] = useState<PortfolioVideo | null>(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoDisplayOrder, setVideoDisplayOrder] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     title: "",
     category: "wedding",
@@ -108,6 +137,18 @@ export default function AdminPortfolioPage() {
       if (!response.ok) throw new Error("Failed to fetch portfolio items");
       return response.json() as Promise<PortfolioItem[]>;
     },
+  });
+
+  const { data: portfolioVideos = [] } = useQuery({
+    queryKey: ["/api/cms/portfolio", selectedPortfolioId, "videos"],
+    queryFn: async () => {
+      if (!selectedPortfolioId) return [];
+      const response = await fetch(`/api/cms/portfolio/${selectedPortfolioId}/videos`);
+      if (!response.ok) throw new Error("Failed to fetch videos");
+      const data = await response.json();
+      return data.videos || [];
+    },
+    enabled: !!selectedPortfolioId,
   });
 
   const createMutation = useMutation({
@@ -183,6 +224,69 @@ export default function AdminPortfolioPage() {
     },
   });
 
+  // Video mutations
+  const uploadVideoMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch(`/api/cms/portfolio/${selectedPortfolioId}/videos`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to upload video");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/portfolio", selectedPortfolioId, "videos"] });
+      resetVideoForm();
+      setShowVideoDialog(false);
+      toast({ title: "Success", description: "Video uploaded successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateVideoMutation = useMutation({
+    mutationFn: async ({ videoId, data }: { videoId: string; data: Partial<PortfolioVideo> }) => {
+      const response = await fetch(`/api/cms/portfolio/${selectedPortfolioId}/videos/${videoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update video");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/portfolio", selectedPortfolioId, "videos"] });
+      setEditingVideo(null);
+      resetVideoForm();
+      toast({ title: "Success", description: "Video updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteVideoMutation = useMutation({
+    mutationFn: async (videoId: string) => {
+      const response = await fetch(`/api/cms/portfolio/${selectedPortfolioId}/videos/${videoId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete video");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cms/portfolio", selectedPortfolioId, "videos"] });
+      setDeleteVideo(null);
+      toast({ title: "Success", description: "Video deleted" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -197,6 +301,38 @@ export default function AdminPortfolioPage() {
       displayOrder: 0,
       isActive: true,
     });
+  };
+
+  const resetVideoForm = () => {
+    setVideoTitle("");
+    setVideoDisplayOrder(0);
+    setVideoUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    if (!selectedPortfolioId) {
+      toast({ title: "Error", description: "No portfolio selected", variant: "destructive" });
+      return;
+    }
+    if (!videoTitle.trim()) {
+      toast({ title: "Error", description: "Video title is required", variant: "destructive" });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("video", file);
+    formData.append("title", videoTitle);
+    formData.append("displayOrder", videoDisplayOrder.toString());
+    uploadVideoMutation.mutate(formData);
+  };
+
+  const handleEditVideo = (video: PortfolioVideo) => {
+    setEditingVideo(video);
+    setVideoTitle(video.title);
+    setVideoDisplayOrder(video.displayOrder);
   };
 
   const handleEdit = (item: PortfolioItem) => {
@@ -468,6 +604,14 @@ export default function AdminPortfolioPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
+                              onClick={() => { setSelectedPortfolioId(item.id); setShowVideoDialog(true); }}
+                              data-testid={`menu-manage-videos-${item.id}`}
+                            >
+                              <Film className="w-4 h-4 mr-2" />
+                              Manage Videos
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
                               className="text-red-600"
                               onClick={() => setDeleteItem(item)}
                               data-testid={`menu-delete-${item.id}`}
@@ -678,6 +822,216 @@ export default function AdminPortfolioPage() {
               data-testid="button-confirm-delete"
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Video Management Dialog */}
+      <Dialog open={showVideoDialog} onOpenChange={() => { setShowVideoDialog(false); setSelectedPortfolioId(null); resetVideoForm(); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Portfolio Videos</DialogTitle>
+            <DialogDescription>
+              {portfolioItems?.find(i => i.id === selectedPortfolioId)?.title}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Upload Section */}
+            <Card data-testid="card-video-upload">
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium">Upload New Video</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="video-title">Video Title *</Label>
+                    <Input
+                      id="video-title"
+                      placeholder="e.g., Ceremony Highlights"
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                      data-testid="input-video-title"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="video-file">Video File (MP4, WebM, MOV, AVI - Max 500MB) *</Label>
+                    <div className="border-2 border-dashed rounded-lg p-6 hover:bg-muted/50 cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                      data-testid="drop-zone-video"
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                        onChange={(e) => e.target.files?.[0] && handleVideoUpload(e.target.files[0])}
+                        className="hidden"
+                        data-testid="input-video-file"
+                      />
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="font-medium">Click to upload or drag and drop</p>
+                        <p className="text-sm text-muted-foreground">MP4, WebM, MOV, AVI up to 500MB</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="video-order">Display Order</Label>
+                    <Input
+                      id="video-order"
+                      type="number"
+                      value={videoDisplayOrder}
+                      onChange={(e) => setVideoDisplayOrder(parseInt(e.target.value) || 0)}
+                      data-testid="input-video-order"
+                    />
+                  </div>
+
+                  {uploadVideoMutation.isPending && (
+                    <div className="space-y-2">
+                      <p className="text-sm">Uploading... {videoUploadProgress}%</p>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className="bg-primary h-2 rounded-full transition-all"
+                          style={{ width: `${videoUploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Videos List */}
+            <div className="space-y-3">
+              <h3 className="font-medium">Videos ({portfolioVideos.length})</h3>
+              {portfolioVideos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No videos uploaded yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {portfolioVideos.map((video) => (
+                    <div
+                      key={video.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                      data-testid={`card-video-${video.id}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{video.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(video.fileSize / (1024 * 1024)).toFixed(2)} MB • Order: {video.displayOrder}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={video.isActive}
+                          onCheckedChange={(checked) =>
+                            updateVideoMutation.mutate({ videoId: video.id, data: { isActive: checked } })
+                          }
+                          data-testid={`switch-video-active-${video.id}`}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditVideo(video)}
+                          data-testid={`button-edit-video-${video.id}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => setDeleteVideo(video)}
+                          data-testid={`button-delete-video-${video.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setShowVideoDialog(false); setSelectedPortfolioId(null); resetVideoForm(); }}
+              data-testid="button-close-video-dialog"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Video Dialog */}
+      <Dialog open={!!editingVideo} onOpenChange={() => { setEditingVideo(null); resetVideoForm(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-video-title">Title</Label>
+              <Input
+                id="edit-video-title"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+                data-testid="input-edit-video-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-video-order">Display Order</Label>
+              <Input
+                id="edit-video-order"
+                type="number"
+                value={videoDisplayOrder}
+                onChange={(e) => setVideoDisplayOrder(parseInt(e.target.value) || 0)}
+                data-testid="input-edit-video-order"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingVideo(null); resetVideoForm(); }} data-testid="button-cancel-edit">
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                editingVideo &&
+                updateVideoMutation.mutate({
+                  videoId: editingVideo.id,
+                  data: { title: videoTitle, displayOrder: videoDisplayOrder },
+                })
+              }
+              disabled={!videoTitle.trim()}
+              data-testid="button-save-video"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Video Confirmation */}
+      <AlertDialog open={!!deleteVideo} onOpenChange={() => setDeleteVideo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Video</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteVideo?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-video">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => deleteVideo && deleteVideoMutation.mutate(deleteVideo.id)}
+              data-testid="button-confirm-delete-video"
+            >
+              {deleteVideoMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
