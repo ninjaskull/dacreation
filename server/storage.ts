@@ -5,6 +5,7 @@ import {
   type LeadNote, type InsertLeadNote,
   type TeamMember, type InsertTeamMember,
   type PortfolioItem, type InsertPortfolioItem,
+  type PortfolioVideo, type InsertPortfolioVideo,
   type Testimonial, type InsertTestimonial,
   type Career, type InsertCareer,
   type PressArticle, type InsertPressArticle,
@@ -34,7 +35,7 @@ import {
   type VendorServiceOffering, type InsertVendorServiceOffering,
   type VendorPerformanceReview, type InsertVendorPerformanceReview,
   users, leads, appointments, activityLogs, leadNotes,
-  teamMembers, portfolioItems, testimonials, careers, pressArticles, pageContent,
+  teamMembers, portfolioItems, portfolioVideos, testimonials, careers, pressArticles, pageContent,
   clients, events, vendors, companySettings, userSettings,
   invoiceTemplates, invoices, invoiceItems, invoicePayments,
   callbackRequests, conversations, chatMessages, agentStatus,
@@ -371,6 +372,13 @@ export interface IStorage {
   createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem>;
   updatePortfolioItem(id: string, data: Partial<InsertPortfolioItem>): Promise<PortfolioItem | undefined>;
   deletePortfolioItem(id: string): Promise<boolean>;
+  
+  getAllPortfolioVideos(portfolioItemId: string): Promise<PortfolioVideo[]>;
+  getPortfolioVideoById(id: string): Promise<PortfolioVideo | undefined>;
+  createPortfolioVideo(video: InsertPortfolioVideo): Promise<PortfolioVideo>;
+  updatePortfolioVideo(id: string, data: Partial<InsertPortfolioVideo>): Promise<PortfolioVideo | undefined>;
+  deletePortfolioVideo(id: string): Promise<boolean>;
+  deletePortfolioVideosByItem(portfolioItemId: string): Promise<boolean>;
   
   getAllTestimonials(activeOnly?: boolean): Promise<Testimonial[]>;
   getTestimonialById(id: string): Promise<Testimonial | undefined>;
@@ -1115,7 +1123,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePortfolioItem(id: string): Promise<boolean> {
+    await db.delete(portfolioVideos).where(eq(portfolioVideos.portfolioItemId, id));
     await db.delete(portfolioItems).where(eq(portfolioItems.id, id));
+    return true;
+  }
+
+  async getAllPortfolioVideos(portfolioItemId: string): Promise<PortfolioVideo[]> {
+    return await db
+      .select()
+      .from(portfolioVideos)
+      .where(and(eq(portfolioVideos.portfolioItemId, portfolioItemId), eq(portfolioVideos.isActive, true)))
+      .orderBy(asc(portfolioVideos.displayOrder));
+  }
+
+  async getPortfolioVideoById(id: string): Promise<PortfolioVideo | undefined> {
+    const [video] = await db.select().from(portfolioVideos).where(eq(portfolioVideos.id, id));
+    return video || undefined;
+  }
+
+  async createPortfolioVideo(video: InsertPortfolioVideo): Promise<PortfolioVideo> {
+    const [created] = await db.insert(portfolioVideos).values(video).returning();
+    return created;
+  }
+
+  async updatePortfolioVideo(id: string, data: Partial<InsertPortfolioVideo>): Promise<PortfolioVideo | undefined> {
+    const [updated] = await db
+      .update(portfolioVideos)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(portfolioVideos.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePortfolioVideo(id: string): Promise<boolean> {
+    await db.delete(portfolioVideos).where(eq(portfolioVideos.id, id));
+    return true;
+  }
+
+  async deletePortfolioVideosByItem(portfolioItemId: string): Promise<boolean> {
+    await db.delete(portfolioVideos).where(eq(portfolioVideos.portfolioItemId, portfolioItemId));
     return true;
   }
 
