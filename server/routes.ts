@@ -11,7 +11,7 @@ import {
   insertLeadSchema, insertUserSchema, updateUserSchema, updateLeadSchema,
   insertAppointmentSchema, updateAppointmentSchema,
   insertActivityLogSchema, insertLeadNoteSchema,
-  insertTeamMemberSchema, insertPortfolioItemSchema,
+  insertTeamMemberSchema, insertPortfolioItemSchema, insertPortfolioVideoSchema,
   insertTestimonialSchema, insertCareerSchema,
   insertPressArticleSchema, insertPageContentSchema,
   insertClientSchema, updateClientSchema,
@@ -120,6 +120,48 @@ const documentUpload = multer({
       cb(null, true);
     } else {
       cb(new Error('Invalid file type. Allowed: PDF, JPEG, PNG, DOC, DOCX'));
+    }
+  }
+});
+
+// Configure multer for portfolio video uploads
+const videoDir = path.join(process.cwd(), "uploads", "portfolio-videos");
+if (!fs.existsSync(videoDir)) {
+  fs.mkdirSync(videoDir, { recursive: true });
+}
+const videoDirThumb = path.join(videoDir, "thumbnails");
+if (!fs.existsSync(videoDirThumb)) {
+  fs.mkdirSync(videoDirThumb, { recursive: true });
+}
+
+const videoStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, videoDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  }
+});
+
+const videoUpload = multer({
+  storage: videoStorage,
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB max file size
+  },
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = [
+      'video/mp4',
+      'video/webm',
+      'video/ogg',
+      'video/quicktime',
+      'video/x-msvideo'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Allowed: MP4, WebM, OGG, MOV, AVI'));
     }
   }
 });
@@ -789,6 +831,154 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete portfolio item error:", error);
       res.status(500).json({ message: "Failed to delete portfolio item" });
+    }
+  });
+
+  // ==================== Portfolio Videos ====================
+
+  // GET all videos for a portfolio item
+  app.get("/api/cms/portfolio/:itemId/videos", async (req, res) => {
+    try {
+      const videos = await storage.getAllPortfolioVideos(req.params.itemId);
+      res.json({ videos });
+    } catch (error) {
+      console.error("Get portfolio videos error:", error);
+      res.status(500).json({ message: "Failed to fetch portfolio videos" });
+    }
+  });
+
+  // POST upload new video for a portfolio item
+  app.post("/api/cms/portfolio/:itemId/videos", isAuthenticated, isAdmin, videoUpload.single('video'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No video file provided" });
+      }
+
+      const { title, displayOrder } = req.body;
+      
+      if (!title || !title.trim()) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(400).json({ message: "Video title is required" });
+      }
+
+      const item = await storage.getPortfolioItemById(req.params.itemId);
+      if (!item) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(404).json({ message: "Portfolio item not found" });
+      }
+
+      const existingVideos = await storage.getAllPortfolioVideos(req.params.itemId);
+      if (existingVideos.length >= 20) {
+        fs.unlink(req.file.path, () => {});
+        return res.status(409).json({ message: "Maximum 20 videos per portfolio item" });
+      }
+
+      const fileName = path.basename(req.file.path);
+      const filePath = `/uploads/portfolio-videos/${fileName}`;
+      
+      const videoData = {
+        portfolioItemId: req.params.itemId,
+        title: title.trim(),
+        fileName,
+        filePath,
+        mimeType: req.file.mimetype,
+        fileSize: req.file.size,
+        displayOrder: displayOrder ? parseInt(displayOrder) : existingVideos.length,
+      };
+
+      const video = await storage.createPortfolioVideo(videoData);
+      res.status(201).json({ success: true, video, message: "Video uploaded successfully" });
+    } catch (error) {
+      if (req.file) {
+        fs.unlink(req.file.path, () => {});
+      }
+      console.error("Upload portfolio video error:", error);
+      res.status(500).json({ message: "Failed to upload video" });
+    }
+  });
+
+  // PATCH update video metadata
+  app.patch("/api/cms/portfolio/:itemId/videos/:videoId", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const video = await storage.getPortfolioVideoById(req.params.videoId);
+      if (!video || video.portfolioItemId !== req.params.itemId) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      const { title, displayOrder, isActive } = req.body;
+      const updateData: any = {};
+      
+      if (title !== undefined && title !== null) {
+        updateData.title = title.trim();
+      }
+      if (displayOrder !== undefined && displayOrder !== null) {
+        updateData.displayOrder = parseInt(displayOrder);
+      }
+      if (isActive !== undefined) {
+        updateData.isActive = isActive;
+      }
+
+      const updated = await storage.updatePortfolioVideo(req.params.videoId, updateData);
+      res.json(updated);
+    } catch (error) {
+      console.error("Update portfolio video error:", error);
+      res.status(500).json({ message: "Failed to update video" });
+    }
+  });
+
+  // DELETE a video
+  app.delete("/api/cms/portfolio/:itemId/videos/:videoId", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const video = await storage.getPortfolioVideoById(req.params.videoId);
+      if (!video || video.portfolioItemId !== req.params.itemId) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      const filePath = path.join(process.cwd(), video.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      if (video.thumbnail) {
+        const thumbPath = path.join(process.cwd(), video.thumbnail);
+        if (fs.existsSync(thumbPath)) {
+          fs.unlinkSync(thumbPath);
+        }
+      }
+
+      await storage.deletePortfolioVideo(req.params.videoId);
+      res.json({ success: true, message: "Video deleted successfully" });
+    } catch (error) {
+      console.error("Delete portfolio video error:", error);
+      res.status(500).json({ message: "Failed to delete video" });
+    }
+  });
+
+  // GET portfolio item with both videos and images
+  app.get("/api/cms/portfolio/:itemId/details", async (req, res) => {
+    try {
+      const item = await storage.getPortfolioItemById(req.params.itemId);
+      if (!item) {
+        return res.status(404).json({ message: "Portfolio item not found" });
+      }
+
+      const videos = await storage.getAllPortfolioVideos(req.params.itemId);
+      const images = item.images || [];
+
+      const galleryItems = [
+        ...videos.map(v => ({ type: 'video', data: v, displayOrder: v.displayOrder })),
+        ...images.map((img, idx) => ({ type: 'image', data: img, displayOrder: idx }))
+      ].sort((a, b) => a.displayOrder - b.displayOrder);
+
+      res.json({
+        item,
+        images,
+        videos,
+        galleryItems
+      });
+    } catch (error) {
+      console.error("Get portfolio details error:", error);
+      res.status(500).json({ message: "Failed to fetch portfolio details" });
     }
   });
 
